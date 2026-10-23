@@ -1,0 +1,238 @@
+{
+  "source": "Owner-uploaded coda-device-results(1).json",
+  "sourceSha256": "a24a57530e4fa1e9514d600befb1ce463498f774fef1b5db75811b4c29ea1156",
+  "exportedAt": "2026-10-23T17:20:26.678Z",
+  "schemaVersion": 2,
+  "browserReportedByUserAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0",
+  "browserIdentityFromOwner": "Awaiting confirmation; Firefox-family user agent alone does not identify Zen",
+  "deviceDescriptionInExport": "",
+  "audioSource": "prepared YouTube audio; anonymous retrieval; fully buffered",
+  "deliveryMode": "preloaded",
+  "musicPreparedAt": "2026-10-23T16:14:59.071Z",
+  "musicTrackIds": [
+    "4D7u5KF7SP8",
+    "t0AvpJ74sBc",
+    "dsUTcSVdU2U"
+  ],
+  "eventsTotal": 305,
+  "retainedEventCount": 300,
+  "eventsTruncated": true,
+  "omittedEventCount": 5,
+  "preparationEventsRetained": false,
+  "retainedWindow": {
+    "first": "2026-10-23T17:17:56.024Z",
+    "last": "2026-10-23T17:19:16.049Z",
+    "seconds": 80.025,
+    "lastEventToExportSeconds": 70.629
+  },
+  "exportedChecklist": [
+    {
+      "check": "Play / pause / seek / volume",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Previous / next",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Three automatic track transitions",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Audio continues when switching panels",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Queue reorder and remove",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Lock screen for ten minutes (Android)",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Headset and lock-screen controls",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Switch apps and return",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Recover after an interruption",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Repeat with battery saver enabled",
+      "status": "NOT RUN"
+    }
+  ],
+  "notesInExport": "",
+  "ownerFollowUp": null,
+  "eventCounts": {
+    "canplay": 41,
+    "control": 16,
+    "ended": 9,
+    "loadedmetadata": 20,
+    "loadstart": 20,
+    "pause": 15,
+    "play": 27,
+    "playing": 33,
+    "queue-end": 1,
+    "queue-item-removed": 1,
+    "queue-reordered": 2,
+    "seeked": 20,
+    "seeking": 59,
+    "waiting": 36
+  },
+  "controlActions": {
+    "Move down": 1,
+    "Move up": 1,
+    "Remove": 1,
+    "next": 10,
+    "play-pause": 2,
+    "previous": 1
+  },
+  "errorCounts": {
+    "stalled": 0,
+    "error": 0,
+    "play-rejected": 0
+  },
+  "transitionObservations": {
+    "endedEvents": 9,
+    "automaticAdvanceAfterEndCount": 8,
+    "minAutomaticEventGapSeconds": 0.016,
+    "medianAutomaticEventGapSeconds": 0.02,
+    "maxAutomaticEventGapSeconds": 0.025,
+    "details": [
+      {
+        "endedAt": "2026-10-23T17:18:25.802Z",
+        "fromId": "4D7u5KF7SP8",
+        "positionSeconds": 369.64,
+        "nextPlayingAt": "2026-10-23T17:18:25.822Z",
+        "toId": "t0AvpJ74sBc",
+        "eventGapSeconds": 0.02,
+        "manualControlsBeforeNextPlaying": 0,
+        "queueEndBeforeNextPlaying": false
+      },
+      {
+        "endedAt": "2026-10-23T17:18:27.949Z",
+        "fromId": "t0AvpJ74sBc",
+        "positionSeconds": 280.4,
+        "nextPlayingAt": "2026-10-23T17:18:27.974Z",
+        "toId": "4D7u5KF7SP8",
+        "eventGapSeconds": 0.025,
+        "manualControlsBeforeNextPlaying": 0,
+        "queueEndBeforeNextPlaying": false
+      },
+      {
+        "endedAt": "2026-10-23T17:18:59.497Z",
+        "fromId": "t0AvpJ74sBc",
+        "positionSeconds": 280.4,
+        "nextPlayingAt": "2026-10-23T17:19:03.841Z",
+        "toId": "t0AvpJ74sBc",
+        "eventGapSeconds": 4.344,
+        "manualControlsBeforeNextPlaying": 1,
+        "queueEndBeforeNextPlaying": true
+      },
+      {
+        "endedAt": "2026-10-23T17:19:11.793Z",
+        "fromId": "t0AvpJ74sBc",
+        "positionSeconds": 280.4,
+        "nextPlayingAt": "2026-10-23T17:19:11.815Z",
+        "toId": "4D7u5KF7SP8",
+        "eventGapSeconds": 0.022,
+        "manualControlsBeforeNextPlaying": 0,
+        "queueEndBeforeNextPlaying": false
+      },
+      {
+        "endedAt": "2026-10-23T17:19:11.975Z",
+        "fromId": "4D7u5KF7SP8",
+        "positionSeconds": 369.64,
+        "nextPlayingAt": "2026-10-23T17:19:11.992Z",
+        "toId": "t0AvpJ74sBc",
+        "eventGapSeconds": 0.017,
+        "manualControlsBeforeNextPlaying": 0,
+        "queueEndBeforeNextPlaying": false
+      },
+      {
+        "endedAt": "2026-10-23T17:19:12.170Z",
+        "fromId": "t0AvpJ74sBc",
+        "positionSeconds": 280.4,
+        "nextPlayingAt": "2026-10-23T17:19:12.190Z",
+        "toId": "4D7u5KF7SP8",
+        "eventGapSeconds": 0.02,
+        "manualControlsBeforeNextPlaying": 0,
+        "queueEndBeforeNextPlaying": false
+      },
+      {
+        "endedAt": "2026-10-23T17:19:12.359Z",
+        "fromId": "4D7u5KF7SP8",
+        "positionSeconds": 369.64,
+        "nextPlayingAt": "2026-10-23T17:19:12.375Z",
+        "toId": "t0AvpJ74sBc",
+        "eventGapSeconds": 0.016,
+        "manualControlsBeforeNextPlaying": 0,
+        "queueEndBeforeNextPlaying": false
+      },
+      {
+        "endedAt": "2026-10-23T17:19:12.489Z",
+        "fromId": "t0AvpJ74sBc",
+        "positionSeconds": 280.4,
+        "nextPlayingAt": "2026-10-23T17:19:12.509Z",
+        "toId": "4D7u5KF7SP8",
+        "eventGapSeconds": 0.02,
+        "manualControlsBeforeNextPlaying": 0,
+        "queueEndBeforeNextPlaying": false
+      },
+      {
+        "endedAt": "2026-10-23T17:19:14.283Z",
+        "fromId": "4D7u5KF7SP8",
+        "positionSeconds": 369.64,
+        "nextPlayingAt": "2026-10-23T17:19:14.302Z",
+        "toId": "t0AvpJ74sBc",
+        "eventGapSeconds": 0.019,
+        "manualControlsBeforeNextPlaying": 0,
+        "queueEndBeforeNextPlaying": false
+      }
+    ]
+  },
+  "seekExamples": [
+    {
+      "at": "2026-10-23T17:18:36.412Z",
+      "trackId": "4D7u5KF7SP8",
+      "positionSeconds": 166.92
+    },
+    {
+      "at": "2026-10-23T17:18:37.568Z",
+      "trackId": "4D7u5KF7SP8",
+      "positionSeconds": 287.25
+    },
+    {
+      "at": "2026-10-23T17:18:56.404Z",
+      "trackId": "t0AvpJ74sBc",
+      "positionSeconds": 278.03
+    }
+  ],
+  "queueMutationEvents": [
+    {
+      "at": "2026-10-23T17:18:05.073Z",
+      "event": "queue-reordered",
+      "currentTrackId": "4D7u5KF7SP8",
+      "currentPositionSeconds": 8.67
+    },
+    {
+      "at": "2026-10-23T17:18:16.322Z",
+      "event": "queue-item-removed",
+      "currentTrackId": "t0AvpJ74sBc",
+      "currentPositionSeconds": 4.04
+    },
+    {
+      "at": "2026-10-23T17:18:43.806Z",
+      "event": "queue-reordered",
+      "currentTrackId": "4D7u5KF7SP8",
+      "currentPositionSeconds": 293.14
+    }
+  ],
+  "interpretation": "Prepared music played on a desktop Firefox-family browser with completed seeks, next/previous actions and queue mutations recorded. Five initial events, including preparation, were omitted. All manual checklist defaults are NOT RUN; browser identity and subjective behavior await owner confirmation. Eight end events automatically advanced within 0.016–0.025 seconds; one queue-end was followed 4.344 seconds later by manual Play. Endings occurred during a short seek-heavy run and are not uninterrupted full-song playback. Many seeking events while dragging are not themselves failed seeks. Queue mutation logs do not include target IDs or queue snapshots, so they cannot independently prove resulting order/removal. No logged errors are not proof of audible continuity, volume controls, background behavior, live streaming or account/Premium features."
+}
