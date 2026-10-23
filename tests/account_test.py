@@ -2,6 +2,8 @@ import importlib.util
 from pathlib import Path
 import unittest
 import tempfile
+from types import SimpleNamespace
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('account_probe', Path(__file__).resolve().parents[1] / 'scripts' / 'music_probe.py')
 probe = importlib.util.module_from_spec(spec)
@@ -99,8 +101,10 @@ class AccountChecks(unittest.TestCase):
             probe.validate_auth(None, True)
 
     def test_auth_inside_repository_is_rejected(self):
-        with self.assertRaises(ValueError):
-            probe.validate_auth(Path(__file__).resolve(), False)
+        # Use private permissions so only the repository boundary can reject this path.
+        with patch.object(Path, 'stat', return_value=SimpleNamespace(st_mode=0o600)):
+            with self.assertRaises(ValueError):
+                probe.validate_auth(Path(__file__).resolve(), False)
 
     def test_auth_permissions_must_be_private(self):
         with tempfile.TemporaryDirectory() as directory:

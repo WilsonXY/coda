@@ -42,7 +42,7 @@ The browser harness and public data access work on this machine. Full Coda feasi
 
 ## Review and delivery
 
-Claude Opus 5.5 reviewed the first commit at high effort. Its own session log confirmed both settings; the parent independently checked those log fields. The first verdict was FAIL because the saved snapshots did not support the shared-playlist row. The code, snapshots, and safeguards were corrected as recorded below; a fresh second review is pending.
+Claude Opus 5.5 reviewed the first commit at high effort. Its own session log confirmed both settings; the parent independently checked those log fields. The first verdict was FAIL because the saved snapshots did not support the shared-playlist row. The code, snapshots, and safeguards were corrected as recorded below. A fresh second review of commit `1fc6984` returned PASS with no blocking security, account-safety, or logic findings.
 
 Review dispositions:
 
@@ -59,3 +59,15 @@ Review dispositions:
 11. **Decline (optional preference):** kept server-delivered tones and byte-range support because this experiment deliberately tests HTTP media delivery and seeking. Browser Blob audio would omit that delivery path. The existing implementation is small and tested.
 
 First reviewer log: `~/.claude/projects/-home-penguin--t3-worktrees-coda-t3-8e271002/8c2ade02-a43a-47e5-88f4-92b94c26b5e7.jsonl` (`model: claude-opus-5-5`, `effort: high`, `perTurnEffort: high`). Parent and review worktree retained their starting commit and clean status; no reviewer mutation commands were present. T3 renamed its temporary branch during setup; the worktree and branch were removed after validation. This checkout has no GitHub remote, so pushing, opening a PR, and checking hosted CI require a repository destination. Local checks are recorded above; no hosted CI result is claimed.
+
+
+Second reviewer log: `~/.claude/projects/-home-penguin--t3-worktrees-coda-t3-e76a7d52/b155a024-69f8-46ef-9ec2-ede57ebe0fab.jsonl`. Both the reviewer and parent confirmed `model: claude-opus-5-5`, `effort: high`, and `perTurnEffort: high`; no fallback was used. Parent and reviewer worktree HEAD/status stayed unchanged, reviewer commands contained no mutations, and the temporary worktree/branch were removed.
+
+Second-round non-blocking findings:
+
+1. **Resolved (low):** the parent confirmed ytmusicapi 1.12.3's installed `ytmusic.py` describes the default 30-second request timeout at line 76 and sets `partial(self._session.request, timeout=30)` at line 233. The existing timeout statement is supported by the installed source.
+2. **Fix (low):** tightened the repository-local auth-file test by simulating private 0600 permissions, so file permissions cannot conceal a missing repository-boundary check. All nine Python tests pass normally and under `-O`. A separate process deliberately disabled the boundary check in memory; the tightened test failed as expected. No production code was changed for that check.
+3. **Fix (info):** this record now reports the second review's PASS rather than pending.
+4. **Decline (style preference):** the checklist's block-scoped `select` DOM variable does not affect the outer track-selection function. No functional problem was identified, so the verified browser code was retained.
+
+The final follow-up changes only this record and the tighter test; production code is unchanged from the passing review. No real account or phone results were added. The private test page remains running for the owner's device checks.
