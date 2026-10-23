@@ -91,6 +91,21 @@ try {
   await edited.locator('#reset').click();
   assert.equal(await edited.evaluate(() => window.audioUrls.size), 0, 'Reset revokes all ready Blobs');
   assert.equal(await edited.locator('audio').getAttribute('src'), null);
+
+  await edited.locator('#play').click();
+  await edited.waitForFunction(() => document.querySelector('#buffer-status').textContent.includes('Next song ready on this device: 三年二班'));
+  let lookaheadRequests = 0;
+  edited.on('request', request => { if (request.resourceType() === 'fetch' && new URL(request.url()).pathname.startsWith('/live/')) lookaheadRequests++; });
+  await edited.locator('audio').evaluate(audio => {
+    audio.play = () => new Promise((resolve, reject) => { window.rejectPlay = () => reject(new DOMException('Blocked by test', 'NotAllowedError')); });
+  });
+  await edited.locator('#queue li').nth(2).getByRole('button', { name: 'Play', exact: true }).click();
+  assert.equal(await edited.evaluate(() => window.audioUrls.size), 0, 'Selecting C releases obsolete B even while play is pending');
+  assert.equal(await edited.locator('#buffer-status').textContent().then(text => text.includes('Next song ready')), false, 'A pending selection never advertises stale readiness');
+  assert.equal(lookaheadRequests, 0, 'A pending selection does not initiate new lookahead');
+  await edited.evaluate(() => window.rejectPlay());
+  await edited.waitForFunction(() => document.querySelector('#now').textContent.includes('Playback failed'));
+  assert.equal(await edited.locator('#buffer-status').textContent().then(text => text.includes('Next song ready')), false, 'Rejection leaves readiness accurate');
   await edited.close();
 
   const failed = await browser.newPage();
@@ -105,6 +120,6 @@ try {
   assert.equal(await failed.locator('audio').getAttribute('src'), '/live/t0AvpJ74sBc.webm', 'Invalid buffered bytes are never used; normal live playback remains available');
   await failed.close();
   assert.deepEqual(errors, []);
-  await writeFile('artifacts/buffer-browser-check.json', JSON.stringify({ date: new Date().toISOString(), browser: browser.version(), status: 'PASS', source: 'gated prepared files through live HTTP fixtures; not fresh YouTube', firstPlaybackBeforeEOF: true, nextSongBeforeEOF: 'pending, not ready', nextTransitionAndSeekWithoutNetworking: 'PASS', failedFurtherBufferPreservesCurrentPlayback: 'PASS', persistentExportAfterTruncation: 'PASS', reorderRemovalCancellationAndResetCleanup: 'PASS', invalidBytesFallback: 'PASS', phoneBatterySaver: 'NOT RUN' }, null, 2));
+  await writeFile('artifacts/buffer-browser-check.json', JSON.stringify({ date: new Date().toISOString(), browser: browser.version(), status: 'PASS', source: 'gated prepared files through live HTTP fixtures; not fresh YouTube', firstPlaybackBeforeEOF: true, nextSongBeforeEOF: 'pending, not ready', nextTransitionAndSeekWithoutNetworking: 'PASS', failedFurtherBufferPreservesCurrentPlayback: 'PASS', persistentExportAfterTruncation: 'PASS', reorderRemovalCancellationAndResetCleanup: 'PASS', pendingAndRejectedSelectionCleanup: 'PASS', invalidBytesFallback: 'PASS', phoneBatterySaver: 'NOT RUN' }, null, 2));
   console.log('PASS: progressive first song, complete next-song Blob, offline transition/seek, bounded state, persistent export, reorder/remove/reset cleanup and invalid-byte fallback. Physical phone/Battery Saver NOT RUN.');
 } finally { await browser.close(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }

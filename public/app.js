@@ -77,6 +77,7 @@ async function select(track) {
     navigator.mediaSession.metadata = new MediaMetadata({ title: track.title, artist: track.artist });
   }
   renderQueue();
+  void bufferNext(false);
   await resume();
 }
 
@@ -141,10 +142,11 @@ function showBufferStatus() {
     : !next ? 'No next song to buffer.'
     : entry?.status === 'ready' ? `Next song ready on this device: ${next.title}. You can lock the screen for the comparison.`
     : entry?.status === 'failed' ? `Buffer unavailable: ${next.title}. Playback will use live HTTP if selected; export the result.`
-    : `Buffering next song: ${next.title}… keep the page open until ready.`;
+    : entry?.status === 'loading' ? `Buffering next song: ${next.title}… keep the page open until ready.`
+    : `Next song not buffered: ${next.title}. Buffering starts after playback begins.`;
 }
 
-async function bufferNext() {
+async function bufferNext(startDownload = true) {
   const enabled = delivery === 'live' && $('buffer-next').checked;
   const next = enabled ? nextBufferTrack() : null;
   // ponytail: retain only current/next Blobs in this three-song experiment; no persistent cache.
@@ -156,9 +158,10 @@ async function bufferNext() {
     liveBuffers.delete(id);
   }
   showBufferStatus();
-  if (!next || liveBuffers.has(next.id)) return;
+  if (!startDownload || !next || liveBuffers.has(next.id)) return;
   const entry = { status: 'loading', bytes: 0, startedAt: new Date().toISOString(), readyAt: null, controller: new AbortController() };
   liveBuffers.set(next.id, entry);
+  showBufferStatus();
   log('next-buffer-start', { bufferedTrackId: next.id });
   try {
     if (!Number.isSafeInteger(next.bytes) || next.bytes < 1 || next.bytes > 16 * 1024 * 1024) throw new Error('Unexpected audio size');

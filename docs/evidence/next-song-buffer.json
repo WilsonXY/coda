@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-23T20:32:59.550Z",
+  "date": "2026-10-23T20:37:50.135Z",
   "browser": "153.0.8010.12",
   "status": "PASS",
   "source": "gated prepared files through live HTTP fixtures; not fresh YouTube",
@@ -9,6 +9,7 @@
   "failedFurtherBufferPreservesCurrentPlayback": "PASS",
   "persistentExportAfterTruncation": "PASS",
   "reorderRemovalCancellationAndResetCleanup": "PASS",
+  "pendingAndRejectedSelectionCleanup": "PASS",
   "invalidBytesFallback": "PASS",
   "phoneBatterySaver": "NOT RUN"
 }
