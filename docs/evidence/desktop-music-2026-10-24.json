@@ -4,7 +4,7 @@
   "exportedAt": "2026-10-23T17:20:26.678Z",
   "schemaVersion": 2,
   "browserReportedByUserAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0",
-  "browserIdentityFromOwner": "Awaiting confirmation; Firefox-family user agent alone does not identify Zen",
+  "browserIdentityFromOwner": "Zen on PC, explicitly confirmed by the owner",
   "deviceDescriptionInExport": "",
   "audioSource": "prepared YouTube audio; anonymous retrieval; fully buffered",
   "deliveryMode": "preloaded",
@@ -68,7 +68,7 @@
     }
   ],
   "notesInExport": "",
-  "ownerFollowUp": null,
+  "ownerFollowUp": "Yes—Zen, and those actions worked",
   "eventCounts": {
     "canplay": 41,
     "control": 16,
@@ -234,5 +234,6 @@
       "currentPositionSeconds": 293.14
     }
   ],
-  "interpretation": "Prepared music played on a desktop Firefox-family browser with completed seeks, next/previous actions and queue mutations recorded. Five initial events, including preparation, were omitted. All manual checklist defaults are NOT RUN; browser identity and subjective behavior await owner confirmation. Eight end events automatically advanced within 0.016–0.025 seconds; one queue-end was followed 4.344 seconds later by manual Play. Endings occurred during a short seek-heavy run and are not uninterrupted full-song playback. Many seeking events while dragging are not themselves failed seeks. Queue mutation logs do not include target IDs or queue snapshots, so they cannot independently prove resulting order/removal. No logged errors are not proof of audible continuity, volume controls, background behavior, live streaming or account/Premium features."
+  "interpretation": "Prepared music played on a desktop Firefox-family browser with completed seeks, next/previous actions and queue mutations recorded. Five initial events, including preparation, were omitted. All exported checklist defaults remain NOT RUN. In separate follow-up the owner confirms Zen on PC and that playback, seeking, reordering and removal worked; record PASS for those actions in this one run. Eight end events automatically advanced within 0.016–0.025 seconds; one queue-end was followed 4.344 seconds later by manual Play. Endings occurred during a short seek-heavy run and are not uninterrupted full-song playback. Many seeking events while dragging are not themselves failed seeks. Queue mutation logs do not include target IDs or queue snapshots, so they cannot independently prove resulting order/removal. No logged errors are not proof of audible continuity, volume controls, background behavior, live streaming or account/Premium features.",
+  "ownerReportedResult": "PASS for playback, seeking, queue reordering and removal in this prepared-music run; explicit owner confirmation"
 }
