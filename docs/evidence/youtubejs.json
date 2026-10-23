@@ -1,0 +1,177 @@
+{
+  "date": "2026-10-23T09:49:36.401Z",
+  "library": "youtubei.js",
+  "version": "18.3.0",
+  "query": "Daft Punk Get Lucky",
+  "location": "MY",
+  "account": "NOT RUN: no session configured",
+  "checks": {
+    "search": {
+      "status": "PASS",
+      "ms": 764,
+      "data": {
+        "items": [
+          {
+            "id": "4D7u5KF7SP8",
+            "title": "Get Lucky (feat. Pharrell Williams and Nile Rodgers)",
+            "artists": "Daft Punk, Pharrell Williams, Nile Rodgers",
+            "seconds": 370
+          },
+          {
+            "id": "Rgrt_8mXrK8",
+            "title": "Get Lucky (Radio Edit - feat. Pharrell Williams and Nile Rodgers)",
+            "artists": "Daft Punk, Pharrell Williams, Nile Rodgers",
+            "seconds": 249
+          },
+          {
+            "id": "CoMwzNkNGcs",
+            "title": "Get Lucky",
+            "artists": "Los del Fuego",
+            "seconds": 179
+          },
+          {
+            "id": "-E0cRZkPviY",
+            "title": "Get Lucky",
+            "artists": "",
+            "seconds": 223
+          },
+          {
+            "id": "NOMa56y_Was",
+            "title": "End of Line (From \"TRON: Legacy\"/Score)",
+            "artists": "Daft Punk",
+            "seconds": 157
+          },
+          {
+            "id": "2KPIShmFouY",
+            "title": "Get Lucky",
+            "artists": "Funk Punk",
+            "seconds": 250
+          },
+          {
+            "id": "bmjsUsS8QuM",
+            "title": "One More Time (12 Mix)",
+            "artists": "Daft Punk",
+            "seconds": 481
+          },
+          {
+            "id": "dJqxQzxLbHM",
+            "title": "Happy (From \"Despicable Me 2\")",
+            "artists": "Pharrell Williams",
+            "seconds": 234
+          },
+          {
+            "id": "imDKnNvqpq0",
+            "title": "Get Lucky",
+            "artists": "Helia",
+            "seconds": 229
+          },
+          {
+            "id": "7-yscfWJ3mQ",
+            "title": "Get Lucky",
+            "artists": "Vitamin String Quartet",
+            "seconds": 295
+          },
+          {
+            "id": "i2tiLSlATq0",
+            "title": "Get Lucky (Acústico)",
+            "artists": "Nossa Toca, AMARINA",
+            "seconds": 215
+          },
+          {
+            "id": "Ttgif1zHK38",
+            "title": "Get Lucky (Radio Edit)",
+            "artists": "I'm Jack",
+            "seconds": 277
+          },
+          {
+            "id": "Smi8vAbm_8o",
+            "title": "Digital Love",
+            "artists": "Daft Punk",
+            "seconds": 302
+          },
+          {
+            "id": "LEw02NSFHsg",
+            "title": "Get Lucky (Originally Performed By Daft Punk)",
+            "artists": "Karaoke Idols",
+            "seconds": 232
+          },
+          {
+            "id": "GoJDUy3lz1M",
+            "title": "Get Lucky (Karaoke Version) (Originally Performed By Daft Punk & Pharrell Williams)",
+            "artists": "Clara Oaks",
+            "seconds": 262
+          },
+          {
+            "id": "rZ5ca_gWMh8",
+            "title": "Daft Punk x Pharrell Williams, Nile Rodgers (Get Lucky) (Amapiano Revisit)",
+            "artists": "RhikZ",
+            "seconds": 449
+          },
+          {
+            "id": "D-cfH1V4RQ0",
+            "title": "Get Lucky (Metal Cover)",
+            "artists": "Leo",
+            "seconds": 209
+          },
+          {
+            "id": "s0tCyoJdGs8",
+            "title": "Get Lucky (Bossa Nova Version) [Originally Performed by Daft Punk and Pharrell Williams]",
+            "artists": "The Bossa Nova All Stars",
+            "seconds": 273
+          },
+          {
+            "id": "wU9ZrsXAsIM",
+            "title": "Get Lucky (In the Style of Daft Punk feat Pharrell Williams) [Karaoke Version] (feat. Pharrell Williams)",
+            "artists": "Zoom Karaoke",
+            "seconds": 250
+          },
+          {
+            "id": "fOqZVUQi0Do",
+            "title": "Get Lucky",
+            "artists": "8-Bit Misfits",
+            "seconds": 251
+          }
+        ],
+        "more": true
+      }
+    },
+    "publicPlaylist": {
+      "status": "PASS",
+      "ms": 624,
+      "data": {
+        "id": "VLPLvcD45uIlPVoAkPQ5LTumatKEWZlxbHYN",
+        "title": "The Black Eyed Peas/Daft Punk",
+        "itemsRead": 16,
+        "more": false
+      }
+    },
+    "playerResponse": {
+      "status": "PASS",
+      "ms": 209,
+      "data": {
+        "id": "4D7u5KF7SP8",
+        "playbackTested": false,
+        "results": [
+          {
+            "client": "WEB",
+            "status": "UNPLAYABLE",
+            "reason": "Video unavailable",
+            "audioFormats": 0,
+            "directAudioUrls": 0,
+            "hasSabr": false
+          },
+          {
+            "client": "ANDROID",
+            "status": "OK",
+            "reason": "",
+            "audioFormats": 6,
+            "directAudioUrls": 0,
+            "hasSabr": true
+          }
+        ],
+        "note": "Player responses only. No media was played. URL resolution and browser playback remain unverified."
+      }
+    }
+  },
+  "integratedPlayback": "NOT RUN: no stream delivery/player integration implemented; player-response success is not audio playback."
+}
