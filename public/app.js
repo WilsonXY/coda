@@ -1,13 +1,18 @@
 const $ = id => document.getElementById(id);
 const audio = $('audio');
 const events = [];
+let eventsTotal = 0;
+let toneUrls = null;
+let preparing = false;
+let modeLocked = false;
 const checks = ['Play / pause / seek / volume', 'Previous / next', 'Three automatic track transitions', 'Audio continues when switching panels', 'Queue reorder and remove', 'Lock screen for ten minutes (Android)', 'Headset and lock-screen controls', 'Switch apps and return', 'Recover after an interruption', 'Repeat with battery saver enabled'];
 let queue = [];
 let current = null;
 let networkBusy = false;
 
 function log(event, details = {}) {
-  events.push({ at: new Date().toISOString(), event, track: current?.title ?? null, position: Number(audio.currentTime.toFixed(2)), ...details });
+  eventsTotal++;
+  events.push({ audioDelivery: toneUrls ? 'preloaded' : 'network', at: new Date().toISOString(), event, track: current?.title ?? null, position: Number(audio.currentTime.toFixed(2)), ...details });
   if (events.length > 300) events.shift();
   $('events').textContent = events.slice(-25).map(row => `${row.at.slice(11, 19)} ${row.event} ${row.track ?? ''} @ ${row.position}s`).join('\n');
 }
@@ -25,18 +30,22 @@ function renderQueue() {
       ['Remove', () => remove(track), false],
     ]) {
       const button = document.createElement('button');
-      button.textContent = label; button.disabled = disabled; button.onclick = action; li.append(button);
+      button.textContent = label; button.disabled = disabled || preparing; button.onclick = () => { log('control', { action: label, control: 'queue' }); action(); }; li.append(button);
     }
     return li;
   }));
 }
 
 async function resume() {
+  if (preparing) return;
   try { await audio.play(); }
   catch (error) { log('play-rejected', { error: error.name }); $('now').textContent = 'Playback failed. Tap Play again; check exported events.'; }
 }
 
 async function select(track) {
+  if (preparing) return;
+  modeLocked = true;
+  $('preload').disabled = true;
   current = track;
   audio.src = track.url;
   $('now').textContent = track.title;
@@ -76,15 +85,58 @@ function remove(track) {
 function reset() {
   audio.pause(); audio.removeAttribute('src'); audio.load(); current = null;
   if ('mediaSession' in navigator) navigator.mediaSession.metadata = null;
-  queue = ['A', 'B', 'C'].map((name, i) => ({ title: `Tone ${name}`, url: `/audio/${i}.wav` }));
+  queue = ['A', 'B', 'C'].map((name, i) => ({ title: `Tone ${name}`, url: toneUrls?.[i] ?? `/audio/${i}.wav` }));
   $('now').textContent = 'Nothing playing'; renderQueue(); log('queue-reset');
 }
 
-$('play').onclick = () => current ? (audio.paused ? resume() : audio.pause()) : queue[0] && select(queue[0]);
-$('next').onclick = () => step(1);
-$('previous').onclick = () => step(-1);
-$('reset').onclick = reset;
-for (const name of ['play', 'pause', 'playing', 'waiting', 'stalled', 'ended', 'seeking', 'seeked', 'loadedmetadata', 'error']) {
+$('play').onclick = () => {
+  log('control', { action: 'play-pause', control: 'button' });
+  return current ? (audio.paused ? resume() : audio.pause()) : queue[0] && select(queue[0]);
+};
+$('next').onclick = () => { log('control', { action: 'next', control: 'button' }); step(1); };
+$('previous').onclick = () => { log('control', { action: 'previous', control: 'button' }); step(-1); };
+$('reset').onclick = () => { log('control', { action: 'reset', control: 'button' }); reset(); };
+
+$('preload').onclick = async () => {
+  if (preparing || modeLocked || toneUrls) return;
+  preparing = true;
+  reset();
+  for (const id of ['play', 'previous', 'next', 'reset', 'preload']) $(id).disabled = true;
+  renderQueue();
+  $('delivery-status').textContent = 'Loading all three tones… wait before pressing Play.';
+  log('preload-start');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  const urls = [];
+  try {
+    const blobs = await Promise.all([0, 1, 2].map(async index => {
+      const response = await fetch(`/audio/${index}.wav`, { signal: controller.signal, cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+      if (!blob.type.startsWith('audio/wav')) throw new Error('Unexpected audio type');
+      return blob;
+    }));
+    for (const blob of blobs) urls.push(URL.createObjectURL(blob));
+    toneUrls = urls;
+    reset();
+    $('delivery-status').textContent = 'Ready: all three tones are loaded in memory. Press Play for the comparison.';
+    log('preload-ready', { bytes: blobs.reduce((sum, blob) => sum + blob.size, 0) });
+  } catch (error) {
+    controller.abort();
+    urls.forEach(url => URL.revokeObjectURL(url));
+    toneUrls = null;
+    $('delivery-status').textContent = 'Could not load all tones. Original network mode remains selected. Retry or press Play to use it.';
+    log('preload-failed', { error: error.name });
+  } finally {
+    clearTimeout(timeout);
+    preparing = false;
+    for (const id of ['play', 'previous', 'next', 'reset']) $(id).disabled = false;
+    $('preload').disabled = Boolean(toneUrls) || modeLocked;
+    renderQueue();
+  }
+};
+
+for (const name of ['play', 'pause', 'playing', 'waiting', 'stalled', 'ended', 'seeking', 'seeked', 'loadedmetadata', 'loadstart', 'canplay', 'error']) {
   audio.addEventListener(name, () => {
     log(name, name === 'error' ? { mediaError: audio.error?.code ?? null } : {});
     if ('mediaSession' in navigator && ['play', 'pause', 'ended'].includes(name)) navigator.mediaSession.playbackState = audio.paused ? 'paused' : 'playing';
@@ -93,9 +145,10 @@ for (const name of ['play', 'pause', 'playing', 'waiting', 'stalled', 'ended', '
 audio.addEventListener('ended', () => step(1));
 document.addEventListener('visibilitychange', () => log('visibility', { state: document.visibilityState }));
 window.addEventListener('pagehide', () => log('pagehide'));
+for (const name of ['freeze', 'resume']) document.addEventListener(name, () => log(name));
 if ('mediaSession' in navigator) {
   for (const [action, handler] of Object.entries({ play: resume, pause: () => audio.pause(), nexttrack: () => step(1), previoustrack: () => step(-1), seekto: detail => { if (Number.isFinite(detail.seekTime)) audio.currentTime = detail.seekTime; } })) {
-    try { navigator.mediaSession.setActionHandler(action, handler); } catch { log('unsupported-media-action', { action }); }
+    try { navigator.mediaSession.setActionHandler(action, details => { log('media-action', { action }); handler(details); }); } catch { log('unsupported-media-action', { action }); }
   }
 }
 for (const panel of ['player', 'search']) $('show-' + panel).onclick = () => {
@@ -109,7 +162,7 @@ for (const [index, label] of checks.entries()) {
   row.append(select); $('checklist').append(row);
 }
 $('export').onclick = () => {
-  const result = { date: new Date().toISOString(), device: $('device').value, userAgent: navigator.userAgent,
+  const result = { schemaVersion: 2, audioDelivery: toneUrls ? 'preloaded' : 'network', eventsTotal, eventsTruncated: eventsTotal > events.length, date: new Date().toISOString(), device: $('device').value, userAgent: navigator.userAgent,
     source: 'generated WAV tones; not YouTube audio',
     mediaSessionSupported: 'mediaSession' in navigator,
     checks: checks.map((check, i) => ({ check, status: $(`check-${i}`).value })), notes: $('notes').value, events };

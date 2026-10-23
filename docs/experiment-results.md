@@ -19,8 +19,8 @@ Recorded 23 October 2026. Targets: Zen/PC and Chrome/Android. Owner reports YouT
 | Authenticated library and playlist operations | BLOCKED | Needs owner-provided local browser-auth file. The separate script is ready; its write safety and duplicate handling have automated tests, not live account proof. |
 | Actual YouTube audio in Coda | NOT RUN | No stream resolver, SABR delivery, or browser media integration is implemented. Must investigate current library playback examples before claiming this works. |
 | Premium behavior | NOT RUN | Public tests cannot establish subscription behavior. |
-| Chrome/Android: basic screen lock | PASS, owner-reported | Owner confirmed generated tones play and continue with the screen locked. Duration, phone/browser version, and automatic transitions were not supplied. Ten-minute, headset, interruption, and battery-saver checks remain unverified. |
-| Zen/PC | NOT RUN | Owner device checklist remains pending. |
+| Chrome/Android: original network mode | FAIL sustained screen-lock playback; basic playback works | New phone export records 38 ended-to-playing intervals with three long gaps (12.823 s, 12.816 s, 145.666 s). Owner marks ten-minute lock-screen FAIL and reports controls disappear; reopening resumes from the same position. Other checklist items are owner-marked PASS, with battery/background reliability qualified by these notes. |
+| Zen/PC | Basic playback captured; full checklist attribution incomplete | The earlier desktop export recorded two track transitions and mixed phone observations. It does not establish a complete per-device result. |
 
 Both probes now use the shared cases in `scripts/cases.json`; every public-search row above is represented in the snapshots. Raw sanitized public probe snapshots: [YouTube.js](evidence/youtubejs.json), [ytmusicapi](evidence/ytmusicapi.json). These contain no credentials or signed media URLs. A PASS on the JSON player-response request only means the request completed; `playbackTested` remains false.
 
@@ -75,3 +75,26 @@ The final follow-up changes only this record and the tighter test; production co
 
 
 Owner device observation (23 October 2026): “Tones play and continue with screen locked.” This establishes basic generated-audio behavior in phone Chrome only; it does not establish a ten-minute run, automatic queue transitions, Zen behavior, or YouTube audio playback. No exported device log was provided with this observation.
+
+
+## Android Chrome follow-up and preload comparison
+
+The owner supplied a phone export dated 23 October 2026 at 14:18:40 UTC. Its retained 300 events span 20 minutes 2.037 seconds. The old harness caps history at 300, so this window is not asserted to be the full run. The checklist marks nine items PASS and ten-minute Android screen lock FAIL. Notes report disappearing media controls after YouTube playback or several locked-screen minutes, with audio continuing from its stopped position on returning to Coda. A derived summary with source hash is saved in [the phone evidence](evidence/android-chrome-2026-10-23.json).
+
+Across 38 retained ended-to-playing event intervals, the median is 0.1645 seconds. Three intervals are much longer:
+
+- 14:08:37.135 → 14:08:49.958 UTC: 12.823 seconds, Tone A → B.
+- 14:11:54.272 → 14:12:07.088 UTC: 12.816 seconds, Tone A → B.
+- 14:14:30.962 → 14:16:56.628 UTC: 145.666 seconds, Tone B → C.
+
+Each long interval contains `waiting`/`stalled` for the next tone at position zero before `loadedmetadata` and `playing`. These timings describe dispatched events, not directly measured audible silence. They locate a delay during the next media load; they do not distinguish browser scheduling, power management, VPN/network behavior, or another cause. Server service state retained the same PID and activation time throughout this window, with no additional restart or journal entry; that excludes an observed app-process restart, not every possible network failure.
+
+The earlier 502 outage was separately restored by running the private server as a user-managed background service. The service's automatic restart was tested before this phone run; no source-code deployment system is introduced here.
+
+A controlled comparison is now available: before first playback, load all three generated WAV files into memory. The same media element, queue, tone bytes, and controls are retained, while track transitions use Blob URLs rather than requesting the next tone over the network. Failed or timed-out preparation leaves network mode selected; changing mode after playback requires exporting and reloading, so a report describes one chosen delivery mode. The comparison does not implement real YouTube playback, a full offline app, or guaranteed background operation.
+
+Exports now identify schema version 2, delivery mode, total event count and whether history was truncated. Custom button and media-action events, plus available load/lifecycle events, improve attribution; native/browser/OS actions still may not reveal why playback paused. The harness does not force automatic resumption after another app finishes.
+
+Automated Chromium checks passed original playback, successful three-file preparation, three transitions with browser networking disabled, mode/export labels, and recovery to the original mode when one preparation request returns 503. Screenshots at 390px/728px were captured locally. Physical Android results for this comparison are NOT RUN. Astra review is pending; prior Claude reviews above apply to the original harness.
+
+Next phone check: reload, choose **Load all three tones before playing**, wait for **Ready**, press Play with the queue looping, then lock the screen under the same conditions for at least five minutes (the reported problem appears after two to three). Export on the phone immediately after reopening, noting whether tones stopped and whether controls disappeared. A successful comparison would support investigating transition-time network dependence; it would not prove the original cause or real-music reliability.
