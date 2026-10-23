@@ -1,0 +1,437 @@
+{
+  "date": "2026-10-23T09:59:20.231Z",
+  "library": "youtubei.js",
+  "version": "18.3.0",
+  "query": "Daft Punk Get Lucky",
+  "location": "MY",
+  "account": "NOT RUN: no session configured",
+  "checks": {
+    "search": {
+      "status": "PASS",
+      "ms": 708,
+      "data": {
+        "items": [
+          {
+            "id": "4D7u5KF7SP8",
+            "title": "Get Lucky (feat. Pharrell Williams and Nile Rodgers)",
+            "artists": "Daft Punk, Pharrell Williams, Nile Rodgers",
+            "seconds": 370
+          },
+          {
+            "id": "Rgrt_8mXrK8",
+            "title": "Get Lucky (Radio Edit - feat. Pharrell Williams and Nile Rodgers)",
+            "artists": "Daft Punk, Pharrell Williams, Nile Rodgers",
+            "seconds": 249
+          },
+          {
+            "id": "CoMwzNkNGcs",
+            "title": "Get Lucky",
+            "artists": "Los del Fuego",
+            "seconds": 179
+          },
+          {
+            "id": "-E0cRZkPviY",
+            "title": "Get Lucky",
+            "artists": "",
+            "seconds": 223
+          },
+          {
+            "id": "NOMa56y_Was",
+            "title": "End of Line (From \"TRON: Legacy\"/Score)",
+            "artists": "Daft Punk",
+            "seconds": 157
+          },
+          {
+            "id": "2KPIShmFouY",
+            "title": "Get Lucky",
+            "artists": "Funk Punk",
+            "seconds": 250
+          },
+          {
+            "id": "bmjsUsS8QuM",
+            "title": "One More Time (12 Mix)",
+            "artists": "Daft Punk",
+            "seconds": 481
+          },
+          {
+            "id": "dJqxQzxLbHM",
+            "title": "Happy (From \"Despicable Me 2\")",
+            "artists": "Pharrell Williams",
+            "seconds": 234
+          },
+          {
+            "id": "imDKnNvqpq0",
+            "title": "Get Lucky",
+            "artists": "Helia",
+            "seconds": 229
+          },
+          {
+            "id": "7-yscfWJ3mQ",
+            "title": "Get Lucky",
+            "artists": "Vitamin String Quartet",
+            "seconds": 295
+          },
+          {
+            "id": "i2tiLSlATq0",
+            "title": "Get Lucky (Acústico)",
+            "artists": "Nossa Toca, AMARINA",
+            "seconds": 215
+          },
+          {
+            "id": "Ttgif1zHK38",
+            "title": "Get Lucky (Radio Edit)",
+            "artists": "I'm Jack",
+            "seconds": 277
+          },
+          {
+            "id": "Smi8vAbm_8o",
+            "title": "Digital Love",
+            "artists": "Daft Punk",
+            "seconds": 302
+          },
+          {
+            "id": "LEw02NSFHsg",
+            "title": "Get Lucky (Originally Performed By Daft Punk)",
+            "artists": "Karaoke Idols",
+            "seconds": 232
+          },
+          {
+            "id": "GoJDUy3lz1M",
+            "title": "Get Lucky (Karaoke Version) (Originally Performed By Daft Punk & Pharrell Williams)",
+            "artists": "Clara Oaks",
+            "seconds": 262
+          },
+          {
+            "id": "rZ5ca_gWMh8",
+            "title": "Daft Punk x Pharrell Williams, Nile Rodgers (Get Lucky) (Amapiano Revisit)",
+            "artists": "RhikZ",
+            "seconds": 449
+          },
+          {
+            "id": "D-cfH1V4RQ0",
+            "title": "Get Lucky (Metal Cover)",
+            "artists": "Leo",
+            "seconds": 209
+          },
+          {
+            "id": "s0tCyoJdGs8",
+            "title": "Get Lucky (Bossa Nova Version) [Originally Performed by Daft Punk and Pharrell Williams]",
+            "artists": "The Bossa Nova All Stars",
+            "seconds": 273
+          },
+          {
+            "id": "wU9ZrsXAsIM",
+            "title": "Get Lucky (In the Style of Daft Punk feat Pharrell Williams) [Karaoke Version] (feat. Pharrell Williams)",
+            "artists": "Zoom Karaoke",
+            "seconds": 250
+          },
+          {
+            "id": "fOqZVUQi0Do",
+            "title": "Get Lucky",
+            "artists": "8-Bit Misfits",
+            "seconds": 251
+          }
+        ],
+        "more": true
+      }
+    },
+    "searchCase2": {
+      "status": "PASS",
+      "ms": 520,
+      "data": {
+        "query": "Daft Pnk Get Luky",
+        "items": [
+          {
+            "id": "4D7u5KF7SP8",
+            "title": "Get Lucky (feat. Pharrell Williams and Nile Rodgers)",
+            "artists": "Daft Punk, Pharrell Williams, Nile Rodgers",
+            "seconds": 370
+          },
+          {
+            "id": "Rgrt_8mXrK8",
+            "title": "Get Lucky (Radio Edit - feat. Pharrell Williams and Nile Rodgers)",
+            "artists": "Daft Punk, Pharrell Williams, Nile Rodgers",
+            "seconds": 249
+          },
+          {
+            "id": "CoMwzNkNGcs",
+            "title": "Get Lucky",
+            "artists": "Los del Fuego",
+            "seconds": 179
+          },
+          {
+            "id": "NOMa56y_Was",
+            "title": "End of Line (From \"TRON: Legacy\"/Score)",
+            "artists": "Daft Punk",
+            "seconds": 157
+          },
+          {
+            "id": "-E0cRZkPviY",
+            "title": "Get Lucky",
+            "artists": "",
+            "seconds": 223
+          },
+          {
+            "id": "2KPIShmFouY",
+            "title": "Get Lucky",
+            "artists": "Funk Punk",
+            "seconds": 250
+          },
+          {
+            "id": "D-cfH1V4RQ0",
+            "title": "Get Lucky (Metal Cover)",
+            "artists": "Leo",
+            "seconds": 209
+          },
+          {
+            "id": "bmjsUsS8QuM",
+            "title": "One More Time (12 Mix)",
+            "artists": "Daft Punk",
+            "seconds": 481
+          },
+          {
+            "id": "Ttgif1zHK38",
+            "title": "Get Lucky (Radio Edit)",
+            "artists": "I'm Jack",
+            "seconds": 277
+          },
+          {
+            "id": "7-yscfWJ3mQ",
+            "title": "Get Lucky",
+            "artists": "Vitamin String Quartet",
+            "seconds": 295
+          },
+          {
+            "id": "6LpuqEjAOdA",
+            "title": "\"Get Bloody,\"Daft Punk Get Lucky Happy Wheels Parody",
+            "artists": "Tobuscus & Toby Turner",
+            "seconds": 182
+          },
+          {
+            "id": "Smi8vAbm_8o",
+            "title": "Digital Love",
+            "artists": "Daft Punk",
+            "seconds": 302
+          },
+          {
+            "id": "LEw02NSFHsg",
+            "title": "Get Lucky (Originally Performed By Daft Punk)",
+            "artists": "Karaoke Idols",
+            "seconds": 232
+          },
+          {
+            "id": "fOqZVUQi0Do",
+            "title": "Get Lucky",
+            "artists": "8-Bit Misfits",
+            "seconds": 251
+          },
+          {
+            "id": "s0tCyoJdGs8",
+            "title": "Get Lucky (Bossa Nova Version) [Originally Performed by Daft Punk and Pharrell Williams]",
+            "artists": "The Bossa Nova All Stars",
+            "seconds": 273
+          },
+          {
+            "id": "H8vfnkUmeNs",
+            "title": "Get Lucky (Bossa Nova Version) [Originally Performed By Daft Punk and Pharrell Williams]",
+            "artists": "Coffee House Music",
+            "seconds": 273
+          },
+          {
+            "id": "EfszWEK_3cs",
+            "title": "Get Lucky - Drums Only Mix (Originally Performed By Daft Punk & Pharrell Williams) (Karaoke Version)",
+            "artists": "Hit Tunes Karaoke",
+            "seconds": 247
+          },
+          {
+            "id": "Ut_V0vhPzUI",
+            "title": "Get Lucky (In the Style of Daft Punk & Pharell Williams) [Karaoke Instrumental Version]",
+            "artists": "Karaoke All Hits",
+            "seconds": 261
+          },
+          {
+            "id": "rZ5ca_gWMh8",
+            "title": "Daft Punk x Pharrell Williams, Nile Rodgers (Get Lucky) (Amapiano Revisit)",
+            "artists": "RhikZ",
+            "seconds": 449
+          },
+          {
+            "id": "Zr05YagBF0I",
+            "title": "Get Lucky (Αs performed by Daft Punk)",
+            "artists": "Pop Music Workshop",
+            "seconds": 246
+          }
+        ],
+        "more": true
+      }
+    },
+    "searchCase3": {
+      "status": "PASS",
+      "ms": 491,
+      "data": {
+        "query": "周杰倫",
+        "items": [
+          {
+            "id": "t0AvpJ74sBc",
+            "title": "三年二班",
+            "artists": "周杰倫",
+            "seconds": 281
+          },
+          {
+            "id": "dsUTcSVdU2U",
+            "title": "半島鐵盒",
+            "artists": "周杰倫",
+            "seconds": 318
+          },
+          {
+            "id": "XFGbwiHWovI",
+            "title": "擱淺",
+            "artists": "周杰倫",
+            "seconds": 262
+          },
+          {
+            "id": "L96FPjpS1kU",
+            "title": "誰稀罕",
+            "artists": "周杰倫",
+            "seconds": 263
+          },
+          {
+            "id": "ROGuzF_K-_k",
+            "title": "回到過去",
+            "artists": "周杰倫",
+            "seconds": 232
+          },
+          {
+            "id": "QoXDQa9L12A",
+            "title": "西西里",
+            "artists": "周杰倫",
+            "seconds": 230
+          },
+          {
+            "id": "QIIoMtkpw58",
+            "title": "世界未末日",
+            "artists": "周杰倫",
+            "seconds": 264
+          },
+          {
+            "id": "SJKoWAd5ySo",
+            "title": "晴天",
+            "artists": "周杰倫",
+            "seconds": 270
+          },
+          {
+            "id": "qd5brxO2eTk",
+            "title": "世界末日",
+            "artists": "周杰倫",
+            "seconds": 266
+          },
+          {
+            "id": "Pi5xzNsmmZU",
+            "title": "聽媽媽的話",
+            "artists": "周杰倫",
+            "seconds": 266
+          },
+          {
+            "id": "Vh9FDut7Ejw",
+            "title": "退後",
+            "artists": "周杰倫",
+            "seconds": 265
+          },
+          {
+            "id": "7joOV65Umq0",
+            "title": "完美主義",
+            "artists": "周杰倫",
+            "seconds": 245
+          },
+          {
+            "id": "7g_wiHn8Ltc",
+            "title": "一點點",
+            "artists": "周杰倫",
+            "seconds": 222
+          },
+          {
+            "id": "B2QoeaMJfps",
+            "title": "太陽之子",
+            "artists": "周杰倫",
+            "seconds": 298
+          },
+          {
+            "id": "yz7XEuW45Kw",
+            "title": "超跑女神",
+            "artists": "周杰倫",
+            "seconds": 157
+          },
+          {
+            "id": "I-2F_jnHrqY",
+            "title": "最後的戰役",
+            "artists": "周杰倫",
+            "seconds": 252
+          },
+          {
+            "id": "QUe29NYmfFo",
+            "title": "梯田",
+            "artists": "周杰倫",
+            "seconds": 214
+          },
+          {
+            "id": "HXhEsi2uCZs",
+            "title": "同一種調調",
+            "artists": "周杰倫",
+            "seconds": 231
+          },
+          {
+            "id": "sZXx_XvndYA",
+            "title": "麥芽糖",
+            "artists": "周杰倫",
+            "seconds": 261
+          },
+          {
+            "id": "3cPBZuxMdE8",
+            "title": "逆鱗",
+            "artists": "周杰倫",
+            "seconds": 235
+          }
+        ],
+        "more": true
+      }
+    },
+    "publicPlaylist": {
+      "status": "PASS",
+      "ms": 334,
+      "data": {
+        "id": "PLKnoch_ESAUI",
+        "title": "Daft Punk",
+        "itemsRead": 53,
+        "more": false
+      }
+    },
+    "playerResponse": {
+      "status": "PASS",
+      "ms": 3524,
+      "data": {
+        "id": "4D7u5KF7SP8",
+        "playbackTested": false,
+        "results": [
+          {
+            "client": "WEB",
+            "status": "UNPLAYABLE",
+            "reason": "Video unavailable",
+            "audioFormats": 0,
+            "directAudioUrls": 0,
+            "hasSabr": false
+          },
+          {
+            "client": "ANDROID",
+            "status": "OK",
+            "reason": "",
+            "audioFormats": 6,
+            "directAudioUrls": 0,
+            "hasSabr": true
+          }
+        ],
+        "note": "Player responses only. No media was played. URL resolution and browser playback remain unverified."
+      }
+    }
+  },
+  "integratedPlayback": "NOT RUN: no stream delivery/player integration implemented; player-response success is not audio playback."
+}

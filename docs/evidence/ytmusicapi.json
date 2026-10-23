@@ -1,0 +1,116 @@
+{
+  "date": "2026-10-23T09:59:20.557837+00:00",
+  "library": "ytmusicapi",
+  "account": "NOT RUN",
+  "version": "1.12.3",
+  "searchCases": [
+    {
+      "query": "Daft Punk Get Lucky",
+      "results": [
+        {
+          "id": "4D7u5KF7SP8",
+          "title": "Get Lucky (feat. Pharrell Williams and Nile Rodgers)"
+        },
+        {
+          "id": "Rgrt_8mXrK8",
+          "title": "Get Lucky (Radio Edit - feat. Pharrell Williams and Nile Rodgers)"
+        },
+        {
+          "id": "-E0cRZkPviY",
+          "title": "Get Lucky"
+        },
+        {
+          "id": "NOMa56y_Was",
+          "title": "End of Line (From \"TRON: Legacy\"/Score)"
+        },
+        {
+          "id": "CoMwzNkNGcs",
+          "title": "Get Lucky"
+        }
+      ],
+      "ms": 1087
+    },
+    {
+      "query": "Daft Pnk Get Luky",
+      "results": [
+        {
+          "id": "4D7u5KF7SP8",
+          "title": "Get Lucky (feat. Pharrell Williams and Nile Rodgers)"
+        },
+        {
+          "id": "Rgrt_8mXrK8",
+          "title": "Get Lucky (Radio Edit - feat. Pharrell Williams and Nile Rodgers)"
+        },
+        {
+          "id": "-E0cRZkPviY",
+          "title": "Get Lucky"
+        },
+        {
+          "id": "NOMa56y_Was",
+          "title": "End of Line (From \"TRON: Legacy\"/Score)"
+        },
+        {
+          "id": "CoMwzNkNGcs",
+          "title": "Get Lucky"
+        }
+      ],
+      "ms": 495
+    },
+    {
+      "query": "\u5468\u6770\u502b",
+      "results": [
+        {
+          "id": "t0AvpJ74sBc",
+          "title": "\u4e09\u5e74\u4e8c\u73ed"
+        },
+        {
+          "id": "dsUTcSVdU2U",
+          "title": "\u534a\u5cf6\u9435\u76d2"
+        },
+        {
+          "id": "XFGbwiHWovI",
+          "title": "\u64f1\u6dfa"
+        },
+        {
+          "id": "L96FPjpS1kU",
+          "title": "\u8ab0\u7a00\u7f55"
+        },
+        {
+          "id": "ROGuzF_K-_k",
+          "title": "\u56de\u5230\u904e\u53bb"
+        }
+      ],
+      "ms": 423
+    }
+  ],
+  "songs": [
+    {
+      "id": "4D7u5KF7SP8",
+      "title": "Get Lucky (feat. Pharrell Williams and Nile Rodgers)"
+    },
+    {
+      "id": "Rgrt_8mXrK8",
+      "title": "Get Lucky (Radio Edit - feat. Pharrell Williams and Nile Rodgers)"
+    },
+    {
+      "id": "-E0cRZkPviY",
+      "title": "Get Lucky"
+    },
+    {
+      "id": "NOMa56y_Was",
+      "title": "End of Line (From \"TRON: Legacy\"/Score)"
+    },
+    {
+      "id": "CoMwzNkNGcs",
+      "title": "Get Lucky"
+    }
+  ],
+  "publicPlaylist": {
+    "id": "PLKnoch_ESAUI",
+    "title": "Daft Punk",
+    "itemsRead": 53,
+    "total": 53
+  },
+  "status": "PASS_PUBLIC_READS",
+  "seconds": 2.475
+}

@@ -1,0 +1,10 @@
+node_modules/
+.venv/
+.env
+.env.*
+*.local.*
+*cookie*
+*oauth*.json
+*browser.json
+artifacts/
+__pycache__/

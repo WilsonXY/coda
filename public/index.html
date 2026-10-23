@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coda functionality experiment</title><link rel="stylesheet" href="/style.css">
+<body><main>
+<h1>Coda functionality experiment</h1>
+<p>Test the basics before designing the app. These are generated test tones, not YouTube playback. Start quietly.</p>
+<nav aria-label="Experiment panels"><button id="show-player">Player checks</button> <button id="show-search">YouTube Music checks</button></nav>
+<section aria-labelledby="player-heading">
+<h2 id="player-heading">Persistent player</h2><p id="now" aria-live="polite">Nothing playing</p>
+<audio id="audio" controls preload="metadata"></audio>
+<p><button id="previous">Previous</button> <button id="play">Play / pause</button> <button id="next">Next</button> <label><input id="loop" type="checkbox" checked> Loop queue</label></p>
+</section>
+<section id="player-panel"><h2>Test queue</h2><ol id="queue"></ol><button id="reset">Reset queue</button>
+<h2>Device checklist</h2><p>Test in Zen on PC and Chrome on Android. Leave unsupported checks as Not run.</p>
+<label>Device, OS and browser version <input id="device" placeholder="e.g. Pixel … / Android … / Chrome …"></label>
+<div id="checklist"></div><label>Notes <textarea id="notes" rows="3" placeholder="What happened? Include interruptions and timing."></textarea></label>
+<button id="export">Export results</button><p id="storage-note">Results stay in this page until exported. Reloading clears them.</p>
+</section>
+<section id="search-panel" hidden><h2>YouTube Music public checks</h2>
+<p>Read-only. No account is connected. Search and player-response checks do not prove audio playback.</p>
+<form id="search"><label>Search <input id="query" required maxlength="120" value="Daft Punk Get Lucky"></label><label>Type <select id="type"><option value="song">Songs</option><option value="playlist">Playlists</option></select></label><button>Search YouTube Music</button></form>
+<p id="search-status" role="status"></p><ol id="results"></ol>
+<form id="playlist"><label>Public playlist ID <input id="playlist-id" required></label><button>Read playlist</button></form>
+<pre id="probe-output" aria-live="polite">No player response checked yet.</pre>
+<p>Account read/write tests use the local account-check script. Credentials are never entered into this page.</p>
+</section>
+<section><h2>Event log</h2><p>Export after testing. Only the last 300 events are kept.</p><pre id="events" aria-live="off"></pre></section>
+</main><script type="module" src="/app.js"></script></body></html>
