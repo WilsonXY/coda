@@ -34,7 +34,7 @@ export function createServer() {
     try {
       const url = new URL(req.url, `http://${req.headers.host}`);
       if (!hosts.has(url.hostname)) return json(403, { error: 'Host not allowed.' });
-      if (req.headers.origin && new URL(req.headers.origin).host !== req.headers.host) return json(403, { error: 'Cross-site request rejected.' });
+      if (req.headers.origin && (!URL.canParse(req.headers.origin) || new URL(req.headers.origin).host !== req.headers.host)) return json(403, { error: 'Cross-site request rejected.' });
       if (req.method !== 'GET' && req.method !== 'HEAD') return json(405, { error: 'Read-only experiment.' });
       if (url.pathname.startsWith('/api/') && req.method === 'HEAD') return json(405, { error: 'GET required.' });
       if (url.pathname === '/api/search') {
@@ -78,7 +78,7 @@ export function createServer() {
       json(404, { error: 'Not found.' });
     } catch {
       // Never expose upstream bodies: they can contain session or signed-media data.
-      json(502, { error: 'Upstream request failed or timed out. This is a failed check, not an empty result. Try again once; inspect the library separately if it persists.' });
+      json(502, { error: 'Experiment request failed. Check local setup or upstream availability. This is a failed check, not an empty result.' });
     }
   });
 }

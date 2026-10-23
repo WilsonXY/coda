@@ -110,7 +110,7 @@ for (const [index, label] of checks.entries()) {
 }
 $('export').onclick = () => {
   const result = { date: new Date().toISOString(), device: $('device').value, userAgent: navigator.userAgent,
-    source: 'generated WAV tones; not YouTube audio', premiumReported: true,
+    source: 'generated WAV tones; not YouTube audio',
     mediaSessionSupported: 'mediaSession' in navigator,
     checks: checks.map((check, i) => ({ check, status: $(`check-${i}`).value })), notes: $('notes').value, events };
   const url = URL.createObjectURL(new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' }));

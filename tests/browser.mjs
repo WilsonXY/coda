@@ -42,6 +42,7 @@ try {
   const download = await downloadEvent;
   await download.saveAs('artifacts/browser-export.json');
   const exported = JSON.parse(await readFile('artifacts/browser-export.json', 'utf8'));
+  assert.equal('premiumReported' in exported, false);
   assert.equal(exported.source, 'generated WAV tones; not YouTube audio');
   assert.ok(exported.checks.every(check => check.status === 'NOT RUN'));
   assert.ok(exported.events.filter(event => event.event === 'ended').length >= 3);

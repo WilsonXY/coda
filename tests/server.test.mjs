@@ -32,6 +32,7 @@ test('generated audio supports seeking through HTTP ranges', async t => {
 test('cross-site requests and invalid queries cannot reach upstream', async t => {
   const base = await serve(t);
   assert.equal((await fetch(base + '/api/search?q=test', { headers: { Origin: 'https://elsewhere.example' } })).status, 403);
+  assert.equal((await fetch(base, { headers: { Origin: 'null' } })).status, 403);
   assert.equal((await fetch(base + '/api/search?q=')).status, 400);
   assert.equal((await fetch(base + '/api/playability?id=invalid')).status, 400);
   assert.equal((await fetch(base + '/api/playlist?id=')).status, 400);

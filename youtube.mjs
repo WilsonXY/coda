@@ -35,10 +35,10 @@ export async function playlist(id) {
 export async function playability(id) {
   const yt = await client();
   const results = [];
-  for (const client of ['WEB', 'ANDROID']) {
-    const info = await yt.getBasicInfo(id, { client });
+  for (const clientType of ['WEB', 'ANDROID']) {
+    const info = await yt.getBasicInfo(id, { client: clientType });
     const formats = info.streaming_data?.adaptive_formats?.filter(format => format.has_audio && !format.has_video) ?? [];
-    results.push({ client, status: info.playability_status?.status ?? 'UNKNOWN',
+    results.push({ client: clientType, status: info.playability_status?.status ?? 'UNKNOWN',
       reason: info.playability_status?.reason ?? '', audioFormats: formats.length,
       directAudioUrls: formats.filter(format => format.url).length,
       hasSabr: Boolean(info.streaming_data?.server_abr_streaming_url) });

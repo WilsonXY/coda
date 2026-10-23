@@ -20,7 +20,7 @@ On **both devices**, check play/pause, seeking, volume, previous/next, queue ord
 
 ### 2. Public YouTube Music access
 
-Use the same query through YouTube.js and ytmusicapi. Record versions, latency, top IDs/titles, and errors. Read a public playlist and record how many items and whether additional pages exist. Test an ordinary query, a misspelling, and a query with non-Latin text. The first automated comparison uses a single fixed query to keep requests modest.
+Use the same query through YouTube.js and ytmusicapi. Record versions, latency, top IDs/titles, and errors. Read a public playlist and record how many items and whether additional pages exist. Test an ordinary query, a misspelling, and a query with non-Latin text. Both automated probes read the same three queries and public playlist ID from `scripts/cases.json`, so their committed snapshots can be compared.
 
 **Pass:** real song results and a real public playlist can be read. Results have stable IDs usable by the next experiment. Report pagination separately; one page does not prove complete long-playlist support.
 
@@ -32,7 +32,7 @@ Requires the owner to supply a session locally, outside the repository. Never pa
 
 Read a private playlist/library first. Then run the account experiment, which creates one **new private disposable playlist** named `Coda experiment <timestamp>`. Make changes only to the ID returned by that creation. No existing playlist is edited. Leave the test playlist for inspection; the owner may delete it afterward.
 
-Use tracks A and B: create [A, B], add a duplicate A → [A, B, A], move the duplicate to the front → [A, A, B], remove that exact occurrence → [A, B]. Read back after each operation, using playlist-item identifiers to distinguish duplicates. Verify the final playlist in the official service. Do not automatically retry writes: a timeout may have occurred after the server applied the change.
+Use tracks A and B: create [A, B], add a duplicate A → [A, B, A], move the duplicate to the front → [A, A, B], remove that exact occurrence → [A, B]. Read back after each operation, confirming PRIVATE visibility and using playlist-item identifiers to distinguish duplicates and verify that the original copy survives removal. Verify the final playlist in the official service. Do not automatically retry writes: a timeout may have occurred after the server applied the change. An immediate readback may also lag behind a successful write; a mismatch stops the test and requires inspection before another run.
 
 **Pass:** account reads succeed; all four readbacks match; the official website shows the final two tracks. Separately record session expiry, reauthentication, and logout. These recovery cases may need a later session; a one-off successful write does not prove them.
 

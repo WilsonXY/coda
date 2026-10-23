@@ -54,7 +54,7 @@ python3.11 -m venv .venv
 .venv/bin/python scripts/music_probe.py
 ```
 
-Use a temporary directory under your home for large installs on this machine; `/tmp` is small. These commands make real upstream requests and may fail after service changes. No fake data replaces failures. The basic player probe deliberately disables JS player retrieval and does not resolve or stream media: a failure only establishes that this basic approach is insufficient, not that Coda playback is impossible.
+Use a temporary directory under your home for large installs on this machine; `/tmp` is small. Both probes use the same three search cases and public playlist from `scripts/cases.json`. These commands make real upstream requests and may fail after service changes. No fake data replaces failures. The basic player probe deliberately disables JS player retrieval and does not resolve or stream media: a failure only establishes that this basic approach is insufficient, not that Coda playback is impossible.
 
 ## Account experiment (owner setup required)
 
@@ -72,7 +72,7 @@ Then, when ready to create a disposable playlist:
 .venv/bin/python scripts/music_probe.py --auth "$HOME/.config/coda/browser.json" --write-test
 ```
 
-The write test creates one new private `Coda experiment <timestamp>` playlist, adds a duplicate, moves it, removes that exact duplicate, and verifies the order after each step. It never edits an existing playlist and never retries writes. It leaves the test playlist for you to inspect in YouTube Music. If a request fails or times out, inspect any reported `playlistId` before running again; every run creates a new playlist. The output contains sanitized IDs/order, not session data. Actual account tests remain blocked until a local session is configured.
+The write test creates one new private `Coda experiment <timestamp>` playlist, adds a duplicate, moves it, removes that exact duplicate, and verifies private visibility and item order after each step, including which duplicate survives removal. It never edits an existing playlist and never retries writes. It leaves the test playlist for you to inspect in YouTube Music. If a request fails or times out, inspect any reported `playlistId` before running again; every run creates a new playlist. The output contains sanitized IDs/order, not session data. Actual account tests remain blocked until a local session is configured.
 
 ## Phone and Zen checks
 
