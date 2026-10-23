@@ -145,3 +145,6 @@ npm run probe:live  # fresh upstream requests, playback-before-completion, seeks
 ```
 
 Both commands need `CODA_MUSIC_DIR` and Chromium; the live probe has a three-minute overall deadline. On phone Chrome, use a fresh live service run, choose the live mode and lock for ten minutes while playing from the first track. Export immediately and report gaps/controls/recovery. This targets cold next-track fetching while hidden; prepared-music phone results do not establish this behavior. No account or Premium session is connected.
+
+
+The first physical Android live-mode run failed: next songs stalled until the owner reopened the phone, despite complete server captures. See [the recorded failure](docs/experiment-results.md#android-live-mode-background-transitions-failed-run). Live exports now include the last twenty HTTP request timing records per track plus a truncation flag. Arrival/first-write/finish/close and drain-wait counts help locate the boundary; response finish does not prove phone receipt. No raw URLs, headers or client addresses are recorded. This adds diagnostics without changing playback. For the focused rerun, select live mode in a fresh server session, play only the first song and lock for seven minutes without skipping, then return/export immediately. Keep the failed result separate from later comparisons.

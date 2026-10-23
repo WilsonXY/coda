@@ -96,3 +96,34 @@ test('the final media byte waits for verified EOF', async t => {
   assert.deepEqual([...(await reader.read()).value], [3]);
   assert.equal((await reader.read()).done, true);
 });
+
+test('live status distinguishes HTTP arrival, first write and completed response', async t => {
+  let source;
+  const base = await fixture(t, async () => ({ bytes: 3, stream: new ReadableStream({ start(controller) { source = controller; controller.enqueue(Uint8Array.of(1)); } }) }));
+  const response = await fetch(`${base}/live/${id}.webm`);
+  const reader = response.body.getReader();
+  assert.deepEqual([...(await reader.read()).value], [1]);
+  let job = (await (await fetch(base + '/api/live/status')).json()).tracks[0];
+  assert.ok(Array.isArray(job.httpRequests));
+  assert.equal(job.httpRequests.length, 1);
+  const pending = job.httpRequests[0];
+  assert.equal(pending.method, 'GET');
+  assert.ok(pending.receivedAt);
+  assert.ok(pending.firstWriteAt);
+  assert.equal(pending.writtenBytes, 1);
+  assert.equal(pending.finishedAt, null);
+  source.enqueue(Uint8Array.of(2, 3)); source.close();
+  while (!(await reader.read()).done) {}
+  job = (await (await fetch(base + '/api/live/status')).json()).tracks[0];
+  assert.equal(job.httpRequests[0].writtenBytes, 3);
+  assert.ok(job.httpRequests[0].finishedAt);
+  assert.equal(job.httpRequests[0].statusCode, 200);
+  assert.equal(job.httpRequestsTruncated, false);
+  for (let i = 0; i < 21; i++) await (await fetch(`${base}/live/${id}.webm`, { headers: { Range: 'bytes=1-2' } })).arrayBuffer();
+  job = (await (await fetch(base + '/api/live/status')).json()).tracks[0];
+  assert.equal(job.httpRequests.length, 20);
+  assert.equal(job.httpRequestsTruncated, true);
+  assert.equal(job.requests, 22);
+  assert.equal(job.httpRequests.at(-1).statusCode, 206);
+  assert.equal(job.httpRequests.at(-1).rangeStart, 1);
+});
