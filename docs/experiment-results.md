@@ -19,7 +19,8 @@ Recorded 23 October 2026. Targets: Zen/PC and Chrome/Android. Owner reports YouT
 | Authenticated library and playlist operations | BLOCKED | Needs owner-provided local browser-auth file. The separate script is ready; its write safety and duplicate handling have automated tests, not live account proof. |
 | Actual YouTube audio in Coda | NOT RUN | No stream resolver, SABR delivery, or browser media integration is implemented. Must investigate current library playback examples before claiming this works. |
 | Premium behavior | NOT RUN | Public tests cannot establish subscription behavior. |
-| Zen and physical Chrome/Android | NOT RUN | Owner must perform device checklist, including ten minutes with screen locked. |
+| Chrome/Android: basic screen lock | PASS, owner-reported | Owner confirmed generated tones play and continue with the screen locked. Duration, phone/browser version, and automatic transitions were not supplied. Ten-minute, headset, interruption, and battery-saver checks remain unverified. |
+| Zen/PC | NOT RUN | Owner device checklist remains pending. |
 
 Both probes now use the shared cases in `scripts/cases.json`; every public-search row above is represented in the snapshots. Raw sanitized public probe snapshots: [YouTube.js](evidence/youtubejs.json), [ytmusicapi](evidence/ytmusicapi.json). These contain no credentials or signed media URLs. A PASS on the JSON player-response request only means the request completed; `playbackTested` remains false.
 
@@ -70,4 +71,7 @@ Second-round non-blocking findings:
 3. **Fix (info):** this record now reports the second review's PASS rather than pending.
 4. **Decline (style preference):** the checklist's block-scoped `select` DOM variable does not affect the outer track-selection function. No functional problem was identified, so the verified browser code was retained.
 
-The final follow-up changes only this record and the tighter test; production code is unchanged from the passing review. No real account or phone results were added. The private test page remains running for the owner's device checks.
+The final follow-up changes only this record and the tighter test; production code is unchanged from the passing review. The review itself added no real account or phone results. Separately, the owner then reported the basic Chrome/Android screen-lock result recorded above. The private test page remains running for the remaining device checks.
+
+
+Owner device observation (23 October 2026): “Tones play and continue with screen locked.” This establishes basic generated-audio behavior in phone Chrome only; it does not establish a ten-minute run, automatic queue transitions, Zen behavior, or YouTube audio playback. No exported device log was provided with this observation.
