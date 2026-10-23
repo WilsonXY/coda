@@ -56,6 +56,18 @@ python3.11 -m venv .venv
 
 Use a temporary directory under your home for large installs on this machine; `/tmp` is small. Both probes use the same three search cases and public playlist from `scripts/cases.json`. These commands make real upstream requests and may fail after service changes. No fake data replaces failures. The basic player probe deliberately disables JS player retrieval and does not resolve or stream media: a failure only establishes that this basic approach is insufficient, not that Coda playback is impossible.
 
+## Actual audio sample probe
+
+With development dependencies and Chromium installed, run:
+
+```sh
+npm run probe:playback --silent
+```
+
+Set `CHROMIUM_PATH` when using an existing compatible Chromium binary. This separate command makes real anonymous requests for the three fixed playback IDs in `scripts/cases.json`, resolves SABR streaming with YouTube.js and googlevideo, retains up to four chunks / 1 MiB per track, then clicks Play and verifies that actual audio advances more than one second in Chromium. Each track's request/decode phase has a 45-second deadline after browser-page setup; requests have 15-second deadlines. Upstream buffering may transfer more bytes than the retained sample. Audio stays in memory and is discarded when each fresh browser context closes. JSON output contains counts and results, with library logs and upstream exception messages suppressed to keep signed URLs and session data out of reports. A failed check exits nonzero.
+
+Extracted player JavaScript runs only in a fresh offline browser context; it is not evaluated in Node or the private web server. The browser has no saved profile or account session. No token minter is implemented. A sample PASS establishes anonymous media retrieval and short decoding on this machine; it does not establish full-song playback, seeking, phone background behavior, Premium behavior, or Coda's integrated queue. The private page still plays generated tones.
+
 ## Account experiment (owner setup required)
 
 Do not send passwords, cookies, browser exports, or auth files through chat or commit them. On your own machine, follow [ytmusicapi browser authentication](https://ytmusicapi.readthedocs.io/en/stable/setup/browser.html) to create a browser-auth file **outside this checkout**, for example `~/.config/coda/browser.json`. Restrict its permissions with `chmod 600 ~/.config/coda/browser.json`. This experiment expects browser authentication, not OAuth credentials.
@@ -78,7 +90,7 @@ The write test creates one new private `Coda experiment <timestamp>` playlist, a
 
 Open the private page. Fill in device/OS/browser version. Play the tone queue and check the controls, seeking, transitions, and switching panels. On Chrome/Android, keep the queue looping for ten minutes with the screen locked; try lock-screen/headset controls, another app, an interruption, and battery saver. Mark each result and export JSON **before reloading**. Results are not saved automatically. Generated tones establish browser behavior only. Repeat with real YouTube audio after playback integration is implemented.
 
-No PWA installation/offline support, media proxy, compressed-audio decoding, signed-URL resolution, token generation, or Premium playback behavior is claimed by this harness.
+The web page provides no PWA installation/offline support, media proxy, real YouTube playback, token generation, or Premium playback behavior. The separate sample probe demonstrates limited SABR URL resolution and compressed-audio decoding as described above.
 
 
 ## Android next-track stall comparison

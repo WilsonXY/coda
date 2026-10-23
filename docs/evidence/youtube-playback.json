@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-23T15:27:22.428Z",
+  "source": "actual YouTube audio samples",
+  "location": "MY",
+  "libraries": {
+    "youtubei.js": "18.3.0",
+    "googlevideo": "5.0.1",
+    "playwright": "1.64.1"
+  },
+  "account": "NOT RUN: no cookies, login or Premium session supplied",
+  "limits": "At most four chunks and 1 MiB retained per track; 45-second deadline per track. Upstream buffering may transfer more bytes. Samples stay in memory.",
+  "phonePlaybackTested": false,
+  "fullTrackTested": false,
+  "integratedCodaPlaybackTested": false,
+  "checks": [
+    {
+      "id": "4D7u5KF7SP8",
+      "status": "PASS",
+      "stage": "complete",
+      "protectionStatuses": [
+        2
+      ],
+      "playerStatus": "OK",
+      "audioFormats": 4,
+      "directAudioUrls": 0,
+      "hasSabr": true,
+      "mime": "audio/webm; codecs=\"opus\"",
+      "itag": 251,
+      "sampleBytes": 535485,
+      "browser": {
+        "secondsPlayed": 1.057694,
+        "paused": false,
+        "mediaError": null
+      }
+    },
+    {
+      "id": "t0AvpJ74sBc",
+      "status": "PASS",
+      "stage": "complete",
+      "protectionStatuses": [
+        2
+      ],
+      "playerStatus": "OK",
+      "audioFormats": 4,
+      "directAudioUrls": 0,
+      "hasSabr": true,
+      "mime": "audio/webm; codecs=\"opus\"",
+      "itag": 251,
+      "sampleBytes": 556809,
+      "browser": {
+        "secondsPlayed": 1.048694,
+        "paused": false,
+        "mediaError": null
+      }
+    },
+    {
+      "id": "dsUTcSVdU2U",
+      "status": "PASS",
+      "stage": "complete",
+      "protectionStatuses": [
+        2
+      ],
+      "playerStatus": "OK",
+      "audioFormats": 4,
+      "directAudioUrls": 0,
+      "hasSabr": true,
+      "mime": "audio/webm; codecs=\"opus\"",
+      "itag": 251,
+      "sampleBytes": 486608,
+      "browser": {
+        "secondsPlayed": 1.041238,
+        "paused": false,
+        "mediaError": null
+      }
+    }
+  ],
+  "browserVersion": "153.0.8010.12"
+}
