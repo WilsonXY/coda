@@ -87,3 +87,8 @@ Result, 23 October 2026: the owner reports the preloaded comparison worked throu
 ## Actual audio sample result and next step
 
 A standalone three-track SABR sample probe now passes anonymous retrieval and over one second of real decoding per track in desktop Chromium. Run `npm run probe:playback --silent`; the fixed playback IDs share `scripts/cases.json`. See [recorded results](experiment-results.md) and [sample evidence](evidence/youtube-playback.json). This is a short media-source test, not integrated playback: full songs, seeking, queue transitions, protection-token behavior and physical-device playback remain to be demonstrated. Integrate the proven source into the private player only with those limits visible, then repeat the device checks with real audio.
+
+
+## Prepared real music: device test
+
+Complete Music-client retrieval and targeted decoding now pass for the three fixed tracks. The private player can load these verified local files into browser memory before playback. See [results](experiment-results.md) and README for preparation/server commands. This isolates real-file decoding and queue behavior from live SABR fetching. Once the private page is configured, repeat the ten-minute Android Chrome lock-screen test with this source and export immediately; inspect source/IDs and distinguish owner observations from untouched checklist defaults. Test seeking and three induced transitions separately, or wait about sixteen minutes for all three natural transitions. Live streaming, source refresh, Premium/account behavior and authenticated playlist operations remain separate investigations.

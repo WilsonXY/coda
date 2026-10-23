@@ -6,14 +6,14 @@ import { Innertube, Platform, Log, Constants } from 'youtubei.js';
 import { SabrStream } from 'googlevideo/sabr-stream';
 import { buildSabrFormat, EnabledTrackTypes, Logger } from 'googlevideo/utils';
 
-export async function collectSample(stream, signal, maxBytes = 1024 * 1024) {
+export async function collectSample(stream, signal, maxBytes = 1024 * 1024, maxChunks = 4) {
   const reader = stream.getReader(), chunks = [];
   const cancel = () => { void reader.cancel().catch(() => {}); };
   let bytes = 0;
   try {
     signal.throwIfAborted();
     signal.addEventListener('abort', cancel, { once: true });
-    while (bytes < maxBytes && chunks.length < 4) {
+    while (bytes < maxBytes && chunks.length < maxChunks) {
       const { value, done } = await reader.read();
       signal.throwIfAborted();
       if (done) break;

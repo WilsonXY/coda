@@ -3,13 +3,14 @@
 <title>Coda functionality experiment</title><link rel="stylesheet" href="/style.css">
 <body><main>
 <h1>Coda functionality experiment</h1>
-<p>Test the basics before designing the app. These are generated test tones, not YouTube playback. Start quietly.</p>
+<p>Test the basics before designing the app. Choose generated tones or the three prepared music tracks below. Start quietly.</p>
 <nav aria-label="Experiment panels"><button id="show-player">Player checks</button> <button id="show-search">YouTube Music checks</button></nav>
 <section aria-labelledby="player-heading">
 <h2 id="player-heading">Persistent player</h2>
 <p id="delivery-status" role="status">Mode: fetch each tone as it starts.</p>
 <button id="preload">Load all three tones before playing</button>
-<p>Choose before playing. Loading stops and resets the queue. To compare with the original mode, export first and reload. This stores only the test tones in memory.</p>
+<button id="music">Load three prepared music tracks</button>
+<p>Choose before playing. Loading stops and resets the queue. Prepared music loads about 16 MB into memory before Play; it uses anonymously retrieved complete files, with no Premium account connected. Wait for Ready. To change modes, export first and reload.</p>
 <p id="now" aria-live="polite">Nothing playing</p>
 <audio id="audio" controls preload="metadata"></audio>
 <p><button id="previous">Previous</button> <button id="play">Play / pause</button> <button id="next">Next</button> <label><input id="loop" type="checkbox" checked> Loop queue</label></p>

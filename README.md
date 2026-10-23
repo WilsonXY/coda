@@ -66,7 +66,7 @@ npm run probe:playback --silent
 
 Set `CHROMIUM_PATH` when using an existing compatible Chromium binary. This separate command makes real anonymous requests for the three fixed playback IDs in `scripts/cases.json`, resolves SABR streaming with YouTube.js and googlevideo, retains up to four chunks / 1 MiB per track, then clicks Play and verifies that actual audio advances more than one second in Chromium. Each track's request/decode phase has a 45-second deadline after browser-page setup; requests have 15-second deadlines. Upstream buffering may transfer more bytes than the retained sample. Audio stays in memory and is discarded when each fresh browser context closes. JSON output contains counts and results, with library logs and upstream exception messages suppressed to keep signed URLs and session data out of reports. A failed check exits nonzero.
 
-Extracted player JavaScript runs only in a fresh offline browser context; it is not evaluated in Node or the private web server. The browser has no saved profile or account session. No token minter is implemented. A sample PASS establishes anonymous media retrieval and short decoding on this machine; it does not establish full-song playback, seeking, phone background behavior, Premium behavior, or Coda's integrated queue. The private page still plays generated tones.
+Extracted player JavaScript runs only in a fresh offline browser context; it is not evaluated in Node or the private web server. The browser has no saved profile or account session. No token minter is implemented. A sample PASS establishes anonymous media retrieval and short decoding on this machine; it does not establish full-song playback, seeking, phone background behavior, Premium behavior, or Coda's integrated queue. The optional prepared-music mode below uses complete files rather than this short sample probe.
 
 ## Account experiment (owner setup required)
 
@@ -90,7 +90,7 @@ The write test creates one new private `Coda experiment <timestamp>` playlist, a
 
 Open the private page. Fill in device/OS/browser version. Play the tone queue and check the controls, seeking, transitions, and switching panels. On Chrome/Android, keep the queue looping for ten minutes with the screen locked; try lock-screen/headset controls, another app, an interruption, and battery saver. Mark each result and export JSON **before reloading**. Results are not saved automatically. Generated tones establish browser behavior only. Repeat with real YouTube audio after playback integration is implemented.
 
-The web page provides no PWA installation/offline support, media proxy, real YouTube playback, token generation, or Premium playback behavior. The separate sample probe demonstrates limited SABR URL resolution and compressed-audio decoding as described above.
+The web page provides no PWA installation/offline app, live media proxy, arbitrary YouTube playback, token generation, or Premium account behavior. It can optionally play the three locally prepared complete files described below. The separate sample probe demonstrates limited SABR URL resolution and compressed-audio decoding.
 
 
 ## Android next-track stall comparison
@@ -98,3 +98,30 @@ The web page provides no PWA installation/offline support, media proxy, real You
 The original phone export showed three long waits while the next tone was loading. The page now offers **Load all three tones before playing** before the first Play. Wait for **Ready**, then play and lock the phone under the same battery/network conditions for at least five minutes. Export immediately on returning. Reload to return to the original network mode; export first because reloading clears observations. This mode loads only the three generated test files into memory and does not promise reliable background playback or offline YouTube access.
 
 Version 2 exports label the chosen delivery mode and whether the last-300-event history was truncated. Button and media-key actions are logged where exposed, without attempting to guess every OS interruption reason. The browser test additionally disables networking after preparation and verifies three real track transitions; a simulated partial load failure keeps the original network mode usable.
+
+
+## Private prepared-music mode
+
+Use an empty directory outside the checkout for the three fixed complete test tracks:
+
+```sh
+export CODA_MUSIC_DIR="$HOME/.cache/coda/music-test-20261024"
+npm run prepare:music --silent > artifacts/prepared-music.json
+npm start
+```
+
+Install development dependencies and Chromium first; set `CHROMIUM_PATH` when needed. Preparation uses the YouTube Music client and browser-based attestation. It retrieves complete WebM/Opus files anonymously, enforces the advertised byte count and a 16 MiB maximum per track, checks decoding at the start/middle/end, then writes the manifest only after all three pass. The whole preparation has a three-minute deadline after browser launch, with 15-second request deadlines. Files are 0600 and the newly created directory is 0700. No audio, cookies, signed URLs or generated tokens are committed. Failed preparation leaves no published manifest; inspect the report and use a new empty directory for another attempt. The server never creates or refreshes this cache.
+
+Start the server with the same `CODA_MUSIC_DIR`. Only the three fixed tracks are readable; each media request checks its length and SHA-256 before serving bytes or a range. Without that environment setting, music mode returns unavailable and tones remain usable. The server needs no Chromium or token minter at runtime.
+
+On the page, choose **Load three prepared music tracks**, wait for **Ready**, then tap Play. It loads about 16 MB into browser memory first, keeps the existing queue and controls, and labels exports with the real source, track IDs and preparation time. A partial load failure returns to tones. Choose before first playback; export and reload to change modes. This tests fully buffered real music, not ongoing SABR streaming or arbitrary catalog playback. No Premium session is connected.
+
+Run the integration checks against your prepared cache:
+
+```sh
+npm run test:music
+# Also wait through the first song at normal speed:
+CODA_LONG_PLAY=1 npm run test:music
+```
+
+The optional longer check takes about six minutes. On phone Chrome, reload the private page, select music, wait for Ready, press Play, then lock for ten minutes and export immediately after returning. Note silence, missing notification controls or any need to reopen the page. Ten minutes crosses the first natural transition; all three natural transitions take about sixteen minutes. Keep other checklist items NOT RUN unless you tested them. Prepared-file success does not establish live-stream renewal, Premium behavior or authenticated playlist writes.

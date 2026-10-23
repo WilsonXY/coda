@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-23T15:52:43.107Z",
+  "client": "WEB",
+  "result": "FAIL complete-track retrieval",
+  "trackId": "4D7u5KF7SP8",
+  "expectedBytes": 6214234,
+  "receivedBytes": 1042111,
+  "receivedMediaEndMs": 60001,
+  "receivedSegments": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "protectionStatuses": [
+    2
+  ],
+  "streamErrorCategory": "stall",
+  "attestationTrial": "InnerTube ENGAGEMENT_TYPE_UNBOUND in an isolated browser",
+  "notes": "The generic and homepage challenge trials, a session-aligned trial, and headed Chromium also failed with the same 60-second segment window. No account session was used. These exploratory diagnostics retained no credentials or token values. Duration/seeking to the reported end was not accepted as proof of complete media. Music-client preparation later succeeded; exact causality beyond the tested client/minting combination was not isolated."
+}
