@@ -1,0 +1,241 @@
+{
+  "source": "Owner-uploaded coda-device-results (6).json",
+  "sourceSha256": "85478ea5a6838cd07539d5bc5c96766c3944051608714179c2c21c556f4dc47d",
+  "exportedAt": "2026-10-23T19:59:58.790Z",
+  "schemaVersion": 2,
+  "deviceDescriptionInExport": "",
+  "browserReportedByUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Mobile Safari/537.36",
+  "audioSource": "live YouTube audio; anonymous retrieval; progressive HTTP",
+  "deliveryMode": "live",
+  "eventsTotal": 32,
+  "retainedEventCount": 32,
+  "eventsTruncated": false,
+  "exportedChecklist": [
+    {
+      "check": "Play / pause / seek / volume",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Previous / next",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Three automatic track transitions",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Audio continues when switching panels",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Queue reorder and remove",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Lock screen for ten minutes (Android)",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Headset and lock-screen controls",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Switch apps and return",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Recover after an interruption",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Repeat with battery saver enabled",
+      "status": "NOT RUN"
+    }
+  ],
+  "notesInExport": "I did accidently opened my phone during the first song. second to third song have the same issue. needs me to reopen only can continue ",
+  "ownerPowerFollowUp": "running on battery, with power saving on",
+  "liveRunId": "279a6b71-367c-4067-bcce-bb19fbaa9d0e",
+  "liveRequestedTrackIdsAtSelection": [
+    "t0AvpJ74sBc"
+  ],
+  "liveStatus": {
+    "runId": "279a6b71-367c-4067-bcce-bb19fbaa9d0e",
+    "tracks": [
+      {
+        "id": "t0AvpJ74sBc",
+        "requests": 2,
+        "receivedBytes": 4864721,
+        "totalBytes": 4864721,
+        "startedAt": "2026-10-23T19:44:34.258Z",
+        "firstByteAt": "2026-10-23T19:44:34.622Z",
+        "completedAt": "2026-10-23T19:44:35.299Z",
+        "failedAt": null,
+        "failure": null,
+        "httpRequestsTruncated": false,
+        "httpRequests": [
+          {
+            "sequence": 1,
+            "method": "GET",
+            "receivedAt": "2026-10-23T19:44:34.259Z",
+            "sourceReadyAt": "2026-10-23T19:44:34.574Z",
+            "firstWriteAt": "2026-10-23T19:44:34.623Z",
+            "finishedAt": "2026-10-23T19:44:35.300Z",
+            "closedAt": "2026-10-23T19:44:35.300Z",
+            "writtenBytes": 4864721,
+            "drainWaits": 28,
+            "statusCode": 206,
+            "rangeStart": 0,
+            "rangeEnd": 4864720,
+            "failed": false
+          },
+          {
+            "sequence": 2,
+            "method": "GET",
+            "receivedAt": "2026-10-23T19:53:17.609Z",
+            "sourceReadyAt": "2026-10-23T19:53:17.609Z",
+            "firstWriteAt": "2026-10-23T19:53:17.609Z",
+            "finishedAt": "2026-10-23T19:53:18.289Z",
+            "closedAt": "2026-10-23T19:53:18.289Z",
+            "writtenBytes": 4864721,
+            "drainWaits": 1,
+            "statusCode": 206,
+            "rangeStart": 0,
+            "rangeEnd": 4864720,
+            "failed": false
+          }
+        ],
+        "protectionStatuses": [
+          1
+        ],
+        "sha256": "a3f43603528c073bd8a9bb7f8df3413276605f4ef02e128602059800654e29c0"
+      },
+      {
+        "id": "4D7u5KF7SP8",
+        "requests": 1,
+        "receivedBytes": 6214234,
+        "totalBytes": 6214234,
+        "startedAt": "2026-10-23T19:47:06.775Z",
+        "firstByteAt": "2026-10-23T19:47:07.121Z",
+        "completedAt": "2026-10-23T19:47:08.386Z",
+        "failedAt": null,
+        "failure": null,
+        "httpRequestsTruncated": false,
+        "httpRequests": [
+          {
+            "sequence": 1,
+            "method": "GET",
+            "receivedAt": "2026-10-23T19:47:06.776Z",
+            "sourceReadyAt": "2026-10-23T19:47:07.075Z",
+            "firstWriteAt": "2026-10-23T19:47:07.121Z",
+            "finishedAt": "2026-10-23T19:47:08.387Z",
+            "closedAt": "2026-10-23T19:47:08.387Z",
+            "writtenBytes": 6214234,
+            "drainWaits": 37,
+            "statusCode": 206,
+            "rangeStart": 0,
+            "rangeEnd": 6214233,
+            "failed": false
+          }
+        ],
+        "protectionStatuses": [
+          1
+        ],
+        "sha256": "1cf495bdfbf2bbe3d7c9921d82ef378b143a52d707e9e2062722714c0e36b9d5"
+      },
+      {
+        "id": "dsUTcSVdU2U",
+        "requests": 2,
+        "receivedBytes": 5607789,
+        "totalBytes": 5607789,
+        "startedAt": "2026-10-23T19:57:58.492Z",
+        "firstByteAt": "2026-10-23T19:57:58.775Z",
+        "completedAt": "2026-10-23T19:58:00.022Z",
+        "failedAt": null,
+        "failure": null,
+        "httpRequestsTruncated": false,
+        "httpRequests": [
+          {
+            "sequence": 1,
+            "method": "GET",
+            "receivedAt": "2026-10-23T19:57:58.492Z",
+            "sourceReadyAt": "2026-10-23T19:57:58.729Z",
+            "firstWriteAt": "2026-10-23T19:57:58.775Z",
+            "finishedAt": null,
+            "closedAt": "2026-10-23T19:59:11.776Z",
+            "writtenBytes": 4583979,
+            "drainWaits": 26,
+            "statusCode": 206,
+            "rangeStart": 0,
+            "rangeEnd": 5607788,
+            "failed": true
+          },
+          {
+            "sequence": 2,
+            "method": "GET",
+            "receivedAt": "2026-10-23T19:59:08.748Z",
+            "sourceReadyAt": "2026-10-23T19:59:08.748Z",
+            "firstWriteAt": "2026-10-23T19:59:08.748Z",
+            "finishedAt": "2026-10-23T19:59:11.427Z",
+            "closedAt": "2026-10-23T19:59:11.427Z",
+            "writtenBytes": 5607789,
+            "drainWaits": 1,
+            "statusCode": 206,
+            "rangeStart": 0,
+            "rangeEnd": 5607788,
+            "failed": false
+          }
+        ],
+        "protectionStatuses": [
+          1
+        ],
+        "sha256": "8ba93c54c7b916e19e74e8788c8c2a461986563cc3006587f46f32a2c2de9b55"
+      }
+    ]
+  },
+  "retainedEventCounts": {
+    "canplay": 3,
+    "control": 1,
+    "ended": 2,
+    "live-selected": 1,
+    "loadedmetadata": 3,
+    "loadstart": 3,
+    "pause": 2,
+    "play": 3,
+    "playing": 3,
+    "queue-reset": 3,
+    "stalled": 1,
+    "visibility": 4,
+    "waiting": 3
+  },
+  "overallBackgroundResult": "FAIL for this run: the second-to-third automatic transition stalled; the first-to-second transition was prompt",
+  "cacheState": "One song (三年二班) was already requested at selection. First transition used that warm capture. The third song was first captured at the stalled boundary, so this run includes a cold third-song request while hidden.",
+  "transitions": [
+    {
+      "fromId": "4D7u5KF7SP8",
+      "toId": "t0AvpJ74sBc",
+      "endedAt": "2026-10-23T19:53:17.546Z",
+      "nextPlayingAt": "2026-10-23T19:53:17.780Z",
+      "gapSeconds": 0.234
+    },
+    {
+      "fromId": "t0AvpJ74sBc",
+      "toId": "dsUTcSVdU2U",
+      "endedAt": "2026-10-23T19:57:58.522Z",
+      "nextPlayingAt": "2026-10-23T19:59:08.906Z",
+      "gapSeconds": 70.384
+    }
+  ],
+  "thirdSongDiagnostic": {
+    "upstreamCaptureSeconds": 1.53,
+    "firstHttpRequestToFirstWriteSeconds": 0.283,
+    "firstHttpRequestToCloseSeconds": 73.284,
+    "firstHttpResponseFinished": false,
+    "firstHttpQueuedMediaBytes": 4583979,
+    "totalMediaBytes": 5607789,
+    "firstHttpRemainingUnqueuedBytes": 1023810,
+    "replacementRequestAfterSeconds": 70.256,
+    "replacementResponseSeconds": 2.679,
+    "playingBeforeVisibleEventSeconds": 1.437
+  },
+  "interpretation": "All 32 events and all HTTP traces retained. One preexisting capture and an accidental foreground visit during the first song qualify the first transition result. The cold third request reached the server while the page was hidden; first write followed 0.283 s and complete upstream retrieval took 1.530 s. The initial response queued 4,583,979 of 5,607,789 bytes, never finished, and later closed failed while a second full-range request completed. Queued writes/Node finish do not prove phone receipt. The remaining failure is downstream delivery/client reading or processing, not an unissued queue advance or slow upstream capture for this transition. Browser/transport/Tailscale/Android responsibility and the cause of the replacement request remain unresolved. New playing precedes the visible event by 1.437 s, so visible timestamp is not exact screen-unlock time. Cross-device subsecond clock alignment is not assumed. Owner confirms battery operation with power saving enabled; this is a candidate condition, not causal proof. Original NOT RUN checklist defaults are preserved."
+}

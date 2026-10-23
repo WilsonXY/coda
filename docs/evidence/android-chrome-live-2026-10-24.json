@@ -1,0 +1,175 @@
+{
+  "source": "Owner-uploaded coda-device-results (5).json",
+  "sourceSha256": "d29a5d007bc889df9d4b5511e9bff49365597dbc75b90609f292c0a5ed4bd2ec",
+  "exportedAt": "2026-10-23T19:30:00.174Z",
+  "schemaVersion": 2,
+  "deviceDescriptionInExport": "android chrome ",
+  "browserReportedByUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Mobile Safari/537.36",
+  "audioSource": "live YouTube audio; anonymous retrieval; progressive HTTP",
+  "deliveryMode": "live",
+  "eventsTotal": 84,
+  "retainedEventCount": 84,
+  "eventsTruncated": false,
+  "exportedChecklist": [
+    {
+      "check": "Play / pause / seek / volume",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Previous / next",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Three automatic track transitions",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Audio continues when switching panels",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Queue reorder and remove",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Lock screen for ten minutes (Android)",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Headset and lock-screen controls",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Switch apps and return",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Recover after an interruption",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Repeat with battery saver enabled",
+      "status": "NOT RUN"
+    }
+  ],
+  "notesInExport": "the next song won't load until I open up the phone everytime ",
+  "liveRunId": "d6395376-e3fa-4613-906a-4cffb7304a5e",
+  "liveRequestedTrackIdsAtSelection": [],
+  "liveStatus": {
+    "runId": "d6395376-e3fa-4613-906a-4cffb7304a5e",
+    "tracks": [
+      {
+        "id": "4D7u5KF7SP8",
+        "requests": 3,
+        "receivedBytes": 6214234,
+        "totalBytes": 6214234,
+        "startedAt": "2026-10-23T19:14:41.179Z",
+        "firstByteAt": "2026-10-23T19:14:41.625Z",
+        "completedAt": "2026-10-23T19:14:43.055Z",
+        "failedAt": null,
+        "failure": null,
+        "protectionStatuses": [
+          1
+        ],
+        "sha256": "1cf495bdfbf2bbe3d7c9921d82ef378b143a52d707e9e2062722714c0e36b9d5"
+      },
+      {
+        "id": "t0AvpJ74sBc",
+        "requests": 3,
+        "receivedBytes": 4864721,
+        "totalBytes": 4864721,
+        "startedAt": "2026-10-23T19:15:21.557Z",
+        "firstByteAt": "2026-10-23T19:15:21.905Z",
+        "completedAt": "2026-10-23T19:15:22.970Z",
+        "failedAt": null,
+        "failure": null,
+        "protectionStatuses": [
+          1
+        ],
+        "sha256": "a3f43603528c073bd8a9bb7f8df3413276605f4ef02e128602059800654e29c0"
+      },
+      {
+        "id": "dsUTcSVdU2U",
+        "requests": 2,
+        "receivedBytes": 5607789,
+        "totalBytes": 5607789,
+        "startedAt": "2026-10-23T19:15:26.762Z",
+        "firstByteAt": "2026-10-23T19:15:27.065Z",
+        "completedAt": "2026-10-23T19:15:27.872Z",
+        "failedAt": null,
+        "failure": null,
+        "protectionStatuses": [
+          1
+        ],
+        "sha256": "8ba93c54c7b916e19e74e8788c8c2a461986563cc3006587f46f32a2c2de9b55"
+      }
+    ]
+  },
+  "backgroundTransitionResult": "FAIL for this run: owner reports next song only loads after reopening phone; both automatic transitions stall until after visibility returns",
+  "coldSelectionResult": "Session started with no previously requested songs; manual next/previous actions retrieved all three while foregrounded before the first hidden interval. Hidden transitions therefore reused warm server captures, not cold upstream retrieval.",
+  "transitions": [
+    {
+      "fromId": "4D7u5KF7SP8",
+      "toId": "t0AvpJ74sBc",
+      "endedAt": "2026-10-23T19:22:18.004Z",
+      "nextPlayingAt": "2026-10-23T19:23:03.391Z",
+      "gapSeconds": 45.387,
+      "visibleAt": "2026-10-23T19:22:57.101Z",
+      "visibleToPlayingSeconds": 6.29,
+      "upstreamCompletedAt": "2026-10-23T19:15:22.970Z",
+      "upstreamAlreadyComplete": true
+    },
+    {
+      "fromId": "t0AvpJ74sBc",
+      "toId": "dsUTcSVdU2U",
+      "endedAt": "2026-10-23T19:27:44.647Z",
+      "nextPlayingAt": "2026-10-23T19:28:54.211Z",
+      "gapSeconds": 69.564,
+      "visibleAt": "2026-10-23T19:28:52.972Z",
+      "visibleToPlayingSeconds": 1.239,
+      "upstreamCompletedAt": "2026-10-23T19:15:27.872Z",
+      "upstreamAlreadyComplete": true
+    }
+  ],
+  "hiddenWindows": [
+    {
+      "hiddenAt": "2026-10-23T19:16:12.790Z",
+      "visibleAt": "2026-10-23T19:22:57.101Z",
+      "seconds": 404.311
+    },
+    {
+      "hiddenAt": "2026-10-23T19:23:13.075Z",
+      "visibleAt": "2026-10-23T19:28:52.972Z",
+      "seconds": 339.897
+    }
+  ],
+  "retainedEventCounts": {
+    "canplay": 9,
+    "control": 9,
+    "ended": 2,
+    "live-selected": 1,
+    "loadedmetadata": 9,
+    "loadstart": 9,
+    "media-action": 2,
+    "pause": 5,
+    "play": 10,
+    "playing": 10,
+    "queue-reset": 3,
+    "stalled": 2,
+    "visibility": 4,
+    "waiting": 9
+  },
+  "mediaSessionActions": [
+    {
+      "at": "2026-10-23T19:21:46.966Z",
+      "action": "pause",
+      "positionSeconds": 340.56
+    },
+    {
+      "at": "2026-10-23T19:21:48.524Z",
+      "action": "play",
+      "positionSeconds": 340.56
+    }
+  ],
+  "interpretation": "All 84 events are retained. Source captures completed with exact bytes, matching hashes and protection status1 before the hidden intervals. The background transition failure occurs after upstream retrieval; whether the browser defers the request, transport defers delivery, or the server response stalls is not resolved because this version has no per-HTTP request timing. Browser/client and server clocks may differ, so cross-device subsecond timing is not inferred. MediaSession pause/play actions are recorded while hidden; the originating physical control is not identified. All exported checklist defaults remain NOT RUN and are kept separate from the failed-run classification. No playback workaround or platform impossibility is established."
+}

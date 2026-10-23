@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-23T18:55:50.987Z",
+  "source": "fresh anonymous YouTube SABR → progressive same-origin HTTP",
+  "status": "FAIL",
+  "checks": [],
+  "phone": "NOT RUN",
+  "fullContinuousSongs": "NOT RUN",
+  "renewal": "NOT RUN",
+  "sessionBrowser": "153.0.8010.12",
+  "playbackBrowser": "153.0.8010.12",
+  "current": {
+    "id": "4D7u5KF7SP8",
+    "firstPlayingAt": "2026-10-23T18:55:57.275Z",
+    "retrieval": {
+      "id": "4D7u5KF7SP8",
+      "requests": 1,
+      "receivedBytes": 2539034,
+      "totalBytes": 6214234,
+      "startedAt": "2026-10-23T18:55:56.810Z",
+      "firstByteAt": "2026-10-23T18:55:57.203Z",
+      "completedAt": null,
+      "failedAt": null,
+      "failure": null,
+      "protectionStatuses": [
+        1
+      ],
+      "sha256": null
+    },
+    "preparedSha256": "1cf495bdfbf2bbe3d7c9921d82ef378b143a52d707e9e2062722714c0e36b9d5",
+    "preparedBytes": 6214234
+  },
+  "failure": {
+    "stage": "hash:4D7u5KF7SP8",
+    "errorType": "AssertionError"
+  },
+  "interpretation": "Verification-script failure: async browser predicate returned before EOF; the hash assertion compared null with the expected SHA-256. This is not evidence of corrupted or failed upstream media. Replaced with an awaited Node-side completion loop; the subsequent cold three-track run passed."
+}

@@ -13,7 +13,10 @@
     "test:music": "node tests/music-browser.mjs",
     "probe": "node scripts/probe.mjs",
     "probe:playback": "node scripts/playback-probe.mjs",
-    "prepare:music": "node scripts/prepare-music.mjs"
+    "prepare:music": "node scripts/prepare-music.mjs",
+    "start:live": "node scripts/live-server.mjs",
+    "test:live": "node tests/live-browser.mjs",
+    "probe:live": "node tests/live-upstream.mjs"
   },
   "dependencies": {
     "youtubei.js": "18.3.0"

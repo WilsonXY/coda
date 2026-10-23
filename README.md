@@ -125,3 +125,26 @@ CODA_LONG_PLAY=1 npm run test:music
 ```
 
 The optional longer check takes about six minutes. On phone Chrome, reload the private page, select music, wait for Ready, press Play, then lock for ten minutes and export immediately after returning. Note silence, missing notification controls or any need to reopen the page. Ten minutes crosses the first natural transition; all three natural transitions take about sixteen minutes. Keep other checklist items NOT RUN unless you tested them. Prepared-file success does not establish live-stream renewal, Premium behavior or authenticated playlist writes.
+
+
+## Optional live-delivery experiment
+
+With the prepared manifest configured for fixed track names and development dependencies/Chromium installed:
+
+```sh
+CODA_MUSIC_DIR="$HOME/.cache/coda/music-test-20261024" npm run start:live
+```
+
+Set `CHROMIUM_PATH` when using an existing compatible browser binary, and the same `CODA_ALLOWED_HOSTS` for private Tailscale access. The optional entry point runs browser-based anonymous attestation; the default server does not. Choose **Use live music**, wait for Ready, then Play. Selecting the mode fetches metadata only. Media comes from fresh upstream SABR retrieval when a song is requested, is served progressively over same-origin HTTP, and is retained in server memory for future ranges/replays. The prepared manifest supplies labels, never fallback audio for this route. Each of three fixed songs is capped at 16 MiB, with a 90-second capture deadline; the retained audio cache has a 48 MiB limit; browser/library and HTTP buffers are additional. Client disconnection leaves the bounded capture running. Restart this experiment process for a cold run or after a capture/session failure.
+
+This is not paced streaming or a general catalog/cache design. Seeking ahead waits for missing bytes; there is no upstream seek, next-track prefetch, automatic token renewal or eviction. A restarted server gets a new run ID. Exports label live delivery, capture status and songs already requested when the mode was selected. An upstream failure stays a failure, with no silent replacement. The browser may buffer received media; this experiment establishes playback before full retrieval, not a memory ceiling for the client.
+
+```sh
+npm run test:live   # gated real-file fixture; not live YouTube
+npm run probe:live  # fresh upstream requests, playback-before-completion, seeks and induced transitions
+```
+
+Both commands need `CODA_MUSIC_DIR` and Chromium; the live probe has a three-minute overall deadline. On phone Chrome, use a fresh live service run, choose the live mode and lock for ten minutes while playing from the first track. Export immediately and report gaps/controls/recovery. This targets cold next-track fetching while hidden; prepared-music phone results do not establish this behavior. No account or Premium session is connected.
+
+
+The first physical Android live-mode run failed: next songs stalled until the owner reopened the phone, despite complete server captures. See [the recorded failure](docs/experiment-results.md#android-live-mode-background-transitions-failed-run). Live exports now include the last twenty HTTP request timing records per track plus a truncation flag. Arrival/first-write/finish/close and drain-wait counts help locate the boundary; response finish does not prove phone receipt. No raw URLs, headers or client addresses are recorded. This adds diagnostics without changing playback. For the focused rerun, select live mode in a fresh server session, play only the first song and lock for seven minutes without skipping, then return/export immediately. Keep the failed result separate from later comparisons.

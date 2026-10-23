@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-23T18:58:06.869Z",
+  "account": "anonymous; no Premium session",
+  "client": "YTMUSIC",
+  "checks": [
+    {
+      "id": "4D7u5KF7SP8",
+      "title": "Get Lucky (feat. Pharrell Williams and Nile Rodgers)",
+      "artist": "Daft Punk, Pharrell Williams, & Nile Rodgers",
+      "seconds": 370,
+      "bytes": 6214234,
+      "sha256": "1cf495bdfbf2bbe3d7c9921d82ef378b143a52d707e9e2062722714c0e36b9d5",
+      "mime": "audio/webm",
+      "status": "PASS",
+      "protectionStatuses": [
+        1
+      ],
+      "decoded": {
+        "duration": 369.641,
+        "ended": true,
+        "mediaError": null
+      }
+    },
+    {
+      "id": "t0AvpJ74sBc",
+      "title": "三年二班",
+      "artist": "周杰倫",
+      "seconds": 280,
+      "bytes": 4864721,
+      "sha256": "a3f43603528c073bd8a9bb7f8df3413276605f4ef02e128602059800654e29c0",
+      "mime": "audio/webm",
+      "status": "PASS",
+      "protectionStatuses": [
+        1
+      ],
+      "decoded": {
+        "duration": 280.401,
+        "ended": true,
+        "mediaError": null
+      }
+    },
+    {
+      "id": "dsUTcSVdU2U",
+      "title": "半島鐵盒",
+      "artist": "周杰倫",
+      "seconds": 317,
+      "bytes": 5607789,
+      "sha256": "8ba93c54c7b916e19e74e8788c8c2a461986563cc3006587f46f32a2c2de9b55",
+      "mime": "audio/webm",
+      "status": "PASS",
+      "protectionStatuses": [
+        1
+      ],
+      "decoded": {
+        "duration": 317.421,
+        "ended": true,
+        "mediaError": null
+      }
+    }
+  ],
+  "published": true,
+  "phoneTested": false,
+  "continuousListeningTested": false,
+  "libraries": {
+    "youtubei.js": "18.3.0",
+    "googlevideo": "5.0.1",
+    "bgutils-js": "4.0.3",
+    "esbuild": "0.28.2",
+    "playwright": "1.64.1"
+  },
+  "browserVersion": "153.0.8010.12"
+}

@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-23T18:56:32.908Z",
+  "source": "fresh anonymous YouTube SABR → progressive same-origin HTTP",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "4D7u5KF7SP8",
+      "status": "PASS",
+      "firstPlayingAt": "2026-10-23T18:56:38.541Z",
+      "playbackBeforeCompletion": true,
+      "requestToPlayingSeconds": 0.35,
+      "retrieval": {
+        "id": "4D7u5KF7SP8",
+        "requests": 1,
+        "receivedBytes": 6214234,
+        "totalBytes": 6214234,
+        "startedAt": "2026-10-23T18:56:38.191Z",
+        "firstByteAt": "2026-10-23T18:56:38.473Z",
+        "completedAt": "2026-10-23T18:56:39.523Z",
+        "failedAt": null,
+        "failure": null,
+        "protectionStatuses": [
+          1
+        ],
+        "sha256": "1cf495bdfbf2bbe3d7c9921d82ef378b143a52d707e9e2062722714c0e36b9d5"
+      },
+      "middleSeek": "PASS"
+    },
+    {
+      "id": "t0AvpJ74sBc",
+      "status": "PASS",
+      "firstPlayingAt": "2026-10-23T18:56:40.600Z",
+      "playbackBeforeCompletion": true,
+      "requestToPlayingSeconds": 0.295,
+      "retrieval": {
+        "id": "t0AvpJ74sBc",
+        "requests": 1,
+        "receivedBytes": 4864721,
+        "totalBytes": 4864721,
+        "startedAt": "2026-10-23T18:56:40.305Z",
+        "firstByteAt": "2026-10-23T18:56:40.556Z",
+        "completedAt": "2026-10-23T18:56:41.553Z",
+        "failedAt": null,
+        "failure": null,
+        "protectionStatuses": [
+          1
+        ],
+        "sha256": "a3f43603528c073bd8a9bb7f8df3413276605f4ef02e128602059800654e29c0"
+      },
+      "middleSeek": "PASS"
+    },
+    {
+      "id": "dsUTcSVdU2U",
+      "status": "PASS",
+      "firstPlayingAt": "2026-10-23T18:56:42.619Z",
+      "playbackBeforeCompletion": true,
+      "requestToPlayingSeconds": 0.268,
+      "retrieval": {
+        "id": "dsUTcSVdU2U",
+        "requests": 1,
+        "receivedBytes": 5607789,
+        "totalBytes": 5607789,
+        "startedAt": "2026-10-23T18:56:42.351Z",
+        "firstByteAt": "2026-10-23T18:56:42.579Z",
+        "completedAt": "2026-10-23T18:56:43.329Z",
+        "failedAt": null,
+        "failure": null,
+        "protectionStatuses": [
+          1
+        ],
+        "sha256": "8ba93c54c7b916e19e74e8788c8c2a461986563cc3006587f46f32a2c2de9b55"
+      },
+      "middleSeek": "PASS"
+    }
+  ],
+  "phone": "NOT RUN",
+  "fullContinuousSongs": "NOT RUN",
+  "renewal": "NOT RUN",
+  "sessionBrowser": "153.0.8010.12",
+  "playbackBrowser": "153.0.8010.12",
+  "inducedTransitions": 3
+}
