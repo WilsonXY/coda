@@ -1,0 +1,89 @@
+{
+  "source": "Owner-uploaded coda-device-results (1).json",
+  "sourceSha256": "3d6cf856da369c90daf4adceaad1b1fe2413193d095303c857f7d117bb9c6499",
+  "exportedAt": "2026-10-23T14:18:40.750Z",
+  "deviceReported": "android chrome",
+  "browserReportedByUserAgent": "Chrome 155 Mobile; Android user-agent values may be reduced",
+  "audioSource": "generated WAV tones; not YouTube audio",
+  "deliveryMode": "network (original harness)",
+  "retainedEventCount": 300,
+  "historyLimitReached": true,
+  "runStartKnown": false,
+  "retainedWindow": {
+    "first": "2026-10-23T13:58:37.540Z",
+    "last": "2026-10-23T14:18:39.577Z",
+    "seconds": 1202.037
+  },
+  "checks": [
+    {
+      "check": "Play / pause / seek / volume",
+      "status": "PASS"
+    },
+    {
+      "check": "Previous / next",
+      "status": "PASS"
+    },
+    {
+      "check": "Three automatic track transitions",
+      "status": "PASS"
+    },
+    {
+      "check": "Audio continues when switching panels",
+      "status": "PASS"
+    },
+    {
+      "check": "Queue reorder and remove",
+      "status": "PASS"
+    },
+    {
+      "check": "Lock screen for ten minutes (Android)",
+      "status": "FAIL"
+    },
+    {
+      "check": "Headset and lock-screen controls",
+      "status": "PASS"
+    },
+    {
+      "check": "Switch apps and return",
+      "status": "PASS"
+    },
+    {
+      "check": "Recover after an interruption",
+      "status": "PASS"
+    },
+    {
+      "check": "Repeat with battery saver enabled",
+      "status": "PASS"
+    }
+  ],
+  "ownerObservations": [
+    "Notification controls disappear after playing YouTube for a while and during a locked-screen run after about two or three minutes.",
+    "Opening Coda again resumes audio from the position where it stopped."
+  ],
+  "endedToPlayingIntervals": 38,
+  "medianEndedToPlayingGapSeconds": 0.1645,
+  "longGaps": [
+    {
+      "endedAt": "2026-10-23T14:08:37.135Z",
+      "playingAt": "2026-10-23T14:08:49.958Z",
+      "from": "Tone A",
+      "to": "Tone B",
+      "gapSeconds": 12.823
+    },
+    {
+      "endedAt": "2026-10-23T14:11:54.272Z",
+      "playingAt": "2026-10-23T14:12:07.088Z",
+      "from": "Tone A",
+      "to": "Tone B",
+      "gapSeconds": 12.816
+    },
+    {
+      "endedAt": "2026-10-23T14:14:30.962Z",
+      "playingAt": "2026-10-23T14:16:56.628Z",
+      "from": "Tone B",
+      "to": "Tone C",
+      "gapSeconds": 145.666
+    }
+  ],
+  "interpretation": "Stalls occur while the next tone is at position zero, before loadedmetadata/playing. The exact Android/Chrome/Tailscale/network cause is unproven. These event intervals are not direct measurements of audible silence."
+}

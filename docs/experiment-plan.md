@@ -75,3 +75,10 @@ Use `PASS`, `FAIL`, `BLOCKED` (missing account/device/access), or `NOT RUN`. Inc
 - [Chrome autoplay rules](https://developer.chrome.com/blog/autoplay/)
 
 The broader findings and terms/licensing considerations remain in [investigation.md](investigation.md).
+
+
+## Next controlled phone test: remove network fetches between tones
+
+The original Android Chrome export shows delayed next-track loads during locked/background playback. Before repeating a full run, compare the existing network mode with a mode that loads all three test tones into memory before playback. Choose the mode before first playback; export and reload before switching. Keep phone, connection, loop setting, and battery policy the same. Run the preloaded comparison for at least five locked-screen minutes, then export from phone Chrome. Record stops, notification controls, resumption position, and whether opening the page was needed. This isolates transition-time media fetching as a variable; it is not a claimed fix for Android power management or YouTube streaming.
+
+Result, 23 October 2026: the owner reports the preloaded comparison worked throughout ten minutes. The export retains 37 prompt transitions (median 0.092 s, max 0.117 s) with no stalled/error/play-rejected events, but truncates the initial history. See [results](experiment-results.md) and [derived evidence](evidence/android-chrome-preloaded-2026-10-23.json). Record a PASS for this one reported run; controls, interruption recovery, repeatability, and actual YouTube playback remain separate checks.

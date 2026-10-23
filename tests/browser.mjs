@@ -43,6 +43,10 @@ try {
   await download.saveAs('artifacts/browser-export.json');
   const exported = JSON.parse(await readFile('artifacts/browser-export.json', 'utf8'));
   assert.equal('premiumReported' in exported, false);
+  assert.equal(exported.schemaVersion, 2);
+  assert.equal(exported.audioDelivery, 'network');
+  assert.equal(exported.eventsTruncated, false);
+  assert.ok(exported.events.some(event => event.event === 'control' && event.action === 'play-pause'));
   assert.equal(exported.source, 'generated WAV tones; not YouTube audio');
   assert.ok(exported.checks.every(check => check.status === 'NOT RUN'));
   assert.ok(exported.events.filter(event => event.event === 'ended').length >= 3);
@@ -50,8 +54,51 @@ try {
   await page.setViewportSize({ width: 728, height: 900 });
   await page.screenshot({ path: 'artifacts/player-728.png', fullPage: true });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+  const cached = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  cached.on('pageerror', error => errors.push(error.message));
+  let audioRequests = 0;
+  cached.on('request', request => { if (request.url().includes('/audio/')) audioRequests++; });
+  await cached.goto(base);
+  await cached.locator('#preload').click();
+  await cached.waitForFunction(() => document.querySelector('#delivery-status').textContent.includes('Ready: all three tones'));
+  assert.equal(audioRequests, 3);
+  await cached.context().setOffline(true);
+  await cached.locator('#play').click();
+  await cached.waitForFunction(() => document.querySelector('audio').currentTime > 0.2);
+  assert.ok((await cached.locator('audio').getAttribute('src')).startsWith('blob:'));
+  assert.equal(await cached.locator('#preload').isDisabled(), true);
+  for (const name of ['Tone B', 'Tone C', 'Tone A']) {
+    await cached.locator('audio').evaluate(audio => { audio.currentTime = 19.7; });
+    await cached.waitForFunction(expected => document.querySelector('#now').textContent === expected, name);
+    await cached.waitForFunction(() => !document.querySelector('audio').paused && document.querySelector('audio').currentTime > 0.1);
+  }
+  assert.equal(audioRequests, 3, 'No new audio requests after preloading, even across offline track transitions');
+  const cachedDownload = cached.waitForEvent('download');
+  await cached.locator('#export').click();
+  await (await cachedDownload).saveAs('artifacts/preloaded-export.json');
+  const cachedReport = JSON.parse(await readFile('artifacts/preloaded-export.json', 'utf8'));
+  assert.equal(cachedReport.audioDelivery, 'preloaded');
+  assert.equal(cachedReport.schemaVersion, 2);
+  assert.ok(cachedReport.events.filter(event => event.event === 'ended').length >= 3);
+  await cached.screenshot({ path: 'artifacts/preloaded-390.png', fullPage: true });
+  await cached.setViewportSize({ width: 728, height: 900 });
+  assert.equal(await cached.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await cached.screenshot({ path: 'artifacts/preloaded-728.png', fullPage: true });
+  await cached.close();
+
+  const failed = await browser.newPage();
+  await failed.route('**/audio/1.wav', route => route.fulfill({ status: 503, body: 'unavailable' }));
+  await failed.goto(base);
+  await failed.locator('#preload').click();
+  await failed.waitForFunction(() => document.querySelector('#delivery-status').textContent.includes('Could not load all tones'));
+  assert.equal(await failed.locator('#preload').isDisabled(), false);
+  assert.equal(await failed.locator('#play').isDisabled(), false);
+  await failed.locator('#play').click();
+  await failed.waitForFunction(() => document.querySelector('audio').currentTime > 0.2);
+  assert.equal(await failed.locator('audio').getAttribute('src'), '/audio/0.wav');
+  await failed.close();
   assert.deepEqual(errors, []);
-  console.log('PASS: real audio playback, persistent player across panels, seeking, automatic transitions, loop, reorder/remove/reset, JSON export, 390px/728px layouts. Physical Android and Zen NOT RUN.');
+  console.log('PASS: real audio playback, persistent player across panels, seeking, automatic transitions, loop, reorder/remove/reset, JSON export, 390px/728px layouts. Preloaded mode also plays through three transitions with browser network disabled; partial load failure stays in network mode. Physical Android preloaded mode and Zen NOT RUN.');
 } finally {
   await browser.close();
   await new Promise(resolve => server.close(resolve));
