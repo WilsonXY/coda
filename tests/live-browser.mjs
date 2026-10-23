@@ -43,6 +43,7 @@ try {
   const exported = JSON.parse(await readFile('artifacts/live-export.json', 'utf8'));
   assert.equal(exported.audioDelivery, 'live');
   assert.equal(exported.liveRunId, exported.liveStatus.runId);
+  assert.deepEqual(exported.liveRequestedTrackIdsAtSelection, []);
   assert.equal(exported.musicPreparedAt, null);
   assert.ok(exported.source.includes('progressive'));
   assert.ok(exported.checks.every(check => check.status === 'NOT RUN'));
@@ -51,6 +52,17 @@ try {
   await page.setViewportSize({ width: 728, height: 900 });
   await page.screenshot({ path: 'artifacts/live-728.png', fullPage: true });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  const warm = await browser.newPage();
+  await warm.goto(base); await warm.locator('#live').click();
+  await warm.waitForFunction(() => document.querySelector('#delivery-status').textContent.includes('Ready: live music'));
+  await warm.evaluate(() => { for (let i = 0; i < 301; i++) document.dispatchEvent(new Event('resume')); });
+  const warmDownload = warm.waitForEvent('download'); await warm.locator('#export').click();
+  await (await warmDownload).saveAs('artifacts/live-warm-export.json');
+  const warmExport = JSON.parse(await readFile('artifacts/live-warm-export.json', 'utf8'));
+  assert.equal(warmExport.eventsTruncated, true);
+  assert.equal(warmExport.events.some(event => event.event === 'live-selected'), false);
+  assert.deepEqual(warmExport.liveRequestedTrackIdsAtSelection, [...releases.keys()], 'Selection-time warm cache evidence survives the rolling log');
+  await warm.close();
   assert.deepEqual(errors, []);
   await writeFile('artifacts/live-browser-check.json', JSON.stringify({ status: 'PASS', source: 'prepared files gated as progressive upstream fixtures; not live YouTube', earlyPlayback: partial, earlySecondTrack: second, middleSeek: 'PASS', phone: 'NOT RUN' }, null, 2));
   console.log('PASS: gated progressive HTTP playback before completion, seeking, automatic cold next track, export and layouts. Live upstream not exercised by this fixture test.');

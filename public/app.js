@@ -5,6 +5,7 @@ let eventsTotal = 0;
 let selectedTracks = null;
 let delivery = 'network';
 let liveRunId = null;
+let liveRequestedTrackIdsAtSelection = null;
 const toneSource = 'generated WAV tones; not YouTube audio';
 let source = toneSource;
 let musicPreparedAt = null;
@@ -167,10 +168,11 @@ $('live').onclick = async () => {
     selectedTracks = catalog.tracks.map(track => ({ ...track, url: `/live/${encodeURIComponent(track.id)}.webm` }));
     delivery = 'live'; source = 'live YouTube audio; anonymous retrieval; progressive HTTP';
     musicPreparedAt = null; liveRunId = catalog.runId;
-    reset(); log('live-selected', { runId: liveRunId, requestedTrackIdsAtSelection: catalog.retrievals.map(track => track.id) });
+    liveRequestedTrackIdsAtSelection = catalog.retrievals.map(track => track.id);
+    reset(); log('live-selected', { runId: liveRunId, requestedTrackIdsAtSelection: liveRequestedTrackIdsAtSelection });
     $('delivery-status').textContent = 'Ready: live music. Press Play to fetch the selected song while it plays. Seeking may wait for incoming bytes.';
   } catch (error) {
-    selectedTracks = null; delivery = 'network'; source = toneSource; liveRunId = null; reset();
+    selectedTracks = null; delivery = 'network'; source = toneSource; liveRunId = null; liveRequestedTrackIdsAtSelection = null; reset();
     $('delivery-status').textContent = 'Live music unavailable. Retry or use the generated tones.';
     log('live-selection-failed', { error: error.name });
   } finally {
@@ -214,7 +216,7 @@ $('export').onclick = async () => {
     catch { liveStatus = { unavailable: true }; }
   }
   const result = { schemaVersion: 2, audioDelivery: delivery, eventsTotal, eventsTruncated: eventsTotal > events.length, date: new Date().toISOString(), device: $('device').value, userAgent: navigator.userAgent,
-    source, musicPreparedAt, liveRunId, liveStatus, musicTrackIds: (selectedTracks ?? []).filter(track => track.id).map(track => track.id),
+    source, musicPreparedAt, liveRunId, liveRequestedTrackIdsAtSelection, liveStatus, musicTrackIds: (selectedTracks ?? []).filter(track => track.id).map(track => track.id),
     mediaSessionSupported: 'mediaSession' in navigator,
     checks: checks.map((check, i) => ({ check, status: $(`check-${i}`).value })), notes: $('notes').value, events };
   const url = URL.createObjectURL(new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' }));
