@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import cases from './scripts/cases.json' with { type: 'json' };
+import { createLiveMusic } from './live-music.mjs';
 import { search, playlist, playability } from './youtube.mjs';
 
 const files = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'] };
@@ -44,8 +45,9 @@ async function musicManifest(directory) {
   return { preparedAt: manifest.preparedAt, tracks };
 }
 
-export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR } = {}) {
-  return http.createServer(async (req, res) => {
+export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR, liveMusic } = {}) {
+  const live = liveMusic ? createLiveMusic(liveMusic) : null;
+  const server = http.createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', "default-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
@@ -71,6 +73,19 @@ export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR } = {
         const id = url.searchParams.get('id');
         if (!id || !/^[\w-]{11}$/.test(id)) return json(400, { error: 'Enter an 11-character video ID.' });
         return json(200, await playability(id));
+      }
+      if (url.pathname === '/api/live' || url.pathname === '/api/live/status') {
+        if (!live) return json(503, { error: 'Live music is not enabled. Start the optional live experiment.' });
+        if (url.pathname.endsWith('/status')) return json(200, live.status());
+        if (!musicDirectory) return json(503, { error: 'Fixed-track metadata is not configured.' });
+        const status = live.status();
+        return json(200, { ...await musicManifest(musicDirectory), runId: status.runId, retrievals: status.tracks });
+      }
+      const liveTrack = url.pathname.match(/^\/live\/([\w-]{11})\.webm$/);
+      if (liveTrack) {
+        if (!cases.playbackIds.includes(liveTrack[1])) return json(404, { error: 'Not a fixed test track.' });
+        if (!live) return json(503, { error: 'Live music is not enabled.' });
+        return await live.serve(liveTrack[1], req, res);
       }
       if (url.pathname === '/api/music') {
         if (!musicDirectory) return json(503, { error: 'Prepared music is not available. Run the local preparation command first.' });
@@ -113,10 +128,14 @@ export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR } = {
       }
       json(404, { error: 'Not found.' });
     } catch {
+      if (res.headersSent) { res.destroy(); return; }
+      for (const name of ['Content-Length', 'Content-Range', 'Accept-Ranges']) res.removeHeader(name);
       // Never expose upstream bodies: they can contain session or signed-media data.
       json(502, { error: 'Experiment request failed. Check local setup or upstream availability. This is a failed check, not an empty result.' });
     }
   });
+  server.on('close', () => live?.close());
+  return server;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
