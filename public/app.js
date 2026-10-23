@@ -6,6 +6,8 @@ let selectedTracks = null;
 let delivery = 'network';
 let liveRunId = null;
 let liveRequestedTrackIdsAtSelection = null;
+const liveBuffers = new Map();
+let livePlayback = null;
 const toneSource = 'generated WAV tones; not YouTube audio';
 let source = toneSource;
 let musicPreparedAt = null;
@@ -51,7 +53,7 @@ function renderQueue() {
 
 async function resume() {
   if (preparing) return;
-  try { await audio.play(); }
+  try { await audio.play(); void bufferNext(); }
   catch (error) { log('play-rejected', { error: error.name }); $('now').textContent = 'Playback failed. Tap Play again; check exported events.'; }
 }
 
@@ -61,8 +63,15 @@ async function select(track) {
   $('preload').disabled = true;
   $('music').disabled = true;
   $('live').disabled = true;
+  $('buffer-next').disabled = true;
   current = track;
-  audio.src = track.url;
+  const buffered = liveBuffers.get(track.id);
+  const useBuffer = delivery === 'live' && buffered?.status === 'ready';
+  audio.src = useBuffer ? buffered.url : track.url;
+  if (delivery === 'live') {
+    livePlayback = { trackId: track.id, storage: useBuffer ? 'phone-buffer' : 'progressive-http', selectedAt: new Date().toISOString() };
+    log('live-playback-source', livePlayback);
+  }
   $('now').textContent = track.title;
   if ('mediaSession' in navigator && 'MediaMetadata' in window) {
     navigator.mediaSession.metadata = new MediaMetadata({ title: track.title, artist: track.artist });
@@ -85,6 +94,7 @@ function step(direction) {
 function move(index, direction) {
   [queue[index], queue[index + direction]] = [queue[index + direction], queue[index]];
   renderQueue(); log('queue-reordered');
+  void bufferNext();
 }
 
 function remove(track) {
@@ -92,13 +102,17 @@ function remove(track) {
   if (current === track) {
     audio.pause(); audio.removeAttribute('src'); audio.load();
     current = null; $('now').textContent = 'Current track removed. Choose another track.';
+    livePlayback = null;
     if ('mediaSession' in navigator) navigator.mediaSession.metadata = null;
   }
   renderQueue(); log('queue-item-removed');
+  void bufferNext();
 }
 
 function reset() {
   audio.pause(); audio.removeAttribute('src'); audio.load(); current = null;
+  livePlayback = null;
+  void bufferNext();
   if ('mediaSession' in navigator) navigator.mediaSession.metadata = null;
   queue = (selectedTracks ?? tones()).map(track => ({ ...track }));
   $('now').textContent = 'Nothing playing'; renderQueue(); log('queue-reset');
@@ -111,6 +125,63 @@ $('play').onclick = () => {
 $('next').onclick = () => { log('control', { action: 'next', control: 'button' }); step(1); };
 $('previous').onclick = () => { log('control', { action: 'previous', control: 'button' }); step(-1); };
 $('reset').onclick = () => { log('control', { action: 'reset', control: 'button' }); reset(); };
+
+function nextBufferTrack() {
+  const index = queue.indexOf(current);
+  if (index < 0 || queue.length < 2) return null;
+  return queue[index + 1] ?? ($('loop').checked ? queue[0] : null);
+}
+
+function showBufferStatus() {
+  const next = nextBufferTrack();
+  const entry = liveBuffers.get(next?.id);
+  $('buffer-status').textContent = delivery !== 'live' || !$('buffer-next').checked
+    ? 'Next-song buffering is off. Select live music to enable it before Play.'
+    : !current ? 'Next-song buffering enabled. Press Play; then wait for the next song to be ready before locking.'
+    : !next ? 'No next song to buffer.'
+    : entry?.status === 'ready' ? `Next song ready on this device: ${next.title}. You can lock the screen for the comparison.`
+    : entry?.status === 'failed' ? `Buffer unavailable: ${next.title}. Playback will use live HTTP if selected; export the result.`
+    : `Buffering next song: ${next.title}… keep the page open until ready.`;
+}
+
+async function bufferNext() {
+  const enabled = delivery === 'live' && $('buffer-next').checked;
+  const next = enabled ? nextBufferTrack() : null;
+  // ponytail: retain only current/next Blobs in this three-song experiment; no persistent cache.
+  const keep = enabled && current ? [current.id, next?.id] : [];
+  for (const [id, entry] of liveBuffers) {
+    if (keep.includes(id)) continue;
+    entry.controller.abort();
+    if (entry.url) URL.revokeObjectURL(entry.url);
+    liveBuffers.delete(id);
+  }
+  showBufferStatus();
+  if (!next || liveBuffers.has(next.id)) return;
+  const entry = { status: 'loading', bytes: 0, startedAt: new Date().toISOString(), readyAt: null, controller: new AbortController() };
+  liveBuffers.set(next.id, entry);
+  log('next-buffer-start', { bufferedTrackId: next.id });
+  try {
+    if (!Number.isSafeInteger(next.bytes) || next.bytes < 1 || next.bytes > 16 * 1024 * 1024) throw new Error('Unexpected audio size');
+    const response = await fetch(next.url, { cache: 'no-store', signal: AbortSignal.any([entry.controller.signal, AbortSignal.timeout(120000)]) });
+    if (!response.ok) throw new Error('Audio unavailable');
+    const blob = await response.blob();
+    if (blob.size !== next.bytes || !blob.type.startsWith(next.mime)) throw new Error('Unexpected audio data');
+    if (liveBuffers.get(next.id) !== entry || entry.controller.signal.aborted) return;
+    entry.url = URL.createObjectURL(blob);
+    entry.status = 'ready'; entry.bytes = blob.size; entry.readyAt = new Date().toISOString();
+    log('next-buffer-ready', { bufferedTrackId: next.id, bytes: blob.size });
+  } catch (error) {
+    if (liveBuffers.get(next.id) !== entry) return;
+    entry.status = 'failed';
+    log('next-buffer-failed', { bufferedTrackId: next.id, error: error.name });
+  } finally { showBufferStatus(); }
+}
+
+$('loop').onchange = () => { void bufferNext(); };
+$('buffer-next').onchange = () => {
+  source = 'live YouTube audio; anonymous retrieval; progressive HTTP' + ($('buffer-next').checked ? ' with next-song browser buffering' : '');
+  showBufferStatus();
+};
 
 async function prepare(mode) {
   if (preparing || modeLocked || selectedTracks) return;
@@ -152,6 +223,7 @@ async function prepare(mode) {
     preparing = false;
     for (const id of ['play', 'previous', 'next', 'reset']) $(id).disabled = false;
     for (const id of ['preload', 'music', 'live']) $(id).disabled = Boolean(selectedTracks) || modeLocked;
+    $('buffer-next').disabled = delivery !== 'live' || modeLocked;
     renderQueue();
   }
 }
@@ -179,6 +251,7 @@ $('live').onclick = async () => {
     preparing = false;
     for (const id of ['play', 'previous', 'next', 'reset']) $(id).disabled = false;
     for (const id of ['preload', 'music', 'live']) $(id).disabled = Boolean(selectedTracks) || modeLocked;
+    $('buffer-next').disabled = delivery !== 'live' || modeLocked;
     renderQueue();
   }
 };
@@ -216,7 +289,10 @@ $('export').onclick = async () => {
     catch { liveStatus = { unavailable: true }; }
   }
   const result = { schemaVersion: 2, audioDelivery: delivery, eventsTotal, eventsTruncated: eventsTotal > events.length, date: new Date().toISOString(), device: $('device').value, userAgent: navigator.userAgent,
-    source, musicPreparedAt, liveRunId, liveRequestedTrackIdsAtSelection, liveStatus, musicTrackIds: (selectedTracks ?? []).filter(track => track.id).map(track => track.id),
+    source, musicPreparedAt, liveRunId, liveRequestedTrackIdsAtSelection, liveStatus,
+    liveBrowserBuffering: delivery === 'live' ? { enabled: $('buffer-next').checked, playback: livePlayback,
+      tracks: [...liveBuffers].map(([id, entry]) => ({ id, status: entry.status, bytes: entry.bytes, startedAt: entry.startedAt, readyAt: entry.readyAt })) } : null,
+    musicTrackIds: (selectedTracks ?? []).filter(track => track.id).map(track => track.id),
     mediaSessionSupported: 'mediaSession' in navigator,
     checks: checks.map((check, i) => ({ check, status: $(`check-${i}`).value })), notes: $('notes').value, events };
   const url = URL.createObjectURL(new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' }));

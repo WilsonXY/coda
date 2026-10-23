@@ -11,6 +11,8 @@
 <button id="preload">Load all three tones before playing</button>
 <button id="music">Load three prepared music tracks</button>
 <button id="live">Use live music</button>
+<p><label><input id="buffer-next" type="checkbox" disabled> Buffer the next live song on this device</label></p>
+<p id="buffer-status" role="status">Next-song buffering is off. Select live music to enable it before Play.</p>
 <p>Live mode fetches a song when selected and plays incoming bytes. It requires the optional live experiment server. The server keeps up to three songs in memory until restart; exports identify its run and retrieval status. No account is connected.</p>
 <p>Choose before playing. Loading stops and resets the queue. Prepared music loads about 16 MB into memory before Play; it uses anonymously retrieved complete files, with no Premium account connected. Wait for Ready. To change modes, export first and reload.</p>
 <p id="now" aria-live="polite">Nothing playing</p>

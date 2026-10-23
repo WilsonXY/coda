@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-23T20:32:59.550Z",
+  "browser": "153.0.8010.12",
+  "status": "PASS",
+  "source": "gated prepared files through live HTTP fixtures; not fresh YouTube",
+  "firstPlaybackBeforeEOF": true,
+  "nextSongBeforeEOF": "pending, not ready",
+  "nextTransitionAndSeekWithoutNetworking": "PASS",
+  "failedFurtherBufferPreservesCurrentPlayback": "PASS",
+  "persistentExportAfterTruncation": "PASS",
+  "reorderRemovalCancellationAndResetCleanup": "PASS",
+  "invalidBytesFallback": "PASS",
+  "phoneBatterySaver": "NOT RUN"
+}
