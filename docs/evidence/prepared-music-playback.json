@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-23T16:07:31.414Z",
+  "browser": "153.0.8010.12",
+  "source": "prepared YouTube audio; anonymous retrieval; fully buffered",
+  "byteVerifiedTrackIds": [
+    "4D7u5KF7SP8",
+    "t0AvpJ74sBc",
+    "dsUTcSVdU2U"
+  ],
+  "offlineTransitions": 3,
+  "middleSeek": "PASS",
+  "normalSpeedFullTrack": "PASS",
+  "phone": "NOT RUN",
+  "partialPreparationFailure": "PASS: original tones remain usable",
+  "fullTrackWallSeconds": 371.029,
+  "testedPreparedAt": "2026-10-23T16:03:45.754Z",
+  "trackSha256s": [
+    "1cf495bdfbf2bbe3d7c9921d82ef378b143a52d707e9e2062722714c0e36b9d5",
+    "a3f43603528c073bd8a9bb7f8df3413276605f4ef02e128602059800654e29c0",
+    "8ba93c54c7b916e19e74e8788c8c2a461986563cc3006587f46f32a2c2de9b55"
+  ]
+}

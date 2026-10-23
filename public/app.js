@@ -2,17 +2,27 @@ const $ = id => document.getElementById(id);
 const audio = $('audio');
 const events = [];
 let eventsTotal = 0;
-let toneUrls = null;
+let loadedTracks = null;
+const toneSource = 'generated WAV tones; not YouTube audio';
+let source = toneSource;
+let musicPreparedAt = null;
 let preparing = false;
 let modeLocked = false;
 const checks = ['Play / pause / seek / volume', 'Previous / next', 'Three automatic track transitions', 'Audio continues when switching panels', 'Queue reorder and remove', 'Lock screen for ten minutes (Android)', 'Headset and lock-screen controls', 'Switch apps and return', 'Recover after an interruption', 'Repeat with battery saver enabled'];
 let queue = [];
 let current = null;
 let networkBusy = false;
+audio.volume = 0.25;
+
+function tones() {
+  return ['A', 'B', 'C'].map((name, i) => ({ title: `Tone ${name}`, url: `/audio/${i}.wav`, seconds: 20,
+    artist: 'Coda generated test audio', mime: 'audio/wav' }));
+}
 
 function log(event, details = {}) {
   eventsTotal++;
-  events.push({ audioDelivery: toneUrls ? 'preloaded' : 'network', at: new Date().toISOString(), event, track: current?.title ?? null, position: Number(audio.currentTime.toFixed(2)), ...details });
+  events.push({ source, audioDelivery: loadedTracks ? 'preloaded' : 'network', at: new Date().toISOString(), event,
+    track: current?.title ?? null, trackId: current?.id ?? null, position: Number(audio.currentTime.toFixed(2)), ...details });
   if (events.length > 300) events.shift();
   $('events').textContent = events.slice(-25).map(row => `${row.at.slice(11, 19)} ${row.event} ${row.track ?? ''} @ ${row.position}s`).join('\n');
 }
@@ -21,7 +31,7 @@ function renderQueue() {
   $('queue').replaceChildren(...queue.map((track, index) => {
     const li = document.createElement('li');
     const title = document.createElement('span');
-    title.textContent = `${track === current ? '▶ ' : ''}${track.title} — 20 seconds `;
+    title.textContent = `${track === current ? '▶ ' : ''}${track.title} — ${track.seconds} seconds `;
     li.append(title);
     for (const [label, action, disabled] of [
       ['Play', () => select(track), false],
@@ -46,11 +56,12 @@ async function select(track) {
   if (preparing) return;
   modeLocked = true;
   $('preload').disabled = true;
+  $('music').disabled = true;
   current = track;
   audio.src = track.url;
   $('now').textContent = track.title;
   if ('mediaSession' in navigator && 'MediaMetadata' in window) {
-    navigator.mediaSession.metadata = new MediaMetadata({ title: track.title, artist: 'Coda generated test audio' });
+    navigator.mediaSession.metadata = new MediaMetadata({ title: track.title, artist: track.artist });
   }
   renderQueue();
   await resume();
@@ -85,7 +96,7 @@ function remove(track) {
 function reset() {
   audio.pause(); audio.removeAttribute('src'); audio.load(); current = null;
   if ('mediaSession' in navigator) navigator.mediaSession.metadata = null;
-  queue = ['A', 'B', 'C'].map((name, i) => ({ title: `Tone ${name}`, url: toneUrls?.[i] ?? `/audio/${i}.wav` }));
+  queue = (loadedTracks ?? tones()).map(track => ({ ...track }));
   $('now').textContent = 'Nothing playing'; renderQueue(); log('queue-reset');
 }
 
@@ -97,44 +108,50 @@ $('next').onclick = () => { log('control', { action: 'next', control: 'button' }
 $('previous').onclick = () => { log('control', { action: 'previous', control: 'button' }); step(-1); };
 $('reset').onclick = () => { log('control', { action: 'reset', control: 'button' }); reset(); };
 
-$('preload').onclick = async () => {
-  if (preparing || modeLocked || toneUrls) return;
+async function prepare(mode) {
+  if (preparing || modeLocked || loadedTracks) return;
   preparing = true;
   reset();
-  for (const id of ['play', 'previous', 'next', 'reset', 'preload']) $(id).disabled = true;
+  for (const id of ['play', 'previous', 'next', 'reset', 'preload', 'music']) $(id).disabled = true;
   renderQueue();
-  $('delivery-status').textContent = 'Loading all three tones… wait before pressing Play.';
-  log('preload-start');
+  $('delivery-status').textContent = `Loading all three ${mode === 'music' ? 'music tracks' : 'tones'}… wait before pressing Play.`;
+  log('preload-start', { requestedSource: mode });
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const timeout = setTimeout(() => controller.abort(), mode === 'music' ? 120000 : 15000);
   const urls = [];
   try {
-    const blobs = await Promise.all([0, 1, 2].map(async index => {
-      const response = await fetch(`/audio/${index}.wav`, { signal: controller.signal, cache: 'no-store' });
+    const catalog = mode === 'music' ? await request('/api/music', controller.signal) : null;
+    const tracks = catalog ? catalog.tracks.map(track => ({ ...track, url: `/music/${encodeURIComponent(track.id)}.webm` })) : tones();
+    const blobs = await Promise.all(tracks.map(async track => {
+      const response = await fetch(track.url, { signal: controller.signal, cache: 'no-store' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const blob = await response.blob();
-      if (!blob.type.startsWith('audio/wav')) throw new Error('Unexpected audio type');
+      if (!blob.type.startsWith(track.mime) || (mode === 'music' && blob.size !== track.bytes)) throw new Error('Unexpected audio data');
       return blob;
     }));
     for (const blob of blobs) urls.push(URL.createObjectURL(blob));
-    toneUrls = urls;
+    loadedTracks = tracks.map((track, i) => ({ ...track, url: urls[i] }));
+    source = mode === 'music' ? 'prepared YouTube audio; anonymous retrieval; fully buffered' : toneSource;
+    musicPreparedAt = catalog?.preparedAt ?? null;
     reset();
-    $('delivery-status').textContent = 'Ready: all three tones are loaded in memory. Press Play for the comparison.';
+    $('delivery-status').textContent = mode === 'music' ? 'Ready: three complete music tracks are loaded in memory. Press Play.' : 'Ready: all three tones are loaded in memory. Press Play for the comparison.';
     log('preload-ready', { bytes: blobs.reduce((sum, blob) => sum + blob.size, 0) });
   } catch (error) {
     controller.abort();
     urls.forEach(url => URL.revokeObjectURL(url));
-    toneUrls = null;
-    $('delivery-status').textContent = 'Could not load all tones. Original network mode remains selected. Retry or press Play to use it.';
+    loadedTracks = null; source = toneSource; musicPreparedAt = null; reset();
+    $('delivery-status').textContent = `Could not load all ${mode === 'music' ? 'music tracks' : 'tones'}. Original network mode remains selected. Retry or press Play to use it.`;
     log('preload-failed', { error: error.name });
   } finally {
     clearTimeout(timeout);
     preparing = false;
     for (const id of ['play', 'previous', 'next', 'reset']) $(id).disabled = false;
-    $('preload').disabled = Boolean(toneUrls) || modeLocked;
+    for (const id of ['preload', 'music']) $(id).disabled = Boolean(loadedTracks) || modeLocked;
     renderQueue();
   }
-};
+}
+$('preload').onclick = () => prepare('tones');
+$('music').onclick = () => prepare('music');
 
 for (const name of ['play', 'pause', 'playing', 'waiting', 'stalled', 'ended', 'seeking', 'seeked', 'loadedmetadata', 'loadstart', 'canplay', 'error']) {
   audio.addEventListener(name, () => {
@@ -162,8 +179,8 @@ for (const [index, label] of checks.entries()) {
   row.append(select); $('checklist').append(row);
 }
 $('export').onclick = () => {
-  const result = { schemaVersion: 2, audioDelivery: toneUrls ? 'preloaded' : 'network', eventsTotal, eventsTruncated: eventsTotal > events.length, date: new Date().toISOString(), device: $('device').value, userAgent: navigator.userAgent,
-    source: 'generated WAV tones; not YouTube audio',
+  const result = { schemaVersion: 2, audioDelivery: loadedTracks ? 'preloaded' : 'network', eventsTotal, eventsTruncated: eventsTotal > events.length, date: new Date().toISOString(), device: $('device').value, userAgent: navigator.userAgent,
+    source, musicPreparedAt, musicTrackIds: (loadedTracks ?? []).filter(track => track.id).map(track => track.id),
     mediaSessionSupported: 'mediaSession' in navigator,
     checks: checks.map((check, i) => ({ check, status: $(`check-${i}`).value })), notes: $('notes').value, events };
   const url = URL.createObjectURL(new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' }));
@@ -171,8 +188,8 @@ $('export').onclick = () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
-async function request(path) {
-  const response = await fetch(path);
+async function request(path, signal) {
+  const response = await fetch(path, { signal });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? `HTTP ${response.status}`);
   return data;
@@ -197,7 +214,7 @@ function showItems(data, type) {
       $('search-status').textContent = 'Checking…';
       const result = await request(type === 'song' ? `/api/playability?id=${encodeURIComponent(item.id)}` : `/api/playlist?id=${encodeURIComponent(item.id)}`);
       $('probe-output').textContent = JSON.stringify(result, null, 2);
-      $('search-status').textContent = type === 'song' ? 'Response received. No music played; integrated playback is NOT RUN.' : `${result.items.length} playlist items read; more pages: ${result.more}.`;
+      $('search-status').textContent = type === 'song' ? 'Response received. This response check does not play music.' : `${result.items.length} playlist items read; more pages: ${result.more}.`;
       log(type === 'song' ? 'player-response' : 'playlist-read');
     });
     li.append(label, button); return li;

@@ -1,7 +1,9 @@
 import http from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
+import { createHash } from 'node:crypto';
+import cases from './scripts/cases.json' with { type: 'json' };
 import { search, playlist, playability } from './youtube.mjs';
 
 const files = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'] };
@@ -25,7 +27,24 @@ function tone(index) {
 }
 const tones = [0, 1, 2].map(tone);
 
-export function createServer() {
+async function musicManifest(directory) {
+  const manifest = JSON.parse(await readFile(join(directory, 'manifest.json'), 'utf8'));
+  if (manifest.version !== 1 || manifest.complete !== true || !Number.isFinite(Date.parse(manifest.preparedAt)) ||
+      !Array.isArray(manifest.tracks) || manifest.tracks.length !== cases.playbackIds.length) throw new Error('Invalid music manifest');
+  const tracks = manifest.tracks.map((track, index) => {
+    if (track.id !== cases.playbackIds[index] || track.mime !== 'audio/webm' ||
+        typeof track.title !== 'string' || !track.title.length || track.title.length > 200 ||
+        typeof track.artist !== 'string' || track.artist.length > 200 ||
+        !Number.isFinite(track.seconds) || track.seconds <= 0 || track.seconds > 900 ||
+        !Number.isSafeInteger(track.bytes) || track.bytes <= 0 || track.bytes > 16 * 1024 * 1024 ||
+        !/^[a-f0-9]{64}$/.test(track.sha256)) throw new Error('Invalid prepared track');
+    return { id: track.id, title: track.title, artist: track.artist, seconds: track.seconds,
+      bytes: track.bytes, sha256: track.sha256, mime: track.mime };
+  });
+  return { preparedAt: manifest.preparedAt, tracks };
+}
+
+export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR } = {}) {
   return http.createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -53,9 +72,26 @@ export function createServer() {
         if (!id || !/^[\w-]{11}$/.test(id)) return json(400, { error: 'Enter an 11-character video ID.' });
         return json(200, await playability(id));
       }
+      if (url.pathname === '/api/music') {
+        if (!musicDirectory) return json(503, { error: 'Prepared music is not available. Run the local preparation command first.' });
+        return json(200, await musicManifest(musicDirectory));
+      }
       const audio = url.pathname.match(/^\/audio\/([0-2])\.wav$/);
-      if (audio) {
-        const data = tones[Number(audio[1])];
+      const music = url.pathname.match(/^\/music\/([\w-]{11})\.webm$/);
+      if (audio || music) {
+        let data, mime;
+        if (audio) { data = tones[Number(audio[1])]; mime = 'audio/wav'; }
+        else {
+          if (!cases.playbackIds.includes(music[1])) return json(404, { error: 'Not a fixed test track.' });
+          if (!musicDirectory) return json(503, { error: 'Prepared music is not available.' });
+          const manifest = await musicManifest(musicDirectory);
+          const track = manifest.tracks.find(track => track.id === music[1]);
+          // ponytail: fixed small test files; use streaming reads if the catalog grows.
+          if ((await stat(join(musicDirectory, `${track.id}.webm`))).size !== track.bytes) throw new Error('Unexpected prepared file size');
+          data = await readFile(join(musicDirectory, `${track.id}.webm`));
+          if (data.length !== track.bytes || createHash('sha256').update(data).digest('hex') !== track.sha256) throw new Error('Corrupt prepared music');
+          mime = track.mime;
+        }
         let start = 0, end = data.length - 1, status = 200;
         if (req.headers.range) {
           const match = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range);
@@ -66,7 +102,7 @@ export function createServer() {
           }
           status = 206; res.setHeader('Content-Range', `bytes ${start}-${end}/${data.length}`);
         }
-        res.writeHead(status, { 'Content-Type': 'audio/wav', 'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1 });
+        res.writeHead(status, { 'Content-Type': mime, 'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1 });
         return res.end(req.method === 'HEAD' ? undefined : data.subarray(start, end + 1));
       }
       if (files[url.pathname]) {
