@@ -20,6 +20,13 @@ function runWorker(python, authFile, testJournal, request) {
 }
 
 // Serve identity is trusted only behind the loopback Tailscale proxy; local processes are trusted.
+export function ownerAuthorized(req, owner) {
+  const site = req.headers['sec-fetch-site'];
+  return Boolean(owner) && ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) &&
+    req.headers['tailscale-user-login'] === owner && (!site || ['same-origin', 'none'].includes(site)) &&
+    (!req.headers.origin || req.headers.origin === `https://${req.headers.host}`);
+}
+
 export function createAccountReader({ owner = process.env.CODA_ACCOUNT_OWNER,
   authFile = process.env.CODA_ACCOUNT_AUTH, python = process.env.CODA_ACCOUNT_PYTHON,
   testJournal = process.env.CODA_ACCOUNT_TEST_JOURNAL,
@@ -27,11 +34,7 @@ export function createAccountReader({ owner = process.env.CODA_ACCOUNT_OWNER,
   let busy = false; // ponytail: one bounded read at a time; use a persistent worker if startup becomes costly.
   return async (req, url) => {
     if (!owner || !authFile || !python) return { status: 503, body: { error: 'Account library is not configured.' } };
-    const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
-    const site = req.headers['sec-fetch-site'];
-    if (!local || req.headers['tailscale-user-login'] !== owner ||
-        (site && !['same-origin', 'none'].includes(site)) ||
-        (req.headers.origin && req.headers.origin !== `https://${req.headers.host}`)) {
+    if (!ownerAuthorized(req, owner)) {
       return { status: 403, body: { error: 'Account access requires the owner’s private Tailscale link.' } };
     }
     let request;

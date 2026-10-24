@@ -5,7 +5,7 @@ import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import cases from './scripts/cases.json' with { type: 'json' };
 import { createLiveMusic } from './live-music.mjs';
-import { createAccountReader } from './account.mjs';
+import { createAccountReader, ownerAuthorized } from './account.mjs';
 import { search, playlist, playability } from './youtube.mjs';
 
 const files = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'] };
@@ -48,6 +48,7 @@ async function musicManifest(directory) {
 
 export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR, liveMusic, accountOptions } = {}) {
   const live = liveMusic ? createLiveMusic(liveMusic) : null;
+  const sampleStatus = () => { const status = live.status(); return { ...status, tracks: status.tracks.filter(track => cases.playbackIds.includes(track.id)) }; };
   const account = createAccountReader(accountOptions);
   const server = http.createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
@@ -63,6 +64,12 @@ export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR, live
       if (url.pathname.startsWith('/api/account/')) {
         const result = await account(req, url);
         return json(result.status, result.body);
+      }
+      const catalogTrack = url.pathname.match(/^\/catalog\/([\w-]{11})\.webm$/);
+      if (catalogTrack) {
+        if (!ownerAuthorized(req, accountOptions?.owner ?? process.env.CODA_ACCOUNT_OWNER)) return json(403, { error: 'Playback requires the owner’s private Tailscale link.' });
+        if (!live) return json(503, { error: 'Live playback is not enabled.' });
+        return await live.serve(catalogTrack[1], req, res);
       }
       if (url.pathname === '/api/search') {
         const q = url.searchParams.get('q')?.trim();
@@ -82,9 +89,9 @@ export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR, live
       }
       if (url.pathname === '/api/live' || url.pathname === '/api/live/status') {
         if (!live) return json(503, { error: 'Live music is not enabled. Start the optional live experiment.' });
-        if (url.pathname.endsWith('/status')) return json(200, live.status());
+        if (url.pathname.endsWith('/status')) return json(200, sampleStatus());
         if (!musicDirectory) return json(503, { error: 'Fixed-track metadata is not configured.' });
-        const status = live.status();
+        const status = sampleStatus();
         return json(200, { ...await musicManifest(musicDirectory), runId: status.runId, retrievals: status.tracks });
       }
       const liveTrack = url.pathname.match(/^\/live\/([\w-]{11})\.webm$/);
