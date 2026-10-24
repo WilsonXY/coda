@@ -36,6 +36,12 @@
 </section>
 <section id="account-panel" hidden><h2>My YouTube Music library</h2>
 <p>Use your private Tailscale link on an owner device. Browsing below is read-only.</p>
+<button id="account-check">Check connection</button>
+<p id="account-connection" role="status">Connection has not been checked.</p>
+<details id="account-recovery" hidden><summary>Reconnect account</summary>
+<p>Refresh the saved YouTube Music session in the local terminal using your configured auth file. Keep headers and cookies there. Then choose Check connection here; no server restart is needed.</p>
+<p><a href="https://ytmusicapi.readthedocs.io/en/stable/setup/browser.html" target="_blank" rel="noopener noreferrer">Local browser authentication instructions</a></p>
+</details>
 <button id="account-load">Load my playlists</button>
 <p id="account-status" role="status">Your library has not been loaded.</p><ol id="account-playlists"></ol>
 <h3 id="account-playlist-title">No playlist selected</h3>

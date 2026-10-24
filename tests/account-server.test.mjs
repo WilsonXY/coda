@@ -34,6 +34,17 @@ test('account reads require the configured owner proxy identity before upstream 
   assert.equal(calls, 1);
 });
 
+test('account status is an owner-only read that returns no account identity', async t => {
+  let calls = 0;
+  const base = await serve(t, { owner, authFile: '/private/fixture.json', python: 'unused', execute: async request => {
+    calls++; assert.deepEqual(request, { operation: 'status' }); return { state: 'connected' };
+  } });
+  assert.equal((await fetch(base + '/api/account/status')).status, 403);
+  assert.equal(calls, 0);
+  const response = await fetch(base + '/api/account/status', { headers: { 'Tailscale-User-Login': owner } });
+  assert.equal(response.status, 200); assert.deepEqual(await response.json(), { state: 'connected' });
+});
+
 test('one bounded account read runs at a time and the reader recovers after it finishes', async t => {
   let calls = 0, release, entered;
   const ready = new Promise(resolve => { entered = resolve; });
@@ -137,4 +148,18 @@ console.log(JSON.stringify({ok:true,data:{status:'PASS_API_READBACK'}}));
   const result = await fetch(base + '/api/account/playlist-test', { method: 'POST', headers: { 'Tailscale-User-Login': owner, Origin: base.replace('http:', 'https:') } });
   assert.equal(result.status, 200);
   assert.deepEqual(await result.json(), { status: 'PASS_API_READBACK' });
+});
+
+test('worker failure codes distinguish rejected sessions from setup and unavailable service', async t => {
+  const directory = await mkdtemp(join(tmpdir(), 'coda-session-codes-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  for (const [code, status, expected] of [['ACCOUNT_REAUTH_REQUIRED', 401, 'ACCOUNT_REAUTH_REQUIRED'], ['ACCOUNT_SETUP_REQUIRED', 503, 'ACCOUNT_SETUP_REQUIRED'], ['synthetic-private-secret', 502, 'ACCOUNT_UNAVAILABLE']]) {
+    const python = join(directory, `${status}-${expected}.mjs`);
+    await writeFile(python, `#!${process.execPath}\nconsole.log(JSON.stringify({ok:false,error:'synthetic-private-secret',code:${JSON.stringify(code)}}));process.exitCode=1;\n`, { mode: 0o700 });
+    const base = await serve(t, { owner, authFile: '/private/fixture.json', python });
+    const response = await fetch(base + '/api/account/status', { headers: { 'Tailscale-User-Login': owner } });
+    const body = await response.json();
+    assert.equal(response.status, status); assert.equal(body.code, expected);
+    assert.equal(JSON.stringify(body).includes('synthetic-private-secret'), false);
+  }
 });

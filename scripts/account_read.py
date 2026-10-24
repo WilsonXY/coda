@@ -8,13 +8,17 @@ import sys
 PLAYLIST_ID = re.compile(r'(LM|(?:PL|RD|OL)[A-Za-z0-9_-]{5,120})', re.ASCII)
 
 
+class ReauthenticationRequired(Exception):
+    pass
+
+
 def text(value, default=''):
     return value[:200] if isinstance(value, str) else default
 
 
 def validate_request(request):
     if isinstance(request, dict):
-        if request == {'operation': 'library'}:
+        if request in [{'operation': 'library'}, {'operation': 'status'}]:
             return
         if set(request) == {'operation', 'id'} and request['operation'] == 'playlist':
             if isinstance(request['id'], str) and PLAYLIST_ID.fullmatch(request['id']):
@@ -22,10 +26,28 @@ def validate_request(request):
     raise ValueError('Unsupported account read')
 
 
+def verify_account(yt):
+    try:
+        account = yt.get_account_info()
+    except KeyError:
+        # The dependency also raises KeyError for logged-out payloads. Confirm that case;
+        # a changed parser or network failure alone must not be called an expired login.
+        response = yt._send_request('account/account_menu', {})
+        signals = {item.get('value')
+                   for group in response.get('responseContext', {}).get('serviceTrackingParams', [])
+                   for item in group.get('params', []) if item.get('key') == 'logged_in'}
+        if signals == {'0'}:
+            raise ReauthenticationRequired() from None
+        raise
+    if not text(account.get('accountName')).strip():
+        raise ValueError('Account session could not be verified')
+
+
 def read_account(yt, request):
     validate_request(request)
-    if not text(yt.get_account_info().get('accountName')).strip():
-        raise ValueError('Account session could not be verified')
+    verify_account(yt)
+    if request['operation'] == 'status':
+        return {'state': 'connected'}
     if request['operation'] == 'playlist':
         playlist = yt.get_playlist(request['id'], limit=100)
         items = []
@@ -51,6 +73,14 @@ def read_account(yt, request):
     return {'items': items, 'limit': 50, 'complete': False}
 
 
+def failure(code=None):
+    body = {'ok': False, 'error': 'Account read failed.'}
+    if code:
+        body['code'] = code
+    print(json.dumps(body))
+    return 1
+
+
 def main():
     try:
         raw = sys.stdin.read(4097)
@@ -59,15 +89,19 @@ def main():
         request = json.loads(raw)
         validate_request(request)  # Reject unsupported operations before account/session setup.
         from music_probe import validate_auth
-        auth = validate_auth(Path(os.environ['CODA_ACCOUNT_AUTH']), False)
+        try:
+            auth = validate_auth(Path(os.environ['CODA_ACCOUNT_AUTH']), False)
+        except (OSError, ValueError):
+            return failure('ACCOUNT_SETUP_REQUIRED')
         from ytmusicapi import YTMusic
         result = read_account(YTMusic(str(auth), location='MY'), request)
         print(json.dumps({'ok': True, 'data': result}, ensure_ascii=True, allow_nan=False))
         return 0
+    except ReauthenticationRequired:
+        return failure('ACCOUNT_REAUTH_REQUIRED')
     except Exception:
         # Never serialize exception text, raw headers, account context or upstream responses.
-        print(json.dumps({'ok': False, 'error': 'Account read failed.'}))
-        return 1
+        return failure()
 
 
 if __name__ == '__main__':

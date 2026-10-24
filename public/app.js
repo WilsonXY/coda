@@ -331,12 +331,32 @@ $('export').onclick = async () => {
 async function request(path, signal, options = {}) {
   const response = await fetch(path, { ...options, signal });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error ?? `HTTP ${response.status}`);
+  if (!response.ok) throw Object.assign(new Error(data.error ?? `HTTP ${response.status}`), { code: data.code });
   return data;
 }
 
 let accountBusy = false;
 let playlistTestAttempted = false;
+async function accountRead(path) {
+  try {
+    const data = await request(path, AbortSignal.timeout(20000));
+    $('account-connection').textContent = `Connected · last checked ${new Date().toLocaleTimeString()}.`;
+    $('account-recovery').hidden = true; $('account-recovery').open = false;
+    return data;
+  } catch (error) {
+    const states = {
+      ACCOUNT_REAUTH_REQUIRED: 'Reconnect needed. The saved YouTube Music session is no longer accepted.',
+      ACCOUNT_SETUP_REQUIRED: 'Account setup needs attention. Check the local auth file and its permissions.',
+      ACCOUNT_NOT_CONFIGURED: 'Account setup is not configured on this server.',
+      ACCOUNT_OWNER_REQUIRED: 'Use the owner’s private Tailscale link to check the connection.',
+      ACCOUNT_BUSY: 'An account request is already running. Check again shortly.',
+    };
+    $('account-connection').textContent = states[error.code] ?? 'Connection unverified. The server or YouTube Music may be unavailable; try checking again.';
+    $('account-recovery').hidden = !['ACCOUNT_REAUTH_REQUIRED', 'ACCOUNT_SETUP_REQUIRED'].includes(error.code);
+    $('account-recovery').open = false;
+    throw error;
+  }
+}
 function clearAccountView() {
   $('account-playlists').replaceChildren(); $('account-tracks').replaceChildren();
   $('account-playback-actions').replaceChildren();
@@ -395,16 +415,20 @@ $('account-test').onclick = () => {
     }
   }, 'Playlist test stopped.');
 };
+$('account-check').onclick = () => accountCheck(async () => {
+  await accountRead('/api/account/status');
+  $('account-status').textContent = 'Connection checked. You can load your playlists.';
+});
 $('account-load').onclick = () => accountCheck(async () => {
   clearAccountView();
-  const data = await request('/api/account/playlists', AbortSignal.timeout(20000));
+  const data = await accountRead('/api/account/playlists');
   $('account-playlists').replaceChildren(...data.items.map(item => {
     const li = document.createElement('li');
     const title = document.createElement('span'); title.textContent = item.title + ' '; li.append(title);
     if (item.id) {
       const button = document.createElement('button'); button.textContent = 'Open playlist'; button.disabled = accountBusy;
       button.onclick = () => accountCheck(async () => {
-        const playlist = await request(`/api/account/playlist?id=${encodeURIComponent(item.id)}`, AbortSignal.timeout(20000));
+        const playlist = await accountRead(`/api/account/playlist?id=${encodeURIComponent(item.id)}`);
         $('account-playlist-title').textContent = playlist.title;
         $('account-playlist-status').textContent = `${playlist.privacy} · ${playlist.items.length} tracks shown` +
           (playlist.total === null ? ` (limit ${playlist.limit})` : ` of ${playlist.total}`);
