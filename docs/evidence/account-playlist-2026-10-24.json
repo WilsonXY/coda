@@ -1,0 +1,144 @@
+{
+  "date": "2026-10-24T15:29:07.934066+00:00",
+  "library": "ytmusicapi",
+  "version": "1.12.3",
+  "authentication": "local browser-session file outside checkout; mode0600; contents not included",
+  "sourceReportSha256": {
+    "accountRead": "c78655a24146d8a2fb60f261d26c1b5af13425276e46b716132f12582a1778b7",
+    "initialWriteAttempt": "6309dde28924fc1f2c41f615e415fec13b98734517ad6a27284ac0f9d665f6a7",
+    "laterReadDiagnostic": "ce9f620a8d6e66a3c911ee14a1fe0e057a10f21e2523fb13f73f4a271a83afcc",
+    "continuation": "8c9c0eaa89ffff69d3c90061a888da3dc755c273811f4b011392ec7df79a6573"
+  },
+  "continuationScriptSha256": "957254e045b6f0837cc03c22cc7d7b94a71d9b36ffe5c92daf6ca9f103c64cb5",
+  "accountRead": {
+    "status": "PASS_LIBRARY_READ",
+    "libraryInventoryCompleteness": "NOT VERIFIED: bounded library response, not a complete inventory/pagination test"
+  },
+  "initialWriteAttempt": {
+    "date": "2026-10-24T15:21:53.667249+00:00",
+    "status": "FAIL",
+    "playlistId": "PLWEPAqmCfbhY",
+    "errorType": "KeyError",
+    "completedReadbackSteps": 0,
+    "interpretation": "Playlist creation returned an ID; first get_playlist/readback path raised KeyError before a step was recorded. No add/move/remove call was reached. Exact initial response/key/root cause was not captured."
+  },
+  "laterReadOnlyInspection": {
+    "status": "READ_RETURNED",
+    "playlistId": "PLWEPAqmCfbhY",
+    "privacy": "PRIVATE",
+    "items": 2,
+    "interpretation": "A later read-only request returned the expected two-track private playlist. Transient propagation/response shape is a hypothesis, not a confirmed cause."
+  },
+  "continuation": {
+    "date": "2026-10-24T15:29:07.934066+00:00",
+    "library": "ytmusicapi",
+    "version": "1.12.3",
+    "playlistId": "PLWEPAqmCfbhY",
+    "createdNewPlaylist": false,
+    "initialFailureSha256": "6309dde28924fc1f2c41f615e415fec13b98734517ad6a27284ac0f9d665f6a7",
+    "status": "PASS_API_READBACK",
+    "steps": [
+      {
+        "action": "inspect previously created private playlist",
+        "expected": [
+          "4D7u5KF7SP8",
+          "Rgrt_8mXrK8"
+        ],
+        "actual": [
+          "4D7u5KF7SP8",
+          "Rgrt_8mXrK8"
+        ],
+        "private": true,
+        "owned": true
+      },
+      {
+        "action": "add duplicate",
+        "expected": [
+          "4D7u5KF7SP8",
+          "Rgrt_8mXrK8",
+          "4D7u5KF7SP8"
+        ],
+        "actual": [
+          "4D7u5KF7SP8",
+          "Rgrt_8mXrK8",
+          "4D7u5KF7SP8"
+        ],
+        "private": true,
+        "owned": true
+      },
+      {
+        "action": "move duplicate to front",
+        "expected": [
+          "4D7u5KF7SP8",
+          "4D7u5KF7SP8",
+          "Rgrt_8mXrK8"
+        ],
+        "actual": [
+          "4D7u5KF7SP8",
+          "4D7u5KF7SP8",
+          "Rgrt_8mXrK8"
+        ],
+        "private": true,
+        "owned": true
+      },
+      {
+        "action": "remove exact duplicate",
+        "expected": [
+          "4D7u5KF7SP8",
+          "Rgrt_8mXrK8"
+        ],
+        "actual": [
+          "4D7u5KF7SP8",
+          "Rgrt_8mXrK8"
+        ],
+        "private": true,
+        "owned": true
+      }
+    ],
+    "attemptedWrites": [
+      "add duplicate",
+      "move duplicate to front",
+      "remove exact duplicate"
+    ],
+    "officialSiteVerification": "NOT RUN",
+    "distinctDuplicateItemIdVerified": true,
+    "exactDuplicateMovedVerified": true,
+    "originalItemsSurvivedVerified": true
+  },
+  "finalSongs": [
+    {
+      "id": "4D7u5KF7SP8",
+      "title": "Get Lucky (feat. Pharrell Williams and Nile Rodgers)"
+    },
+    {
+      "id": "Rgrt_8mXrK8",
+      "title": "Get Lucky (Radio Edit - feat. Pharrell Williams and Nile Rodgers)"
+    }
+  ],
+  "scopeChecks": [
+    "Only the playlist ID returned by this run creation is used.",
+    "Readbacks require PRIVATE and owned, the Coda experiment title/date within120sec of the original attempt, matching description and expected song order.",
+    "One add, one move and one remove method call are recorded; intent is journaled before each write. No write/create retry and no second playlist creation.",
+    "Distinct playlist-item identities prove that the appended duplicate was moved/removed and both original items survived."
+  ],
+  "apiOutcome": "PASS_API_READBACK after explicit read-only inspection and controlled continuation of the same created playlist; the initial unattended probe attempt remains FAIL.",
+  "officialSiteVerification": {
+    "status": "NOT RUN",
+    "requestedCheck": "Owner refreshes official YouTube Music playlist and confirms PRIVATE, exactly two songs in the recorded order.",
+    "ownerAnswer": null
+  },
+  "limits": [
+    "The unmodified probe stopped after creation; this is not a clean unattended probe PASS.",
+    "Initial KeyError cause unresolved. Later successful read is not proof of propagation as the cause.",
+    "No session expiry/reauthentication/logout, automatic retry recovery, broad catalog/pagination or existing-playlist mutation tested.",
+    "Website remains anonymous/read-only for account operations; credentials were not wired to the web server or frontend.",
+    "Premium/account-linked playback is not established by these library/playlist operations."
+  ],
+  "nextStep": "Finish official-site confirmation, review and retain account evidence; then build a minimal authenticated backend workflow with explicit owner access controls before website account writes.",
+  "harnessChecks": {
+    "command": ".venv/bin/python -m unittest discover -s tests -p *_test.py",
+    "tests": 9,
+    "status": "PASS"
+  },
+  "acceptanceStatus": "PENDING_OFFICIAL_SITE_CONFIRMATION"
+}
