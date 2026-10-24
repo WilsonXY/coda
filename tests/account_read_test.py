@@ -41,7 +41,7 @@ class AccountReaderChecks(unittest.TestCase):
         class Client(AuthenticatedClient):
             def get_playlist(self, identifier, limit):
                 self.arguments = (identifier, limit)
-                return {'title': 'Private fixture', 'privacy': 'PRIVATE', 'trackCount': 103,
+                return {'title': 'Private fixture', 'owned': True, 'privacy': 'PRIVATE', 'trackCount': 103,
                         'cookie': 'must-not-return', 'tracks': [
                             {'videoId': 'aaaaaaaaaaa', 'title': 'Song', 'artists': [{'name': 'Artist'}],
                              'setVideoId': 'private-item-id', 'feedbackTokens': 'must-not-return'}] * 103}
@@ -65,6 +65,16 @@ class AccountReaderChecks(unittest.TestCase):
                         {'operation': 'playlist', 'id': 'https://example.test'}, {'operation': 'playlist', 'id': '../file'}]:
             with self.subTest(request=request), self.assertRaises(ValueError):
                 self.reader.read_account(Client(), request)
+
+    def test_non_owned_privacy_is_unknown_instead_of_trusting_inferred_public(self):
+        class Client(AuthenticatedClient):
+            def get_playlist(self, *args, **kwargs):
+                return self.playlist
+        client = Client()
+        for owned, expected in [(False, 'UNKNOWN'), (None, 'UNKNOWN'), (True, 'PUBLIC')]:
+            client.playlist = {'owned': owned, 'privacy': 'PUBLIC', 'tracks': [], 'trackCount': 0}
+            with self.subTest(owned=owned):
+                self.assertEqual(self.reader.read_account(client, {'operation': 'playlist', 'id': 'PLfixture123'})['privacy'], expected)
 
     def test_worker_rejects_invalid_input_without_disclosing_it(self):
         source = Path(__file__).resolve().parents[1] / 'scripts' / 'account_read.py'

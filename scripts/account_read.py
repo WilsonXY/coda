@@ -37,7 +37,8 @@ def read_account(yt, request):
                           'title': text(track.get('title'), 'Unavailable track'), 'artists': ', '.join(names)[:200]})
         total = playlist.get('trackCount')
         total = total if type(total) is int and total >= 0 else None
-        privacy = playlist.get('privacy')
+        # ytmusicapi infers PUBLIC for non-owned lists, including unlisted ones.
+        privacy = playlist.get('privacy') if playlist.get('owned') is True else None
         return {'id': request['id'], 'title': text(playlist.get('title'), 'Untitled playlist'),
                 'privacy': privacy if privacy in ['PRIVATE', 'PUBLIC', 'UNLISTED'] else 'UNKNOWN',
                 'items': items, 'limit': 100, 'total': total, 'complete': total is not None and total == len(items)}
