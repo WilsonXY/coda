@@ -57,8 +57,11 @@
   "testConditions": {
     "requestedProtocol": "Battery Saver ON; unplugged; locked screen; observe audible next song without waking",
     "measuredByExport": false,
-    "explicitOwnerConfirmation": null,
-    "classification": "Exact conditions awaiting owner confirmation; owner reports multiple successes in notes."
+    "explicitOwnerConfirmation": {
+      "question": "For this run, was Battery Saver on, the phone unplugged, and the screen locked while the next song stayed audible without waking it?",
+      "answer": "Yes, all of those"
+    },
+    "classification": "Owner confirms Battery Saver enabled, unplugged, screen locked and next song audible without waking. These are owner-reported conditions, not automatic export measurements."
   },
   "liveRunId": "b3167f23-71a8-485a-9b15-7b652515e5ba",
   "liveRequestedTrackIdsAtSelection": [],
@@ -253,9 +256,9 @@
     "rangeEnd": 4864720,
     "failed": false
   },
-  "result": "PASS for one short, seek-induced, hidden loop transition into a phone-buffered track and one following browser download completed while hidden. Owner reports multiple successful trials, not independently reconstructable from truncated history.",
+  "result": "PASS for the short buffered locked-screen transition with Battery Saver on and phone unplugged, combining retained technical events with explicit owner confirmation of audible playback without waking. The following browser download also completed while hidden. Owner reports multiple successful trials; only one transition is reconstructable from retained events.",
   "limits": [
-    "Battery Saver, unplugged state, physical screen lock and audible continuity are not measured by this export; exact follow-up conditions are unconfirmed.",
+    "Battery Saver, unplugged state, physical screen lock and audible next-song playback without waking are explicitly owner-confirmed; the export does not measure these conditions automatically.",
     "Only the final 300 of 765 events remain; 465 earlier events and any other attempted transitions cannot be reconstructed.",
     "The retained hidden interval is 60.146 seconds, not a prolonged screen-lock confirmation.",
     "The visible transition is third-to-first after a seek near the third song ending, not a full-song listening result. The previous third-song storage is not established by the retained history.",
@@ -265,5 +268,5 @@
     "Client readiness proves complete browser Blob creation for these tracks; Node queued bytes/finish do not independently prove phone receipt or decoded/audible playback. Cross-device subsecond clock alignment is not assumed.",
     "All exported checklist defaults remain NOT RUN. Headset/notification-control actions, interruptions, Zen buffering, general catalogs and source renewal remain untested here."
   ],
-  "nextStep": "Confirm actual power/lock/listening conditions, then retain this as short-run evidence. One prolonged locked confirmation remains before claiming sustained background reliability; no playback code change is justified by this successful short export."
+  "nextStep": "Short locked-screen success with Battery Saver on is established for this run. No more short repetitions or playback changes are needed from this result. One prolonged locked confirmation remains before claiming sustained background reliability; earlier failures and unresolved causal attribution remain intact."
 }
