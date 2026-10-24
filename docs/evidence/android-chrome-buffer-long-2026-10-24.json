@@ -73,8 +73,11 @@
   "powerConditions": {
     "requestedProtocol": "Battery Saver ON and unplugged throughout",
     "measuredByExport": false,
-    "explicitOwnerConfirmation": null,
-    "classification": "Specific power conditions for this longer run await confirmation; the previous short-run confirmation is not transferred automatically."
+    "explicitOwnerConfirmation": {
+      "question": "Was Battery Saver still ON and the phone unplugged throughout this longer run?",
+      "answer": "Yes, both throughout"
+    },
+    "classification": "Owner explicitly confirms Battery Saver enabled and phone unplugged throughout this longer run. These are owner-reported conditions, not automatic export measurements."
   },
   "ownerLockAndListeningObservation": {
     "screenLock": "phone chrome, lock screen all the way ",
@@ -405,15 +408,15 @@
     ]
   },
   "coldThirdSongCaptureSeconds": 1.472,
-  "result": "PASS for this one prolonged Android Chrome buffered locked-screen playback run, combining complete technical events with owner comments that screen stayed locked and songs kept playing. Specific power settings await confirmation.",
+  "result": "PASS for this one prolonged Android Chrome buffered locked-screen playback run with Battery Saver ON and the phone unplugged throughout, combining complete technical events, original lock/listening notes and explicit owner power-condition confirmation.",
   "interpretation": [
     "Five natural transitions into phone-buffered songs occur in one 1748.866-second hidden interval; no seeks or mid-run controls are recorded. Transition gaps are event intervals, not measurements of audible silence.",
     "One foreground prefetch and five hidden prefetches complete. Third song is first captured upstream during the hidden interval, rather than all source audio being prepared before locking. Its client transfer takes 2.263 seconds, upstream capture 1.472 seconds on server clock.",
     "Initial song uses progressive-http, later five selections use phone-buffer. Five completed songs reach expected ending positions with wall-clock durations consistent with natural full playback; final song remains partway through.",
     "All three captures match expected bytes/hashes, and all seven HTTP responses report finish without failure; these server events alone are not proof of phone decoding or audibility.",
     "All 73 page events and all seven HTTP request records are retained. Six waiting events accompany initial playing of each selection. First five pauses accompany natural endings; final pause follows an explicit button action after returning.",
-    "No cross-device subsecond clock alignment or exact physical lock duration is inferred from page visibility. Device/notes provide the owner observations, while Battery Saver and charging are not measured in the export.",
+    "No cross-device subsecond clock alignment or exact physical lock duration is inferred from page visibility. Device/notes support the lock/listening observations; follow-up explicitly confirms Battery Saver on and unplugged throughout. The export does not automatically measure those conditions.",
     "A successful single phone run does not erase earlier failures, establish definitive Battery Saver causality, guarantee other devices/networks, or test account/Premium/playlist operations, source renewal, headset/notification-button actions or live-mode interruption recovery."
   ],
-  "nextStep": "No further routine playback repetitions or playback changes are needed from this result. Confirm only the actual power conditions, record the scoped sustained result, and move to private account/playlist-access investigation."
+  "nextStep": "No further routine playback repetitions or playback changes are needed for this demonstrated phone/three-track baseline. Record the scoped sustained result with owner-confirmed power conditions and move to private account/playlist-access investigation."
 }
