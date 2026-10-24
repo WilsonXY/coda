@@ -37,7 +37,7 @@ try{
  const exported=JSON.parse(await readFile('artifacts/library-playback-export.json','utf8'));assert.equal(exported.audioDelivery,'library');
  const encoded=JSON.stringify(exported);for(const privateValue of['Private fixture A','Private fixture B','aaaaaaaaaaa','bbbbbbbbbbb'])assert.equal(encoded.includes(privateValue),false,'Export must redact private library selections');
  await page.locator('#show-account').click();
- 
+
  assert.equal(await page.locator('#account-tracks li').last().getByRole('button',{name:'Play',exact:true}).count(),0);
  await page.getByRole('button',{name:'Play playlist',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#now').textContent==='Private fixture A'&&document.querySelector('audio').currentTime>0.25);
  await page.waitForFunction(()=>document.querySelector('#buffer-status').textContent.includes('Next song ready'));
