@@ -1,0 +1,43 @@
+{
+  "api": {
+    "status": "PASS_REQUEST_REJECTIONS_ONLY",
+    "liveWriteAcceptance": "BLOCKED_ACCOUNT_SESSION",
+    "ownerReportsStayedSignedIn": true,
+    "libraryRead": {
+      "status": 502,
+      "genericErrorOnly": true
+    },
+    "getCannotWrite": 405,
+    "postWithoutOrigin": 403,
+    "crossSitePost": 403,
+    "targetOverrideRejected": 400,
+    "bodyRejected": 400,
+    "otherWritePathRejected": 405,
+    "journalAbsent": true,
+    "accountMutations": 0,
+    "serveConfigurationUnchanged": true
+  },
+  "browser": {
+    "status": "PASS_DISABLED_PREVIEW",
+    "realPrivateHttps": true,
+    "manualIdentityHeaders": false,
+    "navigationWrites": 0,
+    "disabledPostStatus": 503,
+    "journalAbsent": true,
+    "accountMutations": 0,
+    "layouts": [
+      390,
+      728
+    ]
+  },
+  "upstreamSessionSignals": {
+    "activeAccountHeader": false,
+    "signInEndpoint": false,
+    "loggedOutSignals": [],
+    "loggedInSignals": [
+      false
+    ],
+    "sessionFormatDetected": true,
+    "originMatchesOfficial": true
+  }
+}
