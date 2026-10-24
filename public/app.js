@@ -335,6 +335,32 @@ async function request(path, signal, options = {}) {
   return data;
 }
 
+async function oauthAction(task) {
+  $('oauth-connect').disabled = true; $('oauth-probe').disabled = true;
+  $('oauth-status').textContent = 'Checking OAuth…';
+  try { await task(); }
+  catch (error) { $('oauth-status').textContent = error.message; }
+  finally { $('oauth-connect').disabled = false; $('oauth-probe').disabled = false; }
+}
+$('oauth-connect').onclick = () => oauthAction(async () => {
+  const data = await request('/api/account/oauth/connect', AbortSignal.timeout(15000), { method: 'POST' });
+  window.location.assign(data.authorizationUrl);
+});
+$('oauth-probe').onclick = () => oauthAction(async () => {
+  const data = await request('/api/account/oauth/probe', AbortSignal.timeout(65000), { method: 'POST' });
+  const passes = phase => phase.dataApiPrivatePlaylist && phase.privatePlaylist && phase.expectedOrder;
+  $('oauth-status').textContent = passes(data.before) && data.renewal && passes(data.after)
+    ? 'PASS: private playlist reads succeeded before and after token renewal. Your library connection has not been switched yet.'
+    : `OAuth comparison: Google private playlist ${data.before.dataApiPrivatePlaylist ? 'YES' : 'NO'} → ${data.after.dataApiPrivatePlaylist ? 'YES' : 'NO'}; YouTube Music private playlist and expected order ${data.before.privatePlaylist && data.before.expectedOrder ? 'YES' : 'NO'} → ${data.after.privatePlaylist && data.after.expectedOrder ? 'YES' : 'NO'}; token renewal ${data.renewal ? 'YES' : 'NO'}. Compatibility is not fully established.`;
+});
+const oauthReturn = new URLSearchParams(location.search).get('oauth');
+if (oauthReturn) {
+  $('show-account').click(); history.replaceState(null, '', location.pathname);
+  $('oauth-status').textContent = oauthReturn === 'connected'
+    ? 'Authorization saved privately. Choose Test OAuth reads and renewal next.'
+    : 'Authorization was not saved. Check the Google setup or start Connect Google again.';
+}
+
 let accountBusy = false;
 let playlistTestAttempted = false;
 async function accountRead(path) {

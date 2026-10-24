@@ -42,6 +42,11 @@
 <p>Refresh the saved YouTube Music session in the local terminal using your configured auth file. Keep headers and cookies there. Then choose Check connection here; no server restart is needed.</p>
 <p><a href="https://ytmusicapi.readthedocs.io/en/stable/setup/browser.html" target="_blank" rel="noopener noreferrer">Local browser authentication instructions</a></p>
 </details>
+<h3>OAuth connection experiment</h3>
+<p>Authorize read-only access on Google, then test private playlist access and token renewal. Your current library connection stays in place during this experiment. Connecting opens Google in this tab and stops any playing audio.</p>
+<button id="oauth-connect">Connect Google (read-only)</button>
+<button id="oauth-probe">Test OAuth reads and renewal</button>
+<p id="oauth-status" role="status">Not tested. A private Google Web client configuration is required on the server.</p>
 <button id="account-load">Load my playlists</button>
 <p id="account-status" role="status">Your library has not been loaded.</p><ol id="account-playlists"></ol>
 <h3 id="account-playlist-title">No playlist selected</h3>

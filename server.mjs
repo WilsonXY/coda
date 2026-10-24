@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import cases from './scripts/cases.json' with { type: 'json' };
 import { createLiveMusic } from './live-music.mjs';
 import { createAccountReader, ownerAuthorized } from './account.mjs';
+import { createOAuthExperiment } from './oauth.mjs';
 import { search, playlist, playability } from './youtube.mjs';
 
 const files = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'] };
@@ -46,10 +47,11 @@ async function musicManifest(directory) {
   return { preparedAt: manifest.preparedAt, tracks };
 }
 
-export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR, liveMusic, accountOptions } = {}) {
+export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR, liveMusic, accountOptions, oauthOptions } = {}) {
   const live = liveMusic ? createLiveMusic(liveMusic) : null;
   const sampleStatus = () => { const status = live.status(); return { ...status, tracks: status.tracks.filter(track => cases.playbackIds.includes(track.id)) }; };
   const account = createAccountReader(accountOptions);
+  const oauth = createOAuthExperiment(oauthOptions);
   const server = http.createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -59,10 +61,11 @@ export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR, live
       const url = new URL(req.url, `http://${req.headers.host}`);
       if (!hosts.has(url.hostname)) return json(403, { error: 'Host not allowed.' });
       if (req.headers.origin && (!URL.canParse(req.headers.origin) || new URL(req.headers.origin).host !== req.headers.host)) return json(403, { error: 'Cross-site request rejected.' });
-      if (req.method !== 'GET' && req.method !== 'HEAD' && !(req.method === 'POST' && url.pathname === '/api/account/playlist-test')) return json(405, { error: 'Method not allowed.' });
+      if (req.method !== 'GET' && req.method !== 'HEAD' && !(req.method === 'POST' && ['/api/account/playlist-test', '/api/account/oauth/connect', '/api/account/oauth/probe'].includes(url.pathname))) return json(405, { error: 'Method not allowed.' });
       if (url.pathname.startsWith('/api/') && req.method === 'HEAD') return json(405, { error: 'GET required.' });
       if (url.pathname.startsWith('/api/account/')) {
-        const result = await account(req, url);
+        const result = await (url.pathname.startsWith('/api/account/oauth/') ? oauth : account)(req, url);
+        for (const [name, value] of Object.entries(result.headers ?? {})) res.setHeader(name, value);
         return json(result.status, result.body);
       }
       const catalogTrack = url.pathname.match(/^\/catalog\/([\w-]{11})\.webm$/);

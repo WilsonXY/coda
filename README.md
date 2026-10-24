@@ -112,6 +112,8 @@ Run `npm run test:account` for synthetic account fixtures, access rejection, per
 
 Run `npm run test:session` for connection/recovery states, owner rejection, uninterrupted tone playback and 390px/728px recovery screenshots. It uses synthetic responses and no Google session.
 
+The separate **OAuth connection experiment** adds Connect Google and a read/renew/read check inside My library. It uses a private Google **Web application** client, requests read-only YouTube access, and saves a separate OAuth token file. It keeps the active library connection in place until compatibility is established. See [Google setup, SSH copy instructions and limits](docs/oauth-experiment.md). Run `npm run test:oauth` for the synthetic HTTPS login/callback/renewal fixture. Real Google consent and Music compatibility are not established by that fixture.
+
 ## Phone and Zen checks
 
 Open the private page. Fill in device/OS/browser version. Play the tone queue and check the controls, seeking, transitions, and switching panels. On Chrome/Android, keep the queue looping for ten minutes with the screen locked; try lock-screen/headset controls, another app, an interruption, and battery saver. Mark each result and export JSON **before reloading**. Results are not saved automatically. Generated tones establish browser behavior only. Repeat with real YouTube audio after playback integration is implemented.
