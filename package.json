@@ -16,6 +16,7 @@
     "prepare:music": "node scripts/prepare-music.mjs",
     "start:live": "node scripts/live-server.mjs",
     "test:live": "node tests/live-browser.mjs",
+    "test:buffer": "node tests/buffer-browser.mjs",
     "probe:live": "node tests/live-upstream.mjs"
   },
   "dependencies": {

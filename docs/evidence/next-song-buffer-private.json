@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-23T20:43:17.729Z",
+  "status": "PASS",
+  "source": "fresh anonymous YouTube retrieval through private Tailscale HTTPS page",
+  "browser": "153.0.8010.12",
+  "runId": "a200c143-5e2d-43b4-b10b-ac541d86f579",
+  "requestedTrackIdsAtSelection": [],
+  "firstSongStorage": "progressive-http",
+  "firstPlayingBeforeCaptureComplete": true,
+  "verifiedCaptures": [
+    {
+      "id": "4D7u5KF7SP8",
+      "bytes": 6214234,
+      "sha256": "1cf495bdfbf2bbe3d7c9921d82ef378b143a52d707e9e2062722714c0e36b9d5"
+    },
+    {
+      "id": "t0AvpJ74sBc",
+      "bytes": 4864721,
+      "sha256": "a3f43603528c073bd8a9bb7f8df3413276605f4ef02e128602059800654e29c0"
+    }
+  ],
+  "nextSongStorage": "phone-buffer",
+  "nextSongId": "t0AvpJ74sBc",
+  "transition": "end induced by seeking",
+  "phoneBatterySaver": "NOT RUN",
+  "humanListening": "NOT RUN",
+  "prolongedLock": "NOT RUN"
+}
