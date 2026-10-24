@@ -46,3 +46,9 @@ Astra round1 returned PASS with no blocking findings and one P3 test suggestion:
 The parent confirmed actual gpt-6-astra/high in the reviewer's own session log `rollout-2026-10-25T03-48-22-01a16f75-0662-74c0-beca-c0bd67d32700.jsonl`, turn-context line10; no fallback. Parent/reviewer commit and clean status, and origin refs, matched before/after. The clean review worktree and branch were removed.
 
 Fresh round2 returned PASS: the P3 suggestion is resolved, with no new findings or suggestions. Actual gpt-6-astra/high was confirmed by the parent in `rollout-2026-10-25T03-50-25-01a16f76-e3e0-7362-94b2-b833049fab34.jsonl`, turn-context line10; no fallback. Parent/reviewer commit and clean status, and origin refs, again matched. The second clean worktree and branch were removed.
+
+## Private preview acceptance
+
+After the reviewed branch was pushed, only the owned experiment service was restarted with the isolated auth file selected through its private environment setting. The original environment was backed up privately, and both comparison auth files retained their baseline modification times. No credentials were copied into Git.
+
+A real private HTTPS browser check, using automatic Serve identity and no supplied identity headers, passed Check connection and a read of the expected PRIVATE two-song disposable playlist. Generated audio continued, both layouts fit, and a loopback request without identity returned403. Tailscale Serve configuration matched its pre-restart snapshot. No account writes occurred. See [sanitized preview evidence](evidence/account-session-preview.json). This is short-term acceptance, not evidence of days-long session durability. GitHub reports no CI checks for the branch.
