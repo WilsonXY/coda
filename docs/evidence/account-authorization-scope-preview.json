@@ -1,0 +1,17 @@
+{
+  "checkedAt": "2026-10-24T20:32:52.834Z",
+  "status": "PASS",
+  "source": "Real private HTTPS; automatic Serve identity; UI/read-only readiness, no broader authorization started",
+  "broaderChoiceExplained": true,
+  "defaultReadOnlyChoiceKept": true,
+  "invalidBodyRejectedBeforeAuthorization": 400,
+  "layouts": [
+    390,
+    728
+  ],
+  "tokenUnchanged": true,
+  "tokenStillReadOnly": true,
+  "serveConfigurationUnchanged": true,
+  "realBroaderScopeTest": "PENDING OWNER CONSENT",
+  "accountWrites": 0
+}
