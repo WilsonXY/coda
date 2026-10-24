@@ -1,0 +1,419 @@
+{
+  "source": "Owner-uploaded coda-device-results (10).json",
+  "sourceSha256": "a7182b1bb55697cbe8b6068adf4433dacb6c4bc4d33c9b237d367783e60160db",
+  "exportedAt": "2026-10-24T08:35:05.988Z",
+  "schemaVersion": 2,
+  "deviceDescriptionInExport": "phone chrome, lock screen all the way ",
+  "browserReportedByUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Mobile Safari/537.36",
+  "sourceLabel": "live YouTube audio; anonymous retrieval; progressive HTTP with next-song browser buffering",
+  "audioDelivery": "live",
+  "notesInExport": "seems fine, songs keeps playing ",
+  "eventsTotal": 73,
+  "retainedEventCount": 73,
+  "eventsTruncated": false,
+  "exportedChecklist": [
+    {
+      "check": "Play / pause / seek / volume",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Previous / next",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Three automatic track transitions",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Audio continues when switching panels",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Queue reorder and remove",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Lock screen for ten minutes (Android)",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Headset and lock-screen controls",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Switch apps and return",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Recover after an interruption",
+      "status": "NOT RUN"
+    },
+    {
+      "check": "Repeat with battery saver enabled",
+      "status": "NOT RUN"
+    }
+  ],
+  "retainedEventCounts": {
+    "queue-reset": 3,
+    "live-selected": 1,
+    "control": 2,
+    "live-playback-source": 6,
+    "play": 6,
+    "waiting": 6,
+    "loadstart": 6,
+    "loadedmetadata": 6,
+    "canplay": 6,
+    "playing": 6,
+    "next-buffer-start": 6,
+    "next-buffer-ready": 6,
+    "visibility": 2,
+    "pause": 6,
+    "ended": 5
+  },
+  "powerConditions": {
+    "requestedProtocol": "Battery Saver ON and unplugged throughout",
+    "measuredByExport": false,
+    "explicitOwnerConfirmation": null,
+    "classification": "Specific power conditions for this longer run await confirmation; the previous short-run confirmation is not transferred automatically."
+  },
+  "ownerLockAndListeningObservation": {
+    "screenLock": "phone chrome, lock screen all the way ",
+    "listening": "seems fine, songs keeps playing "
+  },
+  "liveRunId": "9d865843-c1e2-431b-8627-745de5b02bde",
+  "liveRequestedTrackIdsAtSelection": [],
+  "liveBrowserBuffering": {
+    "enabled": true,
+    "playback": {
+      "trackId": "dsUTcSVdU2U",
+      "storage": "phone-buffer",
+      "selectedAt": "2026-10-24T08:31:43.286Z"
+    },
+    "tracks": [
+      {
+        "id": "dsUTcSVdU2U",
+        "status": "ready",
+        "bytes": 5607789,
+        "startedAt": "2026-10-24T08:27:02.567Z",
+        "readyAt": "2026-10-24T08:27:04.319Z"
+      },
+      {
+        "id": "4D7u5KF7SP8",
+        "status": "ready",
+        "bytes": 6214234,
+        "startedAt": "2026-10-24T08:31:43.371Z",
+        "readyAt": "2026-10-24T08:31:45.206Z"
+      }
+    ]
+  },
+  "hiddenInterval": {
+    "hiddenAt": "2026-10-24T08:05:14.798Z",
+    "visibleAt": "2026-10-24T08:34:23.664Z",
+    "seconds": 1748.866
+  },
+  "firstPlayingAt": "2026-10-24T08:04:43.283Z",
+  "finalPause": {
+    "source": "live YouTube audio; anonymous retrieval; progressive HTTP with next-song browser buffering",
+    "audioDelivery": "live",
+    "at": "2026-10-24T08:34:26.034Z",
+    "event": "pause",
+    "track": "半島鐵盒",
+    "trackId": "dsUTcSVdU2U",
+    "position": 162.34
+  },
+  "finalPauseControl": {
+    "source": "live YouTube audio; anonymous retrieval; progressive HTTP with next-song browser buffering",
+    "audioDelivery": "live",
+    "at": "2026-10-24T08:34:26.017Z",
+    "event": "control",
+    "track": "半島鐵盒",
+    "trackId": "dsUTcSVdU2U",
+    "position": 162.34,
+    "action": "play-pause",
+    "control": "button"
+  },
+  "firstPlayingToFinalPauseSeconds": 1782.751,
+  "transitions": [
+    {
+      "fromTrackId": "4D7u5KF7SP8",
+      "toTrackId": "t0AvpJ74sBc",
+      "endedAt": "2026-10-24T08:10:53.603Z",
+      "endingPositionSeconds": 369.64,
+      "nextPlayingAt": "2026-10-24T08:10:53.752Z",
+      "endedToPlayingSeconds": 0.149,
+      "nextStorage": "phone-buffer",
+      "completedSongWallSeconds": 370.32,
+      "pageHidden": true
+    },
+    {
+      "fromTrackId": "t0AvpJ74sBc",
+      "toTrackId": "dsUTcSVdU2U",
+      "endedAt": "2026-10-24T08:15:34.420Z",
+      "endingPositionSeconds": 280.4,
+      "nextPlayingAt": "2026-10-24T08:15:34.509Z",
+      "endedToPlayingSeconds": 0.089,
+      "nextStorage": "phone-buffer",
+      "completedSongWallSeconds": 280.668,
+      "pageHidden": true
+    },
+    {
+      "fromTrackId": "dsUTcSVdU2U",
+      "toTrackId": "4D7u5KF7SP8",
+      "endedAt": "2026-10-24T08:20:52.291Z",
+      "endingPositionSeconds": 317.42,
+      "nextPlayingAt": "2026-10-24T08:20:52.388Z",
+      "endedToPlayingSeconds": 0.097,
+      "nextStorage": "phone-buffer",
+      "completedSongWallSeconds": 317.782,
+      "pageHidden": true
+    },
+    {
+      "fromTrackId": "4D7u5KF7SP8",
+      "toTrackId": "t0AvpJ74sBc",
+      "endedAt": "2026-10-24T08:27:02.467Z",
+      "endingPositionSeconds": 369.64,
+      "nextPlayingAt": "2026-10-24T08:27:02.566Z",
+      "endedToPlayingSeconds": 0.099,
+      "nextStorage": "phone-buffer",
+      "completedSongWallSeconds": 370.079,
+      "pageHidden": true
+    },
+    {
+      "fromTrackId": "t0AvpJ74sBc",
+      "toTrackId": "dsUTcSVdU2U",
+      "endedAt": "2026-10-24T08:31:43.281Z",
+      "endingPositionSeconds": 280.4,
+      "nextPlayingAt": "2026-10-24T08:31:43.371Z",
+      "endedToPlayingSeconds": 0.09,
+      "nextStorage": "phone-buffer",
+      "completedSongWallSeconds": 280.715,
+      "pageHidden": true
+    }
+  ],
+  "browserPrefetches": [
+    {
+      "trackId": "t0AvpJ74sBc",
+      "startedAt": "2026-10-24T08:04:43.283Z",
+      "readyAt": "2026-10-24T08:04:45.299Z",
+      "bytes": 4864721,
+      "clientEventDurationSeconds": 2.016,
+      "entirelyWhileHidden": false
+    },
+    {
+      "trackId": "dsUTcSVdU2U",
+      "startedAt": "2026-10-24T08:10:53.753Z",
+      "readyAt": "2026-10-24T08:10:56.016Z",
+      "bytes": 5607789,
+      "clientEventDurationSeconds": 2.263,
+      "entirelyWhileHidden": true
+    },
+    {
+      "trackId": "4D7u5KF7SP8",
+      "startedAt": "2026-10-24T08:15:34.509Z",
+      "readyAt": "2026-10-24T08:15:36.338Z",
+      "bytes": 6214234,
+      "clientEventDurationSeconds": 1.829,
+      "entirelyWhileHidden": true
+    },
+    {
+      "trackId": "t0AvpJ74sBc",
+      "startedAt": "2026-10-24T08:20:52.389Z",
+      "readyAt": "2026-10-24T08:20:54.098Z",
+      "bytes": 4864721,
+      "clientEventDurationSeconds": 1.709,
+      "entirelyWhileHidden": true
+    },
+    {
+      "trackId": "dsUTcSVdU2U",
+      "startedAt": "2026-10-24T08:27:02.567Z",
+      "readyAt": "2026-10-24T08:27:04.319Z",
+      "bytes": 5607789,
+      "clientEventDurationSeconds": 1.752,
+      "entirelyWhileHidden": true
+    },
+    {
+      "trackId": "4D7u5KF7SP8",
+      "startedAt": "2026-10-24T08:31:43.372Z",
+      "readyAt": "2026-10-24T08:31:45.206Z",
+      "bytes": 6214234,
+      "clientEventDurationSeconds": 1.834,
+      "entirelyWhileHidden": true
+    }
+  ],
+  "serverStatus": {
+    "runId": "9d865843-c1e2-431b-8627-745de5b02bde",
+    "tracks": [
+      {
+        "id": "4D7u5KF7SP8",
+        "requests": 3,
+        "receivedBytes": 6214234,
+        "totalBytes": 6214234,
+        "startedAt": "2026-10-24T08:04:42.560Z",
+        "firstByteAt": "2026-10-24T08:04:42.991Z",
+        "completedAt": "2026-10-24T08:04:44.582Z",
+        "failedAt": null,
+        "failure": null,
+        "httpRequestsTruncated": false,
+        "httpRequests": [
+          {
+            "sequence": 1,
+            "method": "GET",
+            "receivedAt": "2026-10-24T08:04:42.561Z",
+            "sourceReadyAt": "2026-10-24T08:04:42.895Z",
+            "firstWriteAt": "2026-10-24T08:04:42.991Z",
+            "finishedAt": "2026-10-24T08:04:44.583Z",
+            "closedAt": "2026-10-24T08:04:44.583Z",
+            "writtenBytes": 6214234,
+            "drainWaits": 37,
+            "statusCode": 206,
+            "rangeStart": 0,
+            "rangeEnd": 6214233,
+            "failed": false
+          },
+          {
+            "sequence": 2,
+            "method": "GET",
+            "receivedAt": "2026-10-24T08:15:35.128Z",
+            "sourceReadyAt": "2026-10-24T08:15:35.129Z",
+            "firstWriteAt": "2026-10-24T08:15:35.129Z",
+            "finishedAt": "2026-10-24T08:15:35.629Z",
+            "closedAt": "2026-10-24T08:15:35.630Z",
+            "writtenBytes": 6214234,
+            "drainWaits": 1,
+            "statusCode": 200,
+            "rangeStart": 0,
+            "rangeEnd": 6214233,
+            "failed": false
+          },
+          {
+            "sequence": 3,
+            "method": "GET",
+            "receivedAt": "2026-10-24T08:31:43.991Z",
+            "sourceReadyAt": "2026-10-24T08:31:43.992Z",
+            "firstWriteAt": "2026-10-24T08:31:43.992Z",
+            "finishedAt": "2026-10-24T08:31:44.407Z",
+            "closedAt": "2026-10-24T08:31:44.408Z",
+            "writtenBytes": 6214234,
+            "drainWaits": 1,
+            "statusCode": 200,
+            "rangeStart": 0,
+            "rangeEnd": 6214233,
+            "failed": false
+          }
+        ],
+        "protectionStatuses": [
+          1
+        ],
+        "sha256": "1cf495bdfbf2bbe3d7c9921d82ef378b143a52d707e9e2062722714c0e36b9d5"
+      },
+      {
+        "id": "t0AvpJ74sBc",
+        "requests": 2,
+        "receivedBytes": 4864721,
+        "totalBytes": 4864721,
+        "startedAt": "2026-10-24T08:04:43.155Z",
+        "firstByteAt": "2026-10-24T08:04:43.476Z",
+        "completedAt": "2026-10-24T08:04:44.801Z",
+        "failedAt": null,
+        "failure": null,
+        "httpRequestsTruncated": false,
+        "httpRequests": [
+          {
+            "sequence": 1,
+            "method": "GET",
+            "receivedAt": "2026-10-24T08:04:43.155Z",
+            "sourceReadyAt": "2026-10-24T08:04:43.379Z",
+            "firstWriteAt": "2026-10-24T08:04:43.476Z",
+            "finishedAt": "2026-10-24T08:04:44.802Z",
+            "closedAt": "2026-10-24T08:04:44.802Z",
+            "writtenBytes": 4864721,
+            "drainWaits": 28,
+            "statusCode": 200,
+            "rangeStart": 0,
+            "rangeEnd": 4864720,
+            "failed": false
+          },
+          {
+            "sequence": 2,
+            "method": "GET",
+            "receivedAt": "2026-10-24T08:20:52.990Z",
+            "sourceReadyAt": "2026-10-24T08:20:52.990Z",
+            "firstWriteAt": "2026-10-24T08:20:52.990Z",
+            "finishedAt": "2026-10-24T08:20:53.394Z",
+            "closedAt": "2026-10-24T08:20:53.394Z",
+            "writtenBytes": 4864721,
+            "drainWaits": 1,
+            "statusCode": 200,
+            "rangeStart": 0,
+            "rangeEnd": 4864720,
+            "failed": false
+          }
+        ],
+        "protectionStatuses": [
+          1
+        ],
+        "sha256": "a3f43603528c073bd8a9bb7f8df3413276605f4ef02e128602059800654e29c0"
+      },
+      {
+        "id": "dsUTcSVdU2U",
+        "requests": 2,
+        "receivedBytes": 5607789,
+        "totalBytes": 5607789,
+        "startedAt": "2026-10-24T08:10:54.372Z",
+        "firstByteAt": "2026-10-24T08:10:54.671Z",
+        "completedAt": "2026-10-24T08:10:55.844Z",
+        "failedAt": null,
+        "failure": null,
+        "httpRequestsTruncated": false,
+        "httpRequests": [
+          {
+            "sequence": 1,
+            "method": "GET",
+            "receivedAt": "2026-10-24T08:10:54.372Z",
+            "sourceReadyAt": "2026-10-24T08:10:54.629Z",
+            "firstWriteAt": "2026-10-24T08:10:54.671Z",
+            "finishedAt": "2026-10-24T08:10:55.844Z",
+            "closedAt": "2026-10-24T08:10:55.845Z",
+            "writtenBytes": 5607789,
+            "drainWaits": 32,
+            "statusCode": 200,
+            "rangeStart": 0,
+            "rangeEnd": 5607788,
+            "failed": false
+          },
+          {
+            "sequence": 2,
+            "method": "GET",
+            "receivedAt": "2026-10-24T08:27:03.195Z",
+            "sourceReadyAt": "2026-10-24T08:27:03.195Z",
+            "firstWriteAt": "2026-10-24T08:27:03.195Z",
+            "finishedAt": "2026-10-24T08:27:03.562Z",
+            "closedAt": "2026-10-24T08:27:03.562Z",
+            "writtenBytes": 5607789,
+            "drainWaits": 1,
+            "statusCode": 200,
+            "rangeStart": 0,
+            "rangeEnd": 5607788,
+            "failed": false
+          }
+        ],
+        "protectionStatuses": [
+          1
+        ],
+        "sha256": "8ba93c54c7b916e19e74e8788c8c2a461986563cc3006587f46f32a2c2de9b55"
+      }
+    ]
+  },
+  "coldThirdSongCaptureSeconds": 1.472,
+  "result": "PASS for this one prolonged Android Chrome buffered locked-screen playback run, combining complete technical events with owner comments that screen stayed locked and songs kept playing. Specific power settings await confirmation.",
+  "interpretation": [
+    "Five natural transitions into phone-buffered songs occur in one 1748.866-second hidden interval; no seeks or mid-run controls are recorded. Transition gaps are event intervals, not measurements of audible silence.",
+    "One foreground prefetch and five hidden prefetches complete. Third song is first captured upstream during the hidden interval, rather than all source audio being prepared before locking. Its client transfer takes 2.263 seconds, upstream capture 1.472 seconds on server clock.",
+    "Initial song uses progressive-http, later five selections use phone-buffer. Five completed songs reach expected ending positions with wall-clock durations consistent with natural full playback; final song remains partway through.",
+    "All three captures match expected bytes/hashes, and all seven HTTP responses report finish without failure; these server events alone are not proof of phone decoding or audibility.",
+    "All 73 page events and all seven HTTP request records are retained. Six waiting events accompany initial playing of each selection. First five pauses accompany natural endings; final pause follows an explicit button action after returning.",
+    "No cross-device subsecond clock alignment or exact physical lock duration is inferred from page visibility. Device/notes provide the owner observations, while Battery Saver and charging are not measured in the export.",
+    "A successful single phone run does not erase earlier failures, establish definitive Battery Saver causality, guarantee other devices/networks, or test account/Premium/playlist operations, source renewal, headset/notification-button actions or live-mode interruption recovery."
+  ],
+  "nextStep": "No further routine playback repetitions or playback changes are needed from this result. Confirm only the actual power conditions, record the scoped sustained result, and move to private account/playlist-access investigation."
+}

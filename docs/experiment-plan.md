@@ -128,3 +128,10 @@ Short buffering result, 24 October 2026 MYT: the owner reports repeated success.
 
 
 Owner follow-up resolves the short-run condition question: Battery Saver was on, the phone unplugged, the screen locked, and the next song remained audible without waking (answer: “Yes, all of those”). Record the short buffered locked-screen run PASS with those owner-confirmed conditions; the export itself does not measure them. No more short repeats are needed. One prolonged locked confirmation remains before a sustained-reliability claim, while earlier failures and unresolved causality stay documented.
+
+
+## Prolonged buffering result and next work
+
+The new Android Chrome export contains a full 29-minute-8.866-second hidden interval, five natural phone-buffer transitions (0.149/0.089/0.097/0.099/0.090 seconds), five completed background browser downloads and no seeks/stalls/errors/play rejection. Third-song source capture starts while hidden, after the first full song ends, and completes successfully. All 73 events are retained. The owner reports screen locked throughout and songs kept playing. Record PASS for this one prolonged buffered locked-screen run, separately from untouched NOT RUN checklist defaults. See [long-run evidence](evidence/android-chrome-buffer-long-2026-10-24.json). Actual Battery Saver/unplugged conditions for this run await confirmation; the previous short-run answer does not measure them here.
+
+Stop routine playback repetitions for this baseline. Retain earlier failed progressive runs and single-device limitations. Next investigate private account/library/playlist access using existing local tools, with credentials kept local and disposable playlist operations only when account setup is available. Headset/control actions, live interruptions, Zen buffering and general source renewal remain separately unverified; do not claim a finished arbitrary-catalog or Premium app from this three-track test.
