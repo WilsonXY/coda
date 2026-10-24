@@ -16,6 +16,7 @@ let modeLocked = false;
 const checks = ['Play / pause / seek / volume', 'Previous / next', 'Three automatic track transitions', 'Audio continues when switching panels', 'Queue reorder and remove', 'Lock screen for ten minutes (Android)', 'Headset and lock-screen controls', 'Switch apps and return', 'Recover after an interruption', 'Repeat with battery saver enabled'];
 let queue = [];
 let current = null;
+let playbackAttempt = 0;
 let networkBusy = false;
 const progressive = () => delivery === 'live' || delivery === 'library';
 audio.volume = 0.25;
@@ -55,10 +56,10 @@ function renderQueue() {
 
 async function resume() {
   if (preparing) return;
-  const selected = current;
-  try { await audio.play(); if (current === selected) void bufferNext(); }
+  const attempt = ++playbackAttempt;
+  try { await audio.play(); if (playbackAttempt === attempt) void bufferNext(); }
   catch (error) {
-    if (current !== selected) return;
+    if (playbackAttempt !== attempt) return;
     log('play-rejected', { error: error.name }); $('now').textContent = 'Playback failed. Tap Play again; check exported events.';
   }
 }
@@ -108,6 +109,8 @@ function move(index, direction) {
 function remove(track) {
   queue = queue.filter(item => item !== track);
   if (current === track) {
+    playbackAttempt++;
+    $('playback-status').textContent = '';
     audio.pause(); audio.removeAttribute('src'); audio.load();
     current = null; $('now').textContent = 'Current track removed. Choose another track.';
     livePlayback = null;
@@ -118,6 +121,8 @@ function remove(track) {
 }
 
 function reset() {
+  playbackAttempt++;
+  $('playback-status').textContent = '';
   audio.pause(); audio.removeAttribute('src'); audio.load(); current = null;
   livePlayback = null;
   void bufferNext();
@@ -273,8 +278,14 @@ $('live').onclick = async () => {
 for (const name of ['play', 'pause', 'playing', 'waiting', 'stalled', 'ended', 'seeking', 'seeked', 'loadedmetadata', 'loadstart', 'canplay', 'error']) {
   audio.addEventListener(name, () => {
     log(name, name === 'error' ? { mediaError: audio.error?.code ?? null } : {});
-    if (name === 'playing') $('playback-status').textContent = 'Playing';
-    if (name === 'error') $('playback-status').textContent = 'This song could not be played. It may be unavailable; choose another song.';
+    if (['playing', 'pause', 'error'].includes(name)) {
+      if (name === 'pause' && audio.paused) playbackAttempt++;
+      if (!current) $('playback-status').textContent = '';
+      else if (audio.error) $('playback-status').textContent = 'This song could not be played. It may be unavailable; choose another song.';
+      else if (audio.ended) $('playback-status').textContent = 'Finished';
+      else if (audio.paused) $('playback-status').textContent = 'Paused';
+      else if (name === 'playing') $('playback-status').textContent = 'Playing';
+    }
     if (name === 'loadedmetadata' && current && Number.isFinite(audio.duration)) { current.seconds = Math.round(audio.duration); renderQueue(); }
     if ('mediaSession' in navigator && ['play', 'pause', 'ended'].includes(name)) navigator.mediaSession.playbackState = audio.paused ? 'paused' : 'playing';
   });

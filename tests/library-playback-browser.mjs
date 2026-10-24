@@ -42,6 +42,19 @@ try{
  await page.getByRole('button',{name:'Play playlist',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#now').textContent==='Private fixture A'&&document.querySelector('audio').currentTime>0.25);
  await page.waitForFunction(()=>document.querySelector('#buffer-status').textContent.includes('Next song ready'));
  for(const width of[390,728]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:`artifacts/library-playback-${width}.png`,fullPage:true});}
+ await page.locator('audio').evaluate(a=>new Promise(resolve=>{if(a.paused)return resolve();a.addEventListener('pause',resolve,{once:true});a.pause();}));
+ await page.evaluate(()=>{window.pendingPlays=[];document.querySelector('audio').play=()=>new Promise((resolve,reject)=>window.pendingPlays.push({resolve,reject}));});
+ await page.locator('#show-player').click();
+ for(const index of[0,1,0])await page.locator('#queue li').nth(index).getByRole('button',{name:'Play',exact:true}).click();
+ await page.evaluate(async()=>{window.pendingPlays[2].resolve();window.pendingPlays[1].reject(new DOMException('Synthetic old B','AbortError'));window.pendingPlays[0].reject(new DOMException('Synthetic old A','AbortError'));await Promise.resolve();await Promise.resolve();});
+ assert.equal(await page.locator('#now').textContent(),'Private fixture A','An older A attempt cannot overwrite the latest selection of the same queue object');
+ await page.reload();await page.locator('#show-account').click();await page.locator('#account-load').click();await page.getByRole('button',{name:'Open playlist',exact:true}).click();
+ await page.locator('#account-tracks li').first().getByRole('button',{name:'Play',exact:true}).click();await page.waitForFunction(()=>document.querySelector('audio').currentTime>0.25);
+ await page.locator('audio').evaluate(a=>new Promise(resolve=>{a.addEventListener('pause',resolve,{once:true});a.pause();}));
+ assert.equal(await page.locator('#playback-status').textContent(),'Paused');
+ await page.locator('#show-player').click();await page.locator('#reset').click();assert.equal(await page.locator('#playback-status').textContent(),'');
+ await page.locator('#queue li').first().getByRole('button',{name:'Play',exact:true}).click();await page.waitForFunction(()=>document.querySelector('audio').currentTime>0.25&&document.querySelector('#playback-status').textContent==='Playing');
+ await page.locator('#queue li').first().getByRole('button',{name:'Remove',exact:true}).click();assert.equal(await page.locator('#playback-status').textContent(),'');
  hostile=true;await page.reload();await page.locator('#show-account').click();await page.locator('#account-load').click();await page.getByRole('button',{name:'Open playlist',exact:true}).click();
  await page.locator('#account-tracks li').first().getByRole('button',{name:'Play',exact:true}).click();await page.waitForFunction(()=>document.querySelector('audio').currentTime>0.25);
  assert.equal(await page.locator('#account-tracks img').count(),0);
@@ -50,6 +63,6 @@ try{
  await page.locator('#account-tracks li').last().getByRole('button',{name:'Play',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#playback-status').textContent.includes('could not be played'));
  assert.equal((await page.locator('body').textContent()).includes('synthetic-private-secret'),false);
  assert.deepEqual(errors,[]);
- await writeFile('artifacts/library-playback-browser-check.json',JSON.stringify({status:'PASS',source:'synthetic private library; prepared audio aliased to arbitrary fixture IDs; not fresh upstream',rowPlay:true,playlistPlay:true,addAndRemoveQueue:true,seeking:true,bufferedOfflineNextTrack:true,exportRedaction:true,safeFailure:true,literalLongTitles:true,layouts:[390,728],physicalPhone:'NOT RUN'},null,2)+'\n');
+ await writeFile('artifacts/library-playback-browser-check.json',JSON.stringify({status:'PASS',source:'synthetic private library; prepared audio aliased to arbitrary fixture IDs; not fresh upstream',rowPlay:true,queueAtoBtoARace:true,pauseResetRemovalStatus:true,playlistPlay:true,addAndRemoveQueue:true,seeking:true,bufferedOfflineNextTrack:true,exportRedaction:true,safeFailure:true,literalLongTitles:true,layouts:[390,728],physicalPhone:'NOT RUN'},null,2)+'\n');
  console.log('PASS: playlist/row Play, Add to queue, seeking, offline buffered transition, private export redaction and390/728.');
 }finally{await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}

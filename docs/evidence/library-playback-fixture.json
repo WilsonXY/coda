@@ -2,6 +2,8 @@
   "status": "PASS",
   "source": "synthetic private library; prepared audio aliased to arbitrary fixture IDs; not fresh upstream",
   "rowPlay": true,
+  "queueAtoBtoARace": true,
+  "pauseResetRemovalStatus": true,
   "playlistPlay": true,
   "addAndRemoveQueue": true,
   "seeking": true,
