@@ -1,0 +1,73 @@
+{
+  "recordedAt": "2026-10-24T18:08:30.900400+00:00",
+  "result": "PASS_API_READBACK_AND_OWNER_REPORTED_FLOW",
+  "playlistId": "PLWEPAqmCfbhY",
+  "journalSha256": "7442a70034a95b46904ccfe425b07253c685f1230dda8b1d1d8a2d93e894a8ad",
+  "journalMode": "0o600",
+  "attemptedWrites": [
+    "add duplicate",
+    "move duplicate",
+    "remove duplicate"
+  ],
+  "steps": [
+    {
+      "action": "inspect test playlist",
+      "order": [
+        "4D7u5KF7SP8",
+        "Rgrt_8mXrK8"
+      ],
+      "private": true,
+      "owned": true
+    },
+    {
+      "action": "add duplicate",
+      "order": [
+        "4D7u5KF7SP8",
+        "Rgrt_8mXrK8",
+        "4D7u5KF7SP8"
+      ],
+      "private": true,
+      "owned": true
+    },
+    {
+      "action": "move duplicate",
+      "order": [
+        "4D7u5KF7SP8",
+        "4D7u5KF7SP8",
+        "Rgrt_8mXrK8"
+      ],
+      "private": true,
+      "owned": true
+    },
+    {
+      "action": "remove duplicate",
+      "order": [
+        "4D7u5KF7SP8",
+        "Rgrt_8mXrK8"
+      ],
+      "private": true,
+      "owned": true
+    }
+  ],
+  "independentReadOnlyCheck": {
+    "status": 200,
+    "private": true,
+    "items": 2,
+    "order": [
+      "4D7u5KF7SP8",
+      "Rgrt_8mXrK8"
+    ]
+  },
+  "ownerConfirmation": {
+    "text": "yes it does suceeded",
+    "context": "Response to instructions to run the one-time button, wait for PASS_API_READBACK, and inspect Private/two original songs/order on the official site.",
+    "scope": "Owner-reported success for the requested flow; individual official-site fields were not separately restated and no screenshot was supplied."
+  },
+  "agentAdditionalWrites": 0,
+  "journalRetained": true,
+  "limits": [
+    "Single fixed disposable playlist only",
+    "Session persistence remains unresolved",
+    "No arbitrary playlist editing or account-backed playback proven"
+  ]
+}
