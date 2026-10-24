@@ -4,7 +4,7 @@
 <body><main>
 <h1>Coda functionality experiment</h1>
 <p>Test the basics before designing the app. Choose generated tones or the three prepared music tracks below. Start quietly.</p>
-<nav aria-label="Experiment panels"><button id="show-player">Player checks</button> <button id="show-search">YouTube Music checks</button></nav>
+<nav aria-label="Experiment panels"><button id="show-player">Player checks</button> <button id="show-search">YouTube Music checks</button> <button id="show-account">My library</button></nav>
 <section aria-labelledby="player-heading">
 <h2 id="player-heading">Persistent player</h2>
 <p id="delivery-status" role="status">Mode: fetch each tone as it starts.</p>
@@ -13,7 +13,7 @@
 <button id="live">Use live music</button>
 <p><label><input id="buffer-next" type="checkbox" disabled> Buffer the next live song on this device</label></p>
 <p id="buffer-status" role="status">Next-song buffering is off. Select live music to enable it before Play.</p>
-<p>Live mode fetches a song when selected and plays incoming bytes. It requires the optional live experiment server. The server keeps up to three songs in memory until restart; exports identify its run and retrieval status. No account is connected.</p>
+<p>Live mode fetches a song when selected and plays incoming bytes. It requires the optional live experiment server. The server keeps up to three songs in memory until restart; exports identify its run and retrieval status. This playback source is anonymous.</p>
 <p>Choose before playing. Loading stops and resets the queue. Prepared music loads about 16 MB into memory before Play; it uses anonymously retrieved complete files, with no Premium account connected. Wait for Ready. To change modes, export first and reload.</p>
 <p id="now" aria-live="polite">Nothing playing</p>
 <audio id="audio" controls preload="metadata"></audio>
@@ -26,12 +26,19 @@
 <button id="export">Export results</button><p id="storage-note">Results stay in this page until exported. Reloading clears them.</p>
 </section>
 <section id="search-panel" hidden><h2>YouTube Music public checks</h2>
-<p>Read-only. No account is connected. Search and player-response checks do not prove audio playback.</p>
+<p>These read-only public checks do not use your account. Search and player-response checks do not prove audio playback.</p>
 <form id="search"><label>Search <input id="query" required maxlength="120" value="Daft Punk Get Lucky"></label><label>Type <select id="type"><option value="song">Songs</option><option value="playlist">Playlists</option></select></label><button>Search YouTube Music</button></form>
 <p id="search-status" role="status"></p><ol id="results"></ol>
 <form id="playlist"><label>Public playlist ID <input id="playlist-id" required></label><button>Read playlist</button></form>
 <pre id="probe-output" aria-live="polite">No player response checked yet.</pre>
-<p>Account read/write tests use the local account-check script. Credentials are never entered into this page.</p>
+<p>Account reads are in My library. Playlist write experiments use the local account-check script.</p>
+</section>
+<section id="account-panel" hidden><h2>My YouTube Music library</h2>
+<p>Use your private Tailscale link on an owner device. This view is read-only.</p>
+<button id="account-load">Load my playlists</button>
+<p id="account-status" role="status">Your library has not been loaded.</p><ol id="account-playlists"></ol>
+<h3 id="account-playlist-title">No playlist selected</h3>
+<p id="account-playlist-status" role="status"></p><ol id="account-tracks"></ol>
 </section>
 <section><h2>Event log</h2><p>Export after testing. Only the last 300 events are kept.</p><pre id="events" aria-live="off"></pre></section>
 </main><script type="module" src="/app.js"></script></body></html>

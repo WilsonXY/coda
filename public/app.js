@@ -275,8 +275,9 @@ if ('mediaSession' in navigator) {
     try { navigator.mediaSession.setActionHandler(action, details => { log('media-action', { action }); handler(details); }); } catch { log('unsupported-media-action', { action }); }
   }
 }
-for (const panel of ['player', 'search']) $('show-' + panel).onclick = () => {
-  $('player-panel').hidden = panel !== 'player'; $('search-panel').hidden = panel !== 'search'; log('panel', { panel });
+for (const panel of ['player', 'search', 'account']) $('show-' + panel).onclick = () => {
+  for (const name of ['player', 'search', 'account']) $(name + '-panel').hidden = panel !== name;
+  log('panel', { panel });
 };
 
 for (const [index, label] of checks.entries()) {
@@ -309,6 +310,47 @@ async function request(path, signal) {
   if (!response.ok) throw new Error(data.error ?? `HTTP ${response.status}`);
   return data;
 }
+
+let accountBusy = false;
+function clearAccountView() {
+  $('account-playlists').replaceChildren(); $('account-tracks').replaceChildren();
+  $('account-playlist-title').textContent = 'No playlist selected';
+  $('account-playlist-status').textContent = '';
+}
+async function accountCheck(task) {
+  if (accountBusy) return;
+  accountBusy = true;
+  $('account-panel').querySelectorAll('button').forEach(button => { button.disabled = true; });
+  $('account-status').textContent = 'Loading account data…';
+  try { await task(); }
+  catch (error) { clearAccountView(); $('account-status').textContent = `Account read failed. ${error.message}`; log('account-read-failed'); }
+  finally { accountBusy = false; $('account-panel').querySelectorAll('button').forEach(button => { button.disabled = false; }); }
+}
+$('account-load').onclick = () => accountCheck(async () => {
+  clearAccountView();
+  const data = await request('/api/account/playlists', AbortSignal.timeout(20000));
+  $('account-playlists').replaceChildren(...data.items.map(item => {
+    const li = document.createElement('li');
+    const title = document.createElement('span'); title.textContent = item.title + ' '; li.append(title);
+    if (item.id) {
+      const button = document.createElement('button'); button.textContent = 'Open playlist'; button.disabled = accountBusy;
+      button.onclick = () => accountCheck(async () => {
+        const playlist = await request(`/api/account/playlist?id=${encodeURIComponent(item.id)}`, AbortSignal.timeout(20000));
+        $('account-playlist-title').textContent = playlist.title;
+        $('account-playlist-status').textContent = `${playlist.privacy} · ${playlist.items.length} tracks shown` +
+          (playlist.total === null ? ` (limit ${playlist.limit})` : ` of ${playlist.total}`);
+        $('account-tracks').replaceChildren(...playlist.items.map(track => {
+          const row = document.createElement('li'); row.textContent = `${track.title}${track.artists ? ' — ' + track.artists : ''}`; return row;
+        }));
+        $('account-status').textContent = 'Playlist loaded.'; log('account-playlist-read');
+      });
+      li.append(button);
+    } else li.append(document.createTextNode('Unavailable in this view.'));
+    return li;
+  }));
+  $('account-status').textContent = `${data.items.length} playlists shown (limit ${data.limit}).`;
+  log('account-library-read');
+});
 
 async function networkCheck(task) {
   if (networkBusy) return;

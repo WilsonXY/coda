@@ -5,6 +5,7 @@ import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import cases from './scripts/cases.json' with { type: 'json' };
 import { createLiveMusic } from './live-music.mjs';
+import { createAccountReader } from './account.mjs';
 import { search, playlist, playability } from './youtube.mjs';
 
 const files = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'] };
@@ -45,8 +46,9 @@ async function musicManifest(directory) {
   return { preparedAt: manifest.preparedAt, tracks };
 }
 
-export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR, liveMusic } = {}) {
+export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR, liveMusic, accountOptions } = {}) {
   const live = liveMusic ? createLiveMusic(liveMusic) : null;
+  const account = createAccountReader(accountOptions);
   const server = http.createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -58,6 +60,10 @@ export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR, live
       if (req.headers.origin && (!URL.canParse(req.headers.origin) || new URL(req.headers.origin).host !== req.headers.host)) return json(403, { error: 'Cross-site request rejected.' });
       if (req.method !== 'GET' && req.method !== 'HEAD') return json(405, { error: 'Read-only experiment.' });
       if (url.pathname.startsWith('/api/') && req.method === 'HEAD') return json(405, { error: 'GET required.' });
+      if (url.pathname.startsWith('/api/account/')) {
+        const result = await account(req, url);
+        return json(result.status, result.body);
+      }
       if (url.pathname === '/api/search') {
         const q = url.searchParams.get('q')?.trim();
         const type = url.searchParams.get('type') ?? 'song';

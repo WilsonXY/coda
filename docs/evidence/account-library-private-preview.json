@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-25",
+  "api": {
+    "page": {
+      "status": 200,
+      "json": false,
+      "error": null
+    },
+    "loopbackDenied": {
+      "status": 403,
+      "json": true,
+      "error": "Account access requires the owner\u2019s private Tailscale link."
+    },
+    "privateOwnerRead": {
+      "status": 502,
+      "json": true,
+      "error": "Account read failed. Check the local session and upstream service; no library data was loaded."
+    },
+    "incomingSpoofOverwritten": {
+      "status": 502,
+      "json": true,
+      "error": "Account read failed. Check the local session and upstream service; no library data was loaded."
+    },
+    "serveConfigurationUnchanged": true
+  },
+  "browser": {
+    "status": "PASS_FAILURE_PATH_ONLY",
+    "realServeIdentity": true,
+    "manualIdentityHeaders": false,
+    "unverifiedSessionReported": true,
+    "privateDataCleared": true,
+    "playbackContinues": true,
+    "layouts": [
+      390,
+      728
+    ],
+    "privateLibrarySuccess": "NOT VERIFIED"
+  }
+}
