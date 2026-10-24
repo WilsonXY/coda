@@ -28,7 +28,7 @@ def run_test(yt, journal):
             handle.flush()
             os.fsync(handle.fileno())
 
-        def readback(action, expected, expected_items=None):
+        def readback(action, expected, expected_prefix=None):
             listing = yt.get_playlist(PLAYLIST_ID, limit=20)
             if (listing.get('id') != PLAYLIST_ID or listing.get('owned') is not True or
                     listing.get('privacy') != 'PRIVATE' or listing.get('title') != TITLE or
@@ -38,7 +38,7 @@ def run_test(yt, journal):
             order = [track.get('videoId') for track in tracks]
             items = [track.get('setVideoId') for track in tracks]
             if (order != expected or not all(isinstance(item, str) and 0 < len(item) <= 512 for item in items)
-                    or len(set(items)) != len(items) or (expected_items is not None and items != expected_items)):
+                    or len(set(items)) != len(items) or (expected_prefix is not None and items[:len(expected_prefix)] != expected_prefix)):
                 raise ValueError('Playlist order or item identity guard failed')
             report['steps'].append({'action': action, 'order': order, 'private': True, 'owned': True})
             save()
@@ -61,9 +61,7 @@ def run_test(yt, journal):
             original = readback('inspect test playlist', [A, B])
             attempt('add duplicate')
             yt.add_playlist_items(PLAYLIST_ID, videoIds=[A], duplicates=True)
-            added = readback('add duplicate', [A, B, A])
-            if added[:2] != original:
-                raise ValueError('Original items changed')
+            added = readback('add duplicate', [A, B, A], original)
             duplicate = added[2]
             attempt('move duplicate')
             yt.edit_playlist(PLAYLIST_ID, moveItem=(duplicate, original[0]))

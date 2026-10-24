@@ -142,6 +142,18 @@ class PlaylistWriteChecks(unittest.TestCase):
             result = self.worker.run_test(client, self.journal)
         self.assertEqual(result['status'], 'PASS_API_READBACK')
 
+    def test_replaced_original_after_add_is_not_reported_as_verified(self):
+        client = self.client()
+        original_add = client.add_playlist_items
+        def add_with_replacement(*args, **kwargs):
+            original_add(*args, **kwargs)
+            client.items[1]['setVideoId'] = 'replaced-original-b'
+        client.add_playlist_items = add_with_replacement
+        report = self.worker.run_test(client, self.journal)
+        self.assertEqual(report['status'], 'FAIL_STOP')
+        self.assertEqual(client.calls, ['add duplicate'])
+        self.assertEqual([step['action'] for step in report['steps']], ['inspect test playlist'])
+
 
 if __name__ == '__main__':
     unittest.main()
