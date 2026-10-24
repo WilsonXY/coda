@@ -25,7 +25,7 @@ Let A be `4D7u5KF7SP8` and B be `Rgrt_8mXrK8`:
 
 All four readbacks passed with PRIVATE/owned confirmed. Distinct playlist-item identifiers verified which duplicate moved and was removed, and both original item identities survived. Record **PASS_API_READBACK** for this continuation, separately from the initial failed probe.
 
-The final two songs are Get Lucky (feat. Pharrell Williams and Nile Rodgers), then Get Lucky (Radio Edit - feat. Pharrell Williams and Nile Rodgers). The private test playlist is left intact for owner inspection at [YouTube Music](https://music.youtube.com/playlist?list=PLWEPAqmCfbhY). Official-site confirmation of privacy and final order is pending; overall acceptance is not yet complete.
+The final two songs are Get Lucky (feat. Pharrell Williams and Nile Rodgers), then Get Lucky (Radio Edit - feat. Pharrell Williams and Nile Rodgers). The private test playlist is left intact for owner inspection at [YouTube Music](https://music.youtube.com/playlist?list=PLWEPAqmCfbhY). The owner supplied an official-site screenshot showing the matching playlist ID, Private, exactly 2 tracks, and those songs in that order. Record **PASS_API_AND_OFFICIAL_SITE** for this scoped experiment. The source screenshot hash and observed fields are recorded; the image is not committed or uploaded because unrelated account/sidebar details are visible. The continuation report keeps its original pre-screenshot NOT RUN field for provenance; the later screenshot completes acceptance.
 
 ## Limits and next work
 

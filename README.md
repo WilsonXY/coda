@@ -86,7 +86,7 @@ Then, when ready to create a disposable playlist:
 
 The write test creates one new private `Coda experiment <timestamp>` playlist, adds a duplicate, moves it, removes that exact duplicate, and verifies private visibility and item order after each step, including which duplicate survives removal. It never edits an existing playlist and never retries writes. It leaves the test playlist for you to inspect in YouTube Music. If a request fails or times out, inspect any reported `playlistId` before running again; every run creates a new playlist. The output contains sanitized IDs/order, not session data. Actual account tests require a local session.
 
-Current account results are recorded in [account-results.md](docs/account-results.md). Authenticated reads and a controlled continuation on one new private playlist passed API readbacks after an initial readback failure; official-site confirmation remains separate. The website itself is not connected to this session.
+Current account results are recorded in [account-results.md](docs/account-results.md). Authenticated reads and a controlled continuation on one new private playlist passed API readbacks after an initial readback failure; the owner screenshot confirms the final private two-track playlist on the official site. The website itself is not connected to this session.
 
 ## Phone and Zen checks
 

@@ -123,9 +123,18 @@
   ],
   "apiOutcome": "PASS_API_READBACK after explicit read-only inspection and controlled continuation of the same created playlist; the initial unattended probe attempt remains FAIL.",
   "officialSiteVerification": {
-    "status": "NOT RUN",
-    "requestedCheck": "Owner refreshes official YouTube Music playlist and confirms PRIVATE, exactly two songs in the recorded order.",
-    "ownerAnswer": null
+    "status": "PASS_SCREENSHOT",
+    "source": "Owner-provided screenshot in response to the official-site verification request",
+    "sourceSha256": "bcd4e5c2c11c5f93b8d4dc0f131ff1c4c06aebe321f384a395e52e5ab8512fce",
+    "playlistIdInAddressBar": "PLWEPAqmCfbhY",
+    "observedPrivacy": "PRIVATE",
+    "observedTrackCount": 2,
+    "observedTrackOrder": [
+      "Get Lucky (feat. Pharrell Williams and Nile Rodgers)",
+      "Get Lucky (Radio Edit - feat. Pharrell Williams and Nile Rodgers)"
+    ],
+    "privateImageHandling": "Original screenshot is not committed or uploaded to GitHub because unrelated account/sidebar details are visible.",
+    "provenanceNote": "The embedded continuation report retains its original pre-screenshot NOT RUN field; this later independent official-site check completes acceptance."
   },
   "limits": [
     "The unmodified probe stopped after creation; this is not a clean unattended probe PASS.",
@@ -134,11 +143,11 @@
     "Website remains anonymous/read-only for account operations; credentials were not wired to the web server or frontend.",
     "Premium/account-linked playback is not established by these library/playlist operations."
   ],
-  "nextStep": "Finish official-site confirmation, review and retain account evidence; then build a minimal authenticated backend workflow with explicit owner access controls before website account writes.",
+  "nextStep": "Retain the initial failed attempt and successful same-playlist continuation as scoped feasibility evidence. Next build a minimal authenticated backend workflow with explicit owner access controls before website account writes; no additional account mutation is needed for this experiment.",
   "harnessChecks": {
     "command": ".venv/bin/python -m unittest discover -s tests -p *_test.py",
     "tests": 9,
     "status": "PASS"
   },
-  "acceptanceStatus": "PENDING_OFFICIAL_SITE_CONFIRMATION"
+  "acceptanceStatus": "PASS_API_AND_OFFICIAL_SITE"
 }
