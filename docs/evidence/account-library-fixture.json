@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-24T16:13:37.135Z",
+  "browser": "153.0.8010.12",
+  "status": "PASS",
+  "source": "synthetic library data; simulated Serve identity header, not live account",
+  "libraryAndPrivatePlaylist": "PASS",
+  "accessDeniedBeforeUpstream": "PASS",
+  "literalRenderingAndLongTitles": "PASS",
+  "failureClearsPrivateData": "PASS",
+  "playbackWhileBrowsing": "PASS",
+  "layouts": [
+    390,
+    728
+  ],
+  "realAccount": "NOT RUN"
+}

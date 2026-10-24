@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-25",
+  "mode": "read-only",
+  "initialLibraryCount": 0,
+  "accountIdentityVerification": "FAIL_KEYERROR",
+  "disposablePrivatePlaylistRead": "FAIL_KEYERROR",
+  "publicComparisonReadBeforeIdentityRequirement": {
+    "status": "PASS",
+    "tracks": 53
+  },
+  "guardedWorker": {
+    "status": "PASS_REJECTED_UNVERIFIED_SESSION",
+    "exitCode": 1,
+    "genericErrorOnly": true
+  },
+  "livePrivateLibrary": "NOT VERIFIED",
+  "accountMutations": 0,
+  "cause": "Unknown; session validity or upstream response compatibility needs investigation."
+}

@@ -17,6 +17,7 @@
     "start:live": "node scripts/live-server.mjs",
     "test:live": "node tests/live-browser.mjs",
     "test:buffer": "node tests/buffer-browser.mjs",
+    "test:account": "node tests/account-browser.mjs",
     "probe:live": "node tests/live-upstream.mjs"
   },
   "dependencies": {

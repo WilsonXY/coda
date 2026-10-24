@@ -86,7 +86,27 @@ Then, when ready to create a disposable playlist:
 
 The write test creates one new private `Coda experiment <timestamp>` playlist, adds a duplicate, moves it, removes that exact duplicate, and verifies private visibility and item order after each step, including which duplicate survives removal. It never edits an existing playlist and never retries writes. It leaves the test playlist for you to inspect in YouTube Music. If a request fails or times out, inspect any reported `playlistId` before running again; every run creates a new playlist. The output contains sanitized IDs/order, not session data. Actual account tests require a local session.
 
-Current account results are recorded in [account-results.md](docs/account-results.md). Authenticated reads and a controlled continuation on one new private playlist passed API readbacks after an initial readback failure; the owner screenshot confirms the final private two-track playlist on the official site. The website itself is not connected to this session.
+Current account results are recorded in [account-results.md](docs/account-results.md). Authenticated reads and a controlled continuation on one new private playlist passed API readbacks after an initial readback failure; the owner screenshot confirms the final private two-track playlist on the official site.
+
+## Optional private account library
+
+The **My library** panel can list up to 50 library playlists and open up to 100 tracks in one playlist. It is read-only and does not connect account tracks to playback. Playback remains anonymous and limited to the existing fixed experiment tracks. Library pagination, account writes and login/logout in the browser are outside this slice.
+
+Install the pinned Python requirements above. Configure these three server environment variables privately:
+
+```sh
+export CODA_ACCOUNT_OWNER='your-tailscale-user-login'
+export CODA_ACCOUNT_AUTH="$HOME/.config/coda/browser.json"
+export CODA_ACCOUNT_PYTHON="$HOME/.cache/coda-experiment/python/bin/python"
+```
+
+Use your actual Python environment path. Start the usual server with the same private Tailscale HTTPS route. All three settings are required; without them the panel reports unavailable. Never put the auth file in this repository or a served folder.
+
+Account requests require the exact configured owner in the `Tailscale-User-Login` header, a loopback peer, and same-origin browser requests. [Tailscale Serve strips incoming identity headers and supplies the authenticated tailnet user](https://tailscale.com/docs/features/tailscale-serve). Keep this port private: Funnel and tagged devices do not supply that user identity. Local processes can forge these headers, so this setup trusts the host and other local processes; it is not a public multi-user deployment. Keep the backend bound to loopback.
+
+Each read starts a fixed Python worker, verifies account identity without returning it, and projects only playlist/track display fields. One read runs at a time, with a 15-second deadline and 512 KiB output ceiling. Credentials, raw upstream responses and private library contents are excluded from device exports. A session or parser failure reports an error and clears the panel, rather than claiming the library is empty. Refresh browser authentication locally using the setup link above if needed; do not share cookies through chat.
+
+Run `npm run test:account` for synthetic account fixtures, access rejection, persistent playback and 390px/728px screenshots. It does not use a Google session. See [account-library-results.md](docs/account-library-results.md) for current live verification limits.
 
 ## Phone and Zen checks
 
