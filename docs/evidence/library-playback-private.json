@@ -1,0 +1,45 @@
+{
+  "recordedAt": "2026-10-24T19:06:14.293512+00:00",
+  "beforeLocalSessionRefresh": {
+    "status": "PASS_PRIVATE_NATIVE_ROUTE_LIBRARY_BLOCKED",
+    "manualIdentityHeaders": false,
+    "accountMutations": 0,
+    "physicalPhone": "NOT RUN",
+    "libraryStatus": 502,
+    "libraryUI": "BLOCKED_ACCOUNT_READ",
+    "nativeRouteOnly": true,
+    "media": {
+      "seconds": 1.056475,
+      "error": null,
+      "isCatalog": true,
+      "isBlob": false
+    },
+    "seek": "PASS",
+    "layouts": [
+      390,
+      728
+    ],
+    "sampleDiagnosticsExcludeCatalog": true
+  },
+  "afterLocalSessionRefresh": {
+    "status": "PASS_REAL_PRIVATE_LIBRARY_PLAYBACK",
+    "manualIdentityHeaders": false,
+    "accountMutations": 0,
+    "physicalPhone": "NOT RUN",
+    "ownerZen": "NOT RUN",
+    "libraryCount": 32,
+    "rowPlay": "PASS",
+    "seek": "PASS",
+    "nextBuffer": "PASS",
+    "playlistPlay": "PASS",
+    "addWithoutInterruption": "PASS",
+    "layouts": [
+      390,
+      728
+    ],
+    "exportRedaction": "PASS",
+    "sampleDiagnosticsExcludeCatalog": true,
+    "writeJournalUnchanged": true
+  },
+  "serveConfigurationUnchanged": true
+}
