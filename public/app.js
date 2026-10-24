@@ -304,28 +304,53 @@ $('export').onclick = async () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
-async function request(path, signal) {
-  const response = await fetch(path, { signal });
+async function request(path, signal, options = {}) {
+  const response = await fetch(path, { ...options, signal });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? `HTTP ${response.status}`);
   return data;
 }
 
 let accountBusy = false;
+let playlistTestAttempted = false;
 function clearAccountView() {
   $('account-playlists').replaceChildren(); $('account-tracks').replaceChildren();
   $('account-playlist-title').textContent = 'No playlist selected';
   $('account-playlist-status').textContent = '';
 }
-async function accountCheck(task) {
+async function accountCheck(task, failureLabel = 'Account read failed.') {
   if (accountBusy) return;
   accountBusy = true;
   $('account-panel').querySelectorAll('button').forEach(button => { button.disabled = true; });
   $('account-status').textContent = 'Loading account data…';
   try { await task(); }
-  catch (error) { clearAccountView(); $('account-status').textContent = `Account read failed. ${error.message}`; log('account-read-failed'); }
-  finally { accountBusy = false; $('account-panel').querySelectorAll('button').forEach(button => { button.disabled = false; }); }
+  catch (error) { clearAccountView(); $('account-status').textContent = `${failureLabel} ${error.message}`; log('account-request-failed'); }
+  finally {
+    accountBusy = false; $('account-panel').querySelectorAll('button').forEach(button => { button.disabled = false; });
+    $('account-test').disabled = playlistTestAttempted;
+  }
 }
+$('account-test').onclick = () => {
+  if (accountBusy || playlistTestAttempted) return;
+  playlistTestAttempted = true;
+  accountCheck(async () => {
+    clearAccountView(); $('account-test-steps').replaceChildren();
+    $('account-test-status').textContent = 'Running once. Waiting for verified readbacks…';
+    try {
+      const result = await request('/api/account/playlist-test', AbortSignal.timeout(20000), { method: 'POST' });
+      $('account-test-status').textContent = result.status === 'PASS_API_READBACK'
+        ? 'PASS_API_READBACK: original two songs and their item identities preserved. Verify the playlist on YouTube Music.'
+        : `${result.status}: ${result.note ?? 'Inspect the test playlist and local journal before further writes.'}`;
+      $('account-test-steps').replaceChildren(...result.steps.map(step => {
+        const li = document.createElement('li'); li.textContent = `${step.action}: ${step.order.length} tracks verified`; return li;
+      }));
+      $('account-status').textContent = 'Playlist test request finished.'; log('playlist-test-finished');
+    } catch (error) {
+      $('account-test-status').textContent = 'Outcome unconfirmed. Inspect the disposable playlist and local journal before further writes. Do not retry.';
+      throw error;
+    }
+  }, 'Playlist test stopped.');
+};
 $('account-load').onclick = () => accountCheck(async () => {
   clearAccountView();
   const data = await request('/api/account/playlists', AbortSignal.timeout(20000));

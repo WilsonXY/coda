@@ -1,0 +1,28 @@
+{
+  "api": {
+    "libraryStatus": 200,
+    "libraryItems": 32,
+    "accountMutations": 0,
+    "playlistStatus": 200,
+    "playlistItems": 2,
+    "playlistPrivacy": "PRIVATE",
+    "disposablePlaylistUsed": true
+  },
+  "browser": {
+    "status": "PASS_LIVE_PRIVATE_READ_ONLY",
+    "manualIdentityHeaders": false,
+    "playlistsShown": 32,
+    "disposablePlaylistTracks": 2,
+    "privacy": "PRIVATE",
+    "playbackWhileBrowsing": "PASS",
+    "layouts": [
+      390,
+      728
+    ],
+    "privateMetadataPublished": false,
+    "accountMutations": 0
+  },
+  "ownerConfirmation": "yes it shows, done next",
+  "ownerBrowser": "unspecified",
+  "accountMutations": 0
+}

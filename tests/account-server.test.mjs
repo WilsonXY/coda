@@ -82,6 +82,30 @@ test('upstream errors cannot expose credentials or raw exceptions', async t => {
   assert.equal((await result.text()).includes('synthetic-cookie-secret'), false);
 });
 
+test('playlist test POST needs explicit enablement, owner identity, exact HTTPS origin and no input', async t => {
+  let calls = 0;
+  const settings = { owner, authFile: '/private/fixture.json', python: 'unused',
+    execute: async request => { calls++; assert.deepEqual(request, { operation: 'playlist-test' }); return { status: 'PASS_API_READBACK' }; } };
+  const disabled = await serve(t, settings);
+  const base = await serve(t, { ...settings, testJournal: '/private/playlist-test.json' });
+  const origin = base.replace('http:', 'https:');
+  const headers = { 'Tailscale-User-Login': owner, Origin: origin };
+  const endpoint = base + '/api/account/playlist-test';
+  assert.equal((await fetch(disabled + '/api/account/playlist-test', { method: 'POST', headers: { ...headers, Origin: disabled.replace('http:', 'https:') } })).status, 503);
+  assert.equal((await fetch(endpoint, { method: 'POST' })).status, 403);
+  assert.equal((await fetch(endpoint, { method: 'POST', headers: { 'Tailscale-User-Login': owner } })).status, 403);
+  assert.equal((await fetch(endpoint, { method: 'POST', headers: { ...headers, Origin: base } })).status, 403);
+  assert.equal((await fetch(endpoint, { method: 'POST', headers: { ...headers, 'Sec-Fetch-Site': 'cross-site' } })).status, 403);
+  assert.equal((await fetch(endpoint + '?id=PLother123', { method: 'POST', headers })).status, 400);
+  assert.equal((await fetch(endpoint, { method: 'POST', headers, body: '{}' })).status, 400);
+  assert.equal((await fetch(endpoint, { headers })).status, 405);
+  assert.equal(calls, 0);
+  const response = await fetch(endpoint, { method: 'POST', headers });
+  assert.equal(response.status, 200); assert.equal(calls, 1);
+  assert.deepEqual(await response.json(), { status: 'PASS_API_READBACK' });
+  assert.equal((await fetch(base + '/api/account/playlists', { method: 'POST', headers })).status, 405);
+});
+
 test('account backend runs a fixed worker using JSON input and private server configuration', async t => {
   const directory = await mkdtemp(join(tmpdir(), 'coda-account-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
@@ -97,4 +121,20 @@ console.log(JSON.stringify({ok:true,data:{items:[],limit:50,complete:false}}));
   const result = await fetch(base + '/api/account/playlists', { headers: { 'Tailscale-User-Login': owner } });
   assert.equal(result.status, 200);
   assert.deepEqual(await result.json(), { items: [], limit: 50, complete: false });
+});
+
+test('playlist test transport selects only the fixed writer and private journal path', async t => {
+  const directory = await mkdtemp(join(tmpdir(), 'coda-write-transport-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const python = join(directory, 'fixture.mjs');
+  await writeFile(python, `#!${process.execPath}
+let input = ''; for await (const part of process.stdin) input += part;
+if (!process.argv[2].endsWith('/scripts/account_write.py') || process.env.CODA_ACCOUNT_TEST_JOURNAL !== '/private/test-journal.json') process.exit(1);
+if (JSON.stringify(JSON.parse(input)) !== JSON.stringify({operation:'playlist-test'})) process.exit(1);
+console.log(JSON.stringify({ok:true,data:{status:'PASS_API_READBACK'}}));
+`, { mode: 0o700 });
+  const base = await serve(t, { owner, authFile: '/private/fixture.json', python, testJournal: '/private/test-journal.json' });
+  const result = await fetch(base + '/api/account/playlist-test', { method: 'POST', headers: { 'Tailscale-User-Login': owner, Origin: base.replace('http:', 'https:') } });
+  assert.equal(result.status, 200);
+  assert.deepEqual(await result.json(), { status: 'PASS_API_READBACK' });
 });
