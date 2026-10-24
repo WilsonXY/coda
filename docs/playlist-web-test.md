@@ -1,0 +1,25 @@
+# One-time website playlist experiment
+
+My library includes a button for a single add/move/remove cycle on the previously created disposable private playlist PLWEPAqmCfbhY. This is an experiment, not a general playlist editor. The browser supplies no playlist IDs, video IDs, titles or item identifiers to the write route. It does not create or delete playlists.
+
+## Operation
+
+An explicit click sends an empty POST to /api/account/playlist-test. In addition to the existing private Serve owner gate, this requires the exact HTTPS Origin and explicit server enablement. A body, query parameters, another write path or wrong method is rejected. One account worker runs at a time; the existing 15-second deadline and output bound still apply. Opening the page or browsing playlists never starts a write.
+
+The fixed Python worker reserves a mode-0600 journal outside the checkout with exclusive creation. It syncs the file and its parent directory before proceeding, then syncs intent before each mutation. Any existing journal, including an empty/partial one, prevents a new cycle. The button stays disabled after its first attempt on a page; the durable server journal remains the repeat guard after reload/restart. This assumes the trusted host/operator keeps the journal and its configured path intact.
+
+Before each change/readback, the worker verifies the exact ID, original test title/time and description, PRIVATE, owned, expected count/order and distinct playlist-item identifiers. Expected states are A/B → A/B/A → A/A/B → A/B, where A is 4D7u5KF7SP8 and B is Rgrt_8mXrK8. After adding, both originals must survive in their original positions; moving/removing targets the added occurrence by its unique item identifier. Final readback requires both original item identities in order.
+
+A failure, mismatch or timeout stops the sequence without retry or automatic rollback. Remote changes may already have happened. Inspect the official test playlist and local journal before deciding what to do; do not delete/reset the journal just to try again. A code revert cannot undo an unfinished account change. Concurrent edits through another client cannot be made atomic with these upstream APIs; leave this disposable playlist alone while the test runs. Raw upstream errors, account names, auth headers and private item identifiers are never returned, journaled or exported. Reports contain only the known test playlist/video IDs, step results and status.
+
+## Private setup and owner test
+
+Keep the existing three account settings and private Serve route. Add CODA_ACCOUNT_TEST_JOURNAL to the server environment, pointing to a new journal file inside the private configuration directory outside Git, for example $HOME/.config/coda/playlist-web-test.json. The directory must already exist. The worker creates the file on the first actual test; setup/read-only preflight must not create it. Without this setting the POST is unavailable. Local processes and host configuration remain trusted under the existing Serve model.
+
+After review and private preview setup: refresh Coda, open My library, and click Run add / move / remove test once. Wait for PASS_API_READBACK, then use the official-site link to confirm Private, two original songs, original order. This check should take seconds under normal upstream response times; it does not require a long audio run. Report FAIL_STOP or an unconfirmed outcome without repeating the write.
+
+## Verification
+
+The POST test first failed 405 instead of503; fixed-worker transport failed502; the Python worker was initially absent; its CLI initially accepted an unsupported request; the directory-sync regression stopped the cycle; and the browser initially lacked the button. Each check now passes. Security/guard/failure fixtures cover changed metadata, wrong original item identities, invalid sessions, applied-but-timed-out mutations, failed readbacks, journal reuse and empty reservations. The new browser suite uses actual HTTPS with an ephemeral OpenSSL test certificate and synthetic account data. Simulating HTTPS Origin on an HTTP page was rejected by Chromium's real on-wire Origin; production checks were kept strict.
+
+A real read-only preflight confirms that the existing disposable playlist meets all exact guards and still contains its original two songs. No web mutation has been run by the agent. Screenshots use synthetic worker reports. T3 preview automation was blocked by host AppArmor; the repository Playwright workflow was used. 25 Node tests, 21 Python tests and all six Chromium fixture suites pass. The 390px/728px synthetic screenshots were inspected. Independent Astra review is pending.

@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "source": "synthetic worker; simulated Serve identity; real HTTPS fixture with an ephemeral self-signed test certificate",
+  "explicitClickOnly": true,
+  "successAndStoppedOutcomes": true,
+  "buttonStaysDisabled": true,
+  "denialBeforeUpstream": true,
+  "playbackContinues": true,
+  "layouts": [
+    390,
+    728
+  ],
+  "realAccountWrites": "NOT RUN"
+}

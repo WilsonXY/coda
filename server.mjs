@@ -58,7 +58,7 @@ export function createServer({ musicDirectory = process.env.CODA_MUSIC_DIR, live
       const url = new URL(req.url, `http://${req.headers.host}`);
       if (!hosts.has(url.hostname)) return json(403, { error: 'Host not allowed.' });
       if (req.headers.origin && (!URL.canParse(req.headers.origin) || new URL(req.headers.origin).host !== req.headers.host)) return json(403, { error: 'Cross-site request rejected.' });
-      if (req.method !== 'GET' && req.method !== 'HEAD') return json(405, { error: 'Read-only experiment.' });
+      if (req.method !== 'GET' && req.method !== 'HEAD' && !(req.method === 'POST' && url.pathname === '/api/account/playlist-test')) return json(405, { error: 'Method not allowed.' });
       if (url.pathname.startsWith('/api/') && req.method === 'HEAD') return json(405, { error: 'GET required.' });
       if (url.pathname.startsWith('/api/account/')) {
         const result = await account(req, url);

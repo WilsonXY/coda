@@ -1,10 +1,11 @@
 import { execFile } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-function runWorker(python, authFile, request) {
+function runWorker(python, authFile, testJournal, request) {
   return new Promise((resolve, reject) => {
-    const child = execFile(python, [fileURLToPath(new URL('./scripts/account_read.py', import.meta.url))], {
-      env: { ...process.env, CODA_ACCOUNT_AUTH: authFile }, timeout: 15000, maxBuffer: 512 * 1024,
+    const script = request.operation === 'playlist-test' ? './scripts/account_write.py' : './scripts/account_read.py';
+    const child = execFile(python, [fileURLToPath(new URL(script, import.meta.url))], {
+      env: { ...process.env, CODA_ACCOUNT_AUTH: authFile, CODA_ACCOUNT_TEST_JOURNAL: testJournal ?? '' }, timeout: 15000, maxBuffer: 512 * 1024,
     }, (error, stdout) => {
       if (error) return reject(error);
       try {
@@ -21,7 +22,8 @@ function runWorker(python, authFile, request) {
 // Serve identity is trusted only behind the loopback Tailscale proxy; local processes are trusted.
 export function createAccountReader({ owner = process.env.CODA_ACCOUNT_OWNER,
   authFile = process.env.CODA_ACCOUNT_AUTH, python = process.env.CODA_ACCOUNT_PYTHON,
-  execute = request => runWorker(python, authFile, request) } = {}) {
+  testJournal = process.env.CODA_ACCOUNT_TEST_JOURNAL,
+  execute = request => runWorker(python, authFile, testJournal, request) } = {}) {
   let busy = false; // ponytail: one bounded read at a time; use a persistent worker if startup becomes costly.
   return async (req, url) => {
     if (!owner || !authFile || !python) return { status: 503, body: { error: 'Account library is not configured.' } };
@@ -33,7 +35,14 @@ export function createAccountReader({ owner = process.env.CODA_ACCOUNT_OWNER,
       return { status: 403, body: { error: 'Account access requires the owner’s private Tailscale link.' } };
     }
     let request;
-    if (url.pathname === '/api/account/playlists') request = { operation: 'library' };
+    const writing = url.pathname === '/api/account/playlist-test';
+    if (writing) {
+      if (req.method !== 'POST') return { status: 405, body: { error: 'POST required for the playlist test.' } };
+      if (req.headers.origin !== `https://${req.headers.host}`) return { status: 403, body: { error: 'The playlist test requires the private HTTPS page.' } };
+      if (!testJournal) return { status: 503, body: { error: 'The one-time playlist test is not enabled.' } };
+      if (url.search || req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0')) return { status: 400, body: { error: 'The playlist test accepts no parameters or body.' } };
+      request = { operation: 'playlist-test' };
+    } else if (url.pathname === '/api/account/playlists') request = { operation: 'library' };
     else if (url.pathname === '/api/account/playlist') {
       const id = url.searchParams.get('id');
       if (!id || !/^(LM|(?:PL|RD|OL)[A-Za-z0-9_-]{5,120})$/.test(id)) return { status: 400, body: { error: 'Enter a supported playlist ID.' } };
@@ -42,7 +51,9 @@ export function createAccountReader({ owner = process.env.CODA_ACCOUNT_OWNER,
     if (busy) return { status: 503, body: { error: 'An account read is already running. Retry shortly.' } };
     busy = true;
     try { return { status: 200, body: await execute(request) }; }
-    catch { return { status: 502, body: { error: 'Account read failed. Check the local session and upstream service; no library data was loaded.' } }; }
+    catch { return { status: 502, body: { error: writing
+      ? 'Playlist test outcome is unconfirmed. Inspect the disposable playlist and local journal before any further writes.'
+      : 'Account read failed. Check the local session and upstream service; no library data was loaded.' } }; }
     finally { busy = false; }
   };
 }

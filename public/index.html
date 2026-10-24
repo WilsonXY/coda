@@ -31,14 +31,20 @@
 <p id="search-status" role="status"></p><ol id="results"></ol>
 <form id="playlist"><label>Public playlist ID <input id="playlist-id" required></label><button>Read playlist</button></form>
 <pre id="probe-output" aria-live="polite">No player response checked yet.</pre>
-<p>Account reads are in My library. Playlist write experiments use the local account-check script.</p>
+<p>Account reads and the disposable playlist experiment are in My library.</p>
 </section>
 <section id="account-panel" hidden><h2>My YouTube Music library</h2>
-<p>Use your private Tailscale link on an owner device. This view is read-only.</p>
+<p>Use your private Tailscale link on an owner device. Browsing below is read-only.</p>
 <button id="account-load">Load my playlists</button>
 <p id="account-status" role="status">Your library has not been loaded.</p><ol id="account-playlists"></ol>
 <h3 id="account-playlist-title">No playlist selected</h3>
 <p id="account-playlist-status" role="status"></p><ol id="account-tracks"></ol>
+<h3>One-time playlist management test</h3>
+<p>This changes only the existing private Coda test playlist: add a duplicate of its first song, move that exact copy to the front, then remove it. A successful test leaves the original two songs in order.</p>
+<button id="account-test">Run add / move / remove test once</button>
+<p id="account-test-status" role="status">Not run. Start only when ready to change the disposable test playlist. An interrupted test may leave a partial change; inspect it before further writes.</p>
+<ol id="account-test-steps"></ol>
+<p><a href="https://music.youtube.com/playlist?list=PLWEPAqmCfbhY" target="_blank" rel="noopener noreferrer">Inspect the test playlist on YouTube Music</a></p>
 </section>
 <section><h2>Event log</h2><p>Export after testing. Only the last 300 events are kept.</p><pre id="events" aria-live="off"></pre></section>
 </main><script type="module" src="/app.js"></script></body></html>
