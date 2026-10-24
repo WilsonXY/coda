@@ -90,7 +90,7 @@ Current account results are recorded in [account-results.md](docs/account-result
 
 ## Optional private account library
 
-The **My library** panel can list up to 50 library playlists and open up to 100 tracks in one playlist. Browsing is read-only and does not connect account tracks to playback. An optional one-time disposable-playlist write experiment is described below. Playback remains anonymous and limited to the existing fixed experiment tracks. Library pagination, general playlist editing and login/logout in the browser are outside this slice.
+The **My library** panel can list up to 50 library playlists and open up to 100 tracks in one playlist. Browsing is read-only. Play playlist, Play and Add to queue now connect the loaded tracks to the existing player when the optional live server is running. An optional one-time disposable-playlist write experiment is described below. Playback is retrieved anonymously; Premium-specific behavior is not established. Library pagination, general playlist editing and login/logout in the browser are outside this slice.
 
 Install the pinned Python requirements above. Configure these three server environment variables privately:
 
@@ -112,7 +112,7 @@ Run `npm run test:account` for synthetic account fixtures, access rejection, per
 
 Open the private page. Fill in device/OS/browser version. Play the tone queue and check the controls, seeking, transitions, and switching panels. On Chrome/Android, keep the queue looping for ten minutes with the screen locked; try lock-screen/headset controls, another app, an interruption, and battery saver. Mark each result and export JSON **before reloading**. Results are not saved automatically. Generated tones establish browser behavior only. Repeat with real YouTube audio after playback integration is implemented.
 
-The web page provides no PWA installation/offline app, arbitrary YouTube playback, general media proxy, or Premium account behavior. The optional live server below handles anonymous token generation for three fixed songs only. It can optionally play the three locally prepared complete files described below. The separate sample probe demonstrates limited SABR URL resolution and compressed-audio decoding.
+The web page provides no PWA installation/offline app, public media proxy, or Premium account behavior. The optional live server below handles anonymous audio retrieval for the fixed samples and owner-only library playback. It can optionally play the three locally prepared complete files described below. The separate sample probe demonstrates limited SABR URL resolution and compressed-audio decoding.
 
 
 ## Android next-track stall comparison
@@ -157,9 +157,9 @@ With the prepared manifest configured for fixed track names and development depe
 CODA_MUSIC_DIR="$HOME/.cache/coda/music-test-20261024" npm run start:live
 ```
 
-Set `CHROMIUM_PATH` when using an existing compatible browser binary, and the same `CODA_ALLOWED_HOSTS` for private Tailscale access. The optional entry point runs browser-based anonymous attestation; the default server does not. Choose **Use live music**, wait for Ready, then Play. Selecting the mode fetches metadata only. Media comes from fresh upstream SABR retrieval when a song is requested, is served progressively over same-origin HTTP, and is retained in server memory for future ranges/replays. The prepared manifest supplies labels, never fallback audio for this route. Each of three fixed songs is capped at 16 MiB, with a 90-second capture deadline; the retained audio cache has a 48 MiB limit; browser/library and HTTP buffers are additional. Client disconnection leaves the bounded capture running. Restart this experiment process for a cold run or after a capture/session failure.
+Set `CHROMIUM_PATH` when using an existing compatible browser binary, and the same `CODA_ALLOWED_HOSTS` for private Tailscale access. The optional entry point runs browser-based anonymous attestation; the default server does not. Choose **Use live music**, wait for Ready, then Play. Selecting the mode fetches metadata only. Media comes from fresh upstream SABR retrieval when a song is requested, is served progressively over same-origin HTTP, and is retained in server memory for future ranges/replays. The prepared manifest supplies labels, never fallback audio for this route. Each capture is capped at 16 MiB, with a 90-second deadline. The shared audio cache retains at most three captures (48 MiB), evicting the least-recently-used capture without an active HTTP reader; a fourth active capture is rejected. Browser/library and HTTP buffers are additional. Client disconnection leaves the bounded capture running. Restart this experiment process for a cold run or after a capture/session failure.
 
-This is not paced streaming or a general catalog/cache design. Seeking ahead waits for missing bytes; there is no upstream seek, automatic token renewal or server eviction. Next-track browser buffering is an explicit opt-in described below. A restarted server gets a new run ID. Exports label live delivery, capture status and songs already requested when the mode was selected. An upstream failure stays a failure, with no silent replacement. The browser may buffer received media; this experiment establishes playback before full retrieval, not a memory ceiling for the client.
+This is not paced streaming or a general catalog/cache design. Seeking ahead waits for missing bytes; there is no upstream seek or automatic token renewal. Unused captures may be evicted and retrieved again. Next-track browser buffering is an explicit opt-in described below. A restarted server gets a new run ID. Exports label live delivery, capture status and songs already requested when the mode was selected. An upstream failure stays a failure, with no silent replacement. The browser may buffer received media; this experiment establishes playback before full retrieval, not a memory ceiling for the client.
 
 ```sh
 npm run test:live   # gated real-file fixture; not live YouTube
@@ -188,3 +188,14 @@ Focused phone test (supersedes the longer immediate rerun above): leave Battery 
 ## One-time website playlist write test
 
 The optional button in My library tests add/move/remove only on the already created disposable Coda playlist. Enable it with CODA_ACCOUNT_TEST_JOURNAL pointing to a new file in the private configuration directory outside this checkout. It runs once on an explicit click and leaves the original two songs on successful readback. A timeout or failed guard may leave a partial change; the retained journal blocks repeats, with no automatic retry or rollback. See [setup, exact scope and the short owner check](docs/playlist-web-test.md). Run `npm run test:playlist` for HTTPS browser fixtures (Chromium and the system `openssl` command required); this makes no real account writes.
+
+
+## Playing library songs
+
+Run the optional live server with the private owner/account settings, then open My library → Load my playlists → Open playlist. **Play playlist** queues the playable tracks currently shown and starts the first. **Play** on a row replaces the queue with that loaded playlist and starts at the chosen row. **Add to queue** appends a song, preserving ongoing library playback. The player above remains available; Player checks shows queue controls. Only the loaded first100 rows are supported until pagination is added. Unavailable entries have no play button.
+
+Library playback uses an owner-protected `/catalog/<video-id>.webm` route, validated11-character IDs, and the existing bounded live delivery. It does not send Google credentials to the playback session. The browser buffers the next song automatically; current/next Blobs are bounded at16MiB each. The first song plays progressively. An unavailable track is an error, with no sample substitution. Failed captures persist until eviction/restart; playback token renewal, Premium-specific behavior and physical phone behavior for this new path remain unverified. The repeated account-session invalidations are a separate unresolved limit.
+
+Selecting library playback replaces the demo queue and releases its Blob URLs. Device exports redact library track titles/IDs and omit the loaded playlist; public fixed-sample diagnostics filter out other catalog IDs. These exports are still an explicit owner action. See [library playback results](docs/library-playback.md).
+
+`npm run test:library` uses synthetic account metadata and prepared audio behind the real HTTP player routes. `npm run probe:library` fetches a public song outside the original three samples and tests actual playback/seek with synthetic library metadata and simulated owner identity; it does not prove live account reading. Set CHROMIUM_PATH as needed. The probe has a two-minute overall deadline and makes real anonymous upstream requests.

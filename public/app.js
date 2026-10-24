@@ -17,6 +17,7 @@ const checks = ['Play / pause / seek / volume', 'Previous / next', 'Three automa
 let queue = [];
 let current = null;
 let networkBusy = false;
+const progressive = () => delivery === 'live' || delivery === 'library';
 audio.volume = 0.25;
 
 function tones() {
@@ -27,7 +28,8 @@ function tones() {
 function log(event, details = {}) {
   eventsTotal++;
   events.push({ source, audioDelivery: delivery, at: new Date().toISOString(), event,
-    track: current?.title ?? null, trackId: current?.id ?? null, position: Number(audio.currentTime.toFixed(2)), ...details });
+    track: current?.title ?? null, trackId: current?.id ?? null, position: Number(audio.currentTime.toFixed(2)), ...details,
+    ...(delivery === 'library' ? { track: null, trackId: null, bufferedTrackId: null } : {}) });
   if (events.length > 300) events.shift();
   $('events').textContent = events.slice(-25).map(row => `${row.at.slice(11, 19)} ${row.event} ${row.track ?? ''} @ ${row.position}s`).join('\n');
 }
@@ -36,7 +38,7 @@ function renderQueue() {
   $('queue').replaceChildren(...queue.map((track, index) => {
     const li = document.createElement('li');
     const title = document.createElement('span');
-    title.textContent = `${track === current ? '▶ ' : ''}${track.title} — ${track.seconds} seconds `;
+    title.textContent = `${track === current ? '▶ ' : ''}${track.title}${Number.isFinite(track.seconds) ? ` — ${track.seconds} seconds` : ''} `;
     li.append(title);
     for (const [label, action, disabled] of [
       ['Play', () => select(track), false],
@@ -53,8 +55,12 @@ function renderQueue() {
 
 async function resume() {
   if (preparing) return;
-  try { await audio.play(); void bufferNext(); }
-  catch (error) { log('play-rejected', { error: error.name }); $('now').textContent = 'Playback failed. Tap Play again; check exported events.'; }
+  const selected = current;
+  try { await audio.play(); if (current === selected) void bufferNext(); }
+  catch (error) {
+    if (current !== selected) return;
+    log('play-rejected', { error: error.name }); $('now').textContent = 'Playback failed. Tap Play again; check exported events.';
+  }
 }
 
 async function select(track) {
@@ -66,13 +72,14 @@ async function select(track) {
   $('buffer-next').disabled = true;
   current = track;
   const buffered = liveBuffers.get(track.id);
-  const useBuffer = delivery === 'live' && buffered?.status === 'ready';
+  const useBuffer = progressive() && buffered?.status === 'ready';
   audio.src = useBuffer ? buffered.url : track.url;
-  if (delivery === 'live') {
+  if (progressive()) {
     livePlayback = { trackId: track.id, storage: useBuffer ? 'phone-buffer' : 'progressive-http', selectedAt: new Date().toISOString() };
     log('live-playback-source', livePlayback);
   }
   $('now').textContent = track.title;
+  $('playback-status').textContent = 'Loading song…';
   if ('mediaSession' in navigator && 'MediaMetadata' in window) {
     navigator.mediaSession.metadata = new MediaMetadata({ title: track.title, artist: track.artist });
   }
@@ -136,7 +143,7 @@ function nextBufferTrack() {
 function showBufferStatus() {
   const next = nextBufferTrack();
   const entry = liveBuffers.get(next?.id);
-  $('buffer-status').textContent = delivery !== 'live' || !$('buffer-next').checked
+  $('buffer-status').textContent = !progressive() || !$('buffer-next').checked
     ? 'Next-song buffering is off. Select live music to enable it before Play.'
     : !current ? 'Next-song buffering enabled. Press Play; then wait for the next song to be ready before locking.'
     : !next ? 'No next song to buffer.'
@@ -147,9 +154,9 @@ function showBufferStatus() {
 }
 
 async function bufferNext(startDownload = true) {
-  const enabled = delivery === 'live' && $('buffer-next').checked;
+  const enabled = progressive() && $('buffer-next').checked;
   const next = enabled ? nextBufferTrack() : null;
-  // ponytail: retain only current/next Blobs in this three-song experiment; no persistent cache.
+  // ponytail: retain only current/next Blobs; no persistent catalog cache.
   const keep = enabled && current ? [current.id, next?.id] : [];
   for (const [id, entry] of liveBuffers) {
     if (keep.includes(id)) continue;
@@ -164,11 +171,14 @@ async function bufferNext(startDownload = true) {
   showBufferStatus();
   log('next-buffer-start', { bufferedTrackId: next.id });
   try {
-    if (!Number.isSafeInteger(next.bytes) || next.bytes < 1 || next.bytes > 16 * 1024 * 1024) throw new Error('Unexpected audio size');
+    if (next.bytes !== undefined && (!Number.isSafeInteger(next.bytes) || next.bytes < 1 || next.bytes > 16 * 1024 * 1024)) throw new Error('Unexpected audio size');
     const response = await fetch(next.url, { cache: 'no-store', signal: AbortSignal.any([entry.controller.signal, AbortSignal.timeout(120000)]) });
     if (!response.ok) throw new Error('Audio unavailable');
+    const length = response.headers.get('content-length');
+    const expected = next.bytes ?? (/^[1-9]\d*$/.test(length ?? '') ? Number(length) : NaN);
+    if (!Number.isSafeInteger(expected) || expected < 1 || expected > 16 * 1024 * 1024) throw new Error('Unexpected audio size');
     const blob = await response.blob();
-    if (blob.size !== next.bytes || !blob.type.startsWith(next.mime)) throw new Error('Unexpected audio data');
+    if (blob.size !== expected || !blob.type.startsWith(next.mime)) throw new Error('Unexpected audio data');
     if (liveBuffers.get(next.id) !== entry || entry.controller.signal.aborted) return;
     entry.url = URL.createObjectURL(blob);
     entry.status = 'ready'; entry.bytes = blob.size; entry.readyAt = new Date().toISOString();
@@ -263,6 +273,9 @@ $('live').onclick = async () => {
 for (const name of ['play', 'pause', 'playing', 'waiting', 'stalled', 'ended', 'seeking', 'seeked', 'loadedmetadata', 'loadstart', 'canplay', 'error']) {
   audio.addEventListener(name, () => {
     log(name, name === 'error' ? { mediaError: audio.error?.code ?? null } : {});
+    if (name === 'playing') $('playback-status').textContent = 'Playing';
+    if (name === 'error') $('playback-status').textContent = 'This song could not be played. It may be unavailable; choose another song.';
+    if (name === 'loadedmetadata' && current && Number.isFinite(audio.duration)) { current.seconds = Math.round(audio.duration); renderQueue(); }
     if ('mediaSession' in navigator && ['play', 'pause', 'ended'].includes(name)) navigator.mediaSession.playbackState = audio.paused ? 'paused' : 'playing';
   });
 }
@@ -294,9 +307,9 @@ $('export').onclick = async () => {
   }
   const result = { schemaVersion: 2, audioDelivery: delivery, eventsTotal, eventsTruncated: eventsTotal > events.length, date: new Date().toISOString(), device: $('device').value, userAgent: navigator.userAgent,
     source, musicPreparedAt, liveRunId, liveRequestedTrackIdsAtSelection, liveStatus,
-    liveBrowserBuffering: delivery === 'live' ? { enabled: $('buffer-next').checked, playback: livePlayback,
-      tracks: [...liveBuffers].map(([id, entry]) => ({ id, status: entry.status, bytes: entry.bytes, startedAt: entry.startedAt, readyAt: entry.readyAt })) } : null,
-    musicTrackIds: (selectedTracks ?? []).filter(track => track.id).map(track => track.id),
+    liveBrowserBuffering: progressive() ? { enabled: $('buffer-next').checked, playback: delivery === 'library' && livePlayback ? { ...livePlayback, trackId: null } : livePlayback,
+      tracks: [...liveBuffers].map(([id, entry]) => ({ id: delivery === 'library' ? null : id, status: entry.status, bytes: entry.bytes, startedAt: entry.startedAt, readyAt: entry.readyAt })) } : null,
+    musicTrackIds: delivery === 'library' ? [] : (selectedTracks ?? []).filter(track => track.id).map(track => track.id),
     mediaSessionSupported: 'mediaSession' in navigator,
     checks: checks.map((check, i) => ({ check, status: $(`check-${i}`).value })), notes: $('notes').value, events };
   const url = URL.createObjectURL(new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' }));
@@ -315,8 +328,28 @@ let accountBusy = false;
 let playlistTestAttempted = false;
 function clearAccountView() {
   $('account-playlists').replaceChildren(); $('account-tracks').replaceChildren();
+  $('account-playback-actions').replaceChildren();
   $('account-playlist-title').textContent = 'No playlist selected';
   $('account-playlist-status').textContent = '';
+}
+function libraryMode() {
+  if (preparing) { $('account-status').textContent = 'Wait for the current audio preparation to finish.'; return false; }
+  if (delivery === 'library') return true;
+  for (const track of selectedTracks ?? []) if (track.url.startsWith('blob:')) URL.revokeObjectURL(track.url);
+  selectedTracks = []; delivery = 'library'; source = 'library-selected YouTube audio; anonymous retrieval; next-song browser buffering';
+  musicPreparedAt = null; liveRunId = null; liveRequestedTrackIdsAtSelection = null; modeLocked = true;
+  $('buffer-next').checked = true; $('buffer-next').disabled = true;
+  for (const id of ['preload', 'music', 'live']) $(id).disabled = true;
+  reset();
+  $('delivery-status').textContent = 'Playlist playback. Use the player above; the next song buffers automatically. Playback uses anonymous audio retrieval.';
+  return true;
+}
+const libraryTrack = track => ({ id: track.id, title: track.title, artist: track.artists, mime: 'audio/webm', url: `/catalog/${encodeURIComponent(track.id)}.webm` });
+function playLibrary(tracks, start) {
+  if (!libraryMode()) return;
+  selectedTracks = tracks.map(libraryTrack); reset();
+  select(queue[start]);
+  $('account-status').textContent = 'Playing in the player above. Player checks shows your queue.';
 }
 async function accountCheck(task, failureLabel = 'Account read failed.') {
   if (accountBusy) return;
@@ -364,8 +397,24 @@ $('account-load').onclick = () => accountCheck(async () => {
         $('account-playlist-title').textContent = playlist.title;
         $('account-playlist-status').textContent = `${playlist.privacy} · ${playlist.items.length} tracks shown` +
           (playlist.total === null ? ` (limit ${playlist.limit})` : ` of ${playlist.total}`);
+        const playable = playlist.items.filter(track => track.id);
+        $('account-playback-actions').replaceChildren();
+        if (playable.length) {
+          const play = document.createElement('button'); play.textContent = 'Play playlist'; play.onclick = () => playLibrary(playable, 0);
+          $('account-playback-actions').append(play);
+        }
         $('account-tracks').replaceChildren(...playlist.items.map(track => {
-          const row = document.createElement('li'); row.textContent = `${track.title}${track.artists ? ' — ' + track.artists : ''}`; return row;
+          const row = document.createElement('li'); row.textContent = `${track.title}${track.artists ? ' — ' + track.artists : ''} `;
+          if (track.id) {
+            const play = document.createElement('button'); play.textContent = 'Play'; play.onclick = () => playLibrary(playable, playable.indexOf(track));
+            const add = document.createElement('button'); add.textContent = 'Add to queue'; add.onclick = () => {
+              if (!libraryMode()) return;
+              queue.push(libraryTrack(track)); selectedTracks = queue.map(item => ({ ...item })); renderQueue(); void bufferNext();
+              $('account-status').textContent = 'Added to the player queue. Press Play above to start if stopped.';
+            };
+            row.append(play, add);
+          }
+          return row;
         }));
         $('account-status').textContent = 'Playlist loaded.'; log('account-playlist-read');
       });

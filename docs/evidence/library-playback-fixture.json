@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "source": "synthetic private library; prepared audio aliased to arbitrary fixture IDs; not fresh upstream",
+  "rowPlay": true,
+  "playlistPlay": true,
+  "addAndRemoveQueue": true,
+  "seeking": true,
+  "bufferedOfflineNextTrack": true,
+  "exportRedaction": true,
+  "safeFailure": true,
+  "literalLongTitles": true,
+  "layouts": [
+    390,
+    728
+  ],
+  "physicalPhone": "NOT RUN"
+}

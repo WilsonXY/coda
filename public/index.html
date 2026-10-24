@@ -13,9 +13,10 @@
 <button id="live">Use live music</button>
 <p><label><input id="buffer-next" type="checkbox" disabled> Buffer the next live song on this device</label></p>
 <p id="buffer-status" role="status">Next-song buffering is off. Select live music to enable it before Play.</p>
-<p>Live mode fetches a song when selected and plays incoming bytes. It requires the optional live experiment server. The server keeps up to three songs in memory until restart; exports identify its run and retrieval status. This playback source is anonymous.</p>
+<p>Live mode fetches a song when selected and plays incoming bytes. It requires the optional live experiment server. Older unused songs may be fetched again. This playback source is anonymous.</p>
 <p>Choose before playing. Loading stops and resets the queue. Prepared music loads about 16 MB into memory before Play; it uses anonymously retrieved complete files, with no Premium account connected. Wait for Ready. To change modes, export first and reload.</p>
 <p id="now" aria-live="polite">Nothing playing</p>
+<p id="playback-status" role="status"></p>
 <audio id="audio" controls preload="metadata"></audio>
 <p><button id="previous">Previous</button> <button id="play">Play / pause</button> <button id="next">Next</button> <label><input id="loop" type="checkbox" checked> Loop queue</label></p>
 </section>
@@ -38,7 +39,7 @@
 <button id="account-load">Load my playlists</button>
 <p id="account-status" role="status">Your library has not been loaded.</p><ol id="account-playlists"></ol>
 <h3 id="account-playlist-title">No playlist selected</h3>
-<p id="account-playlist-status" role="status"></p><ol id="account-tracks"></ol>
+<p id="account-playlist-status" role="status"></p><div id="account-playback-actions"></div><ol id="account-tracks"></ol>
 <h3>One-time playlist management test</h3>
 <p>This changes only the existing private Coda test playlist: add a duplicate of its first song, move that exact copy to the front, then remove it. A successful test leaves the original two songs in order.</p>
 <button id="account-test">Run add / move / remove test once</button>

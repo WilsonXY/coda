@@ -127,3 +127,15 @@ test('live status distinguishes HTTP arrival, first write and completed response
   assert.equal(job.httpRequests.at(-1).statusCode, 206);
   assert.equal(job.httpRequests.at(-1).rangeStart, 1);
 });
+
+test('a disconnected reader releases its pending response while source setup continues independently', async () => {
+  const { createLiveMusic } = await import('../live-music.mjs');
+  const { EventEmitter } = await import('node:events');
+  const live = createLiveMusic(() => new Promise(() => {}));
+  const response = new EventEmitter();
+  try {
+    const pending = live.serve(id, { headers: {}, method: 'GET' }, response);
+    response.emit('close');
+    await Promise.race([assert.rejects(pending), new Promise((_, reject) => setImmediate(() => reject(new Error('Closed reader is still counted as active while source opens'))))]);
+  } finally { live.close(); }
+});

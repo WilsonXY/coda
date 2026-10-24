@@ -1,14 +1,21 @@
 import { EventEmitter, once } from 'node:events';
 import { randomUUID, createHash } from 'node:crypto';
 
-// ponytail: three fixed tracks, at most 16 MiB each, retained until process restart.
-// Add eviction and renewal only when testing a larger catalog.
+// ponytail: retain three captures (16 MiB each); evict least-recently-used captures without HTTP readers.
+// Active HTTP/native buffers are additional; reject a fourth simultaneous active capture.
 export function createLiveMusic(open) {
   const jobs = new Map(), runId = randomUUID();
   function get(id) {
-    if (jobs.has(id)) return jobs.get(id);
+    if (jobs.has(id)) {
+      const job = jobs.get(id); jobs.delete(id); jobs.set(id, job); return job;
+    }
+    if (jobs.size >= 3) {
+      const unused = [...jobs.values()].find(job => !job.active);
+      if (!unused) throw new Error('Playback cache busy');
+      unused.controller.abort(); jobs.delete(unused.id);
+    }
     const job = new EventEmitter();
-    Object.assign(job, { id, requests: 0, received: 0, httpRequests: [], startedAt: new Date().toISOString(), controller: new AbortController() });
+    Object.assign(job, { id, active: 0, requests: 0, received: 0, httpRequests: [], startedAt: new Date().toISOString(), controller: new AbortController() });
     jobs.set(id, job);
     let ready, reject;
     job.ready = new Promise((resolve, fail) => { ready = resolve; reject = fail; });
@@ -65,7 +72,7 @@ export function createLiveMusic(open) {
     },
     close() { for (const job of jobs.values()) job.controller.abort(); },
     async serve(id, req, res) {
-      const job = get(id); job.requests++;
+      const job = get(id); job.requests++; job.active++;
       const request = { sequence: job.requests, method: req.method, receivedAt: new Date().toISOString(),
         sourceReadyAt: null, firstWriteAt: null, finishedAt: null, closedAt: null,
         writtenBytes: 0, drainWaits: 0, statusCode: null, rangeStart: null, rangeEnd: null, failed: false };
@@ -79,7 +86,8 @@ export function createLiveMusic(open) {
       };
       res.once('finish', finished); res.once('close', closed);
       try {
-        await job.ready;
+        await Promise.race([job.ready, once(disconnected.signal, 'abort').then(() => { throw new Error('Reader disconnected'); })]);
+        disconnected.signal.throwIfAborted();
         request.sourceReadyAt = new Date().toISOString();
         if (job.failure) throw new Error('Live source failed');
         let start = 0, end = job.total - 1, status = 200;
@@ -113,6 +121,7 @@ export function createLiveMusic(open) {
         }
         res.end();
       } catch (error) { request.failed = true; throw error; }
+      finally { job.active--; }
     },
   };
 }

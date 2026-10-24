@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-24T18:31:54.716Z",
+  "status": "PASS",
+  "id": "Rgrt_8mXrK8",
+  "source": "fresh anonymous upstream audio; synthetic library metadata and Serve identity",
+  "realAccountRead": "NOT RUN",
+  "physicalPhone": "NOT RUN",
+  "renewal": "NOT RUN",
+  "firstPlayback": {
+    "seconds": 1.041825,
+    "mediaError": null
+  },
+  "seek": "PASS",
+  "browser": "153.0.8010.12"
+}
