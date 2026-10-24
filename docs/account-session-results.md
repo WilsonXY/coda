@@ -38,3 +38,9 @@ An unavailable/unverified result does not by itself justify replacing credential
 The status route first failed404, typed rejection transport failed502 instead of401, Python status/classification checks failed before implementation, and the browser check failed because Check connection was absent. These tests now pass. Node31 and Python25 tests pass. The dedicated browser fixture covers connected, reconnect, setup, unverified and owner-required states; clearing private browsing data; no automatic polling; recovery on a later successful read; ongoing audio; and390px/728px layouts. Fixtures use synthetic metadata, simulated Serve identity and generated tones, never Google credentials.
 
 All eight browser suites pass, including the seven existing player/account suites. The native T3 preview could not run because the host blocks its sandbox with AppArmor; repository Playwright is used without changing host policy. Physical Android/Zen checks of the new status/recovery controls and long-term isolated-session durability remain unverified.
+
+## Independent review
+
+Astra round1 returned PASS with no blocking findings and one P3 test suggestion: failing Load my playlists clears results before the request, so that fixture alone did not prove cleanup on failure. Addressed by populating the library, rejecting Check connection, and asserting that private results clear while the existing queue stays identical and audio advances. The stronger browser check passes. No production change was needed.
+
+The parent confirmed actual gpt-6-astra/high in the reviewer's own session log `rollout-2026-10-25T03-48-22-01a16f75-0662-74c0-beca-c0bd67d32700.jsonl`, turn-context line10; no fallback. Parent/reviewer commit and clean status, and origin refs, matched before/after. The clean review worktree and branch were removed.

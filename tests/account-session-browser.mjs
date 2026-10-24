@@ -25,10 +25,12 @@ try {
   await page.waitForFunction(() => document.querySelector('#account-connection').textContent.startsWith('Connected'));
   await page.locator('#account-load').click();
   await page.waitForFunction(() => document.querySelectorAll('#account-playlists li').length === 1);
+  const queueBefore = await page.locator('#queue').textContent();
   code = 'ACCOUNT_REAUTH_REQUIRED';
-  await page.locator('#account-load').click();
+  await page.locator('#account-check').click();
   await page.waitForFunction(() => document.querySelector('#account-connection').textContent.includes('Reconnect'));
   assert.equal(await page.locator('#account-playlists li').count(), 0, 'Rejected reads clear private browsing data');
+  assert.equal(await page.locator('#queue').textContent(), queueBefore, 'Rejected reads preserve the playback queue');
   assert.equal(await page.locator('#account-recovery').isVisible(), true);
   await page.locator('#account-recovery summary').click();
   for (const width of [390, 728]) {
