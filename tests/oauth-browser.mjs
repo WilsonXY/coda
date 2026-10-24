@@ -10,9 +10,11 @@ import { createServer } from '../server.mjs';
 const directory=await mkdtemp(join(tmpdir(),'coda-oauth-browser-'));
 const clientFile=join(directory,'client.json'),tokenFile=join(directory,'token.json');
 let calls=0;
+let releaseProbe,enterProbe;
+const probePending=new Promise(resolve=>{releaseProbe=resolve;}),probeEntered=new Promise(resolve=>{enterProbe=resolve;});
 const app=createServer({oauthOptions:{owner:'owner@example.test',clientFile,tokenFile,python:'unused',fetchImpl:async()=>{
   calls++; return Response.json({access_token:'fixture-access',refresh_token:'fixture-refresh',token_type:'Bearer',scope:'https://www.googleapis.com/auth/youtube.readonly',expires_in:3600});
-},probe:async()=>({dataApiPrivatePlaylist:true,privatePlaylist:true,expectedOrder:true})}});
+},probe:async()=>{enterProbe();await probePending;return {dataApiPrivatePlaylist:true,privatePlaylist:true,expectedOrder:true};}}});
 execFileSync('openssl',['req','-x509','-newkey','ec','-pkeyopt','ec_paramgen_curve:P-256','-noenc','-days','1','-subj','/CN=127.0.0.1','-addext','subjectAltName=IP:127.0.0.1','-keyout',join(directory,'key.pem'),'-out',join(directory,'cert.pem')],{stdio:'ignore'});
 const server=createHttpsServer({key:await readFile(join(directory,'key.pem')),cert:await readFile(join(directory,'cert.pem'))},(req,res)=>{
  req.headers['tailscale-user-login']='owner@example.test';app.listeners('request')[0](req,res);
@@ -37,6 +39,12 @@ try {
  assert.equal(calls,1);
  await page.locator('#play').click();await page.waitForFunction(()=>document.querySelector('audio').currentTime>.25);
  await page.locator('#oauth-probe').click();
+ await probeEntered;
+ const during=await page.locator('audio').evaluate(a=>a.currentTime);
+ await page.waitForFunction(before=>document.querySelector('audio').currentTime>before+.25,during);
+ assert.equal(await page.locator('audio').evaluate(a=>a.paused),false);
+ assert.equal(await page.locator('#oauth-status').textContent(),'Checking OAuth…','Audio advances while the probe is still pending');
+ releaseProbe();
  await page.waitForFunction(()=>document.querySelector('#oauth-status').textContent.includes('PASS'));
  assert.equal(calls,2,'Probe exercises one token renewal');
  const before=await page.locator('audio').evaluate(a=>a.currentTime);

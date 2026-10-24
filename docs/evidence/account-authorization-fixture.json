@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "source": "HTTPS fixture, simulated Google redirect/token exchange, synthetic private-read results",
+  "browserBoundCallback": true,
+  "explicitRenewalProbe": true,
+  "audioContinuesDuringProbe": true,
+  "layouts": [
+    390,
+    728
+  ],
+  "realGoogleAuthorization": "NOT RUN",
+  "audioAdvancesWhileProbePending": true
+}

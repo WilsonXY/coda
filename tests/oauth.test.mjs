@@ -18,7 +18,7 @@ test('web OAuth requires owner consent, binds callback to browser/state, saves p
       assert.equal(data.get('client_secret'),'fixture-secret');
       if(tokenCalls===1) { assert.equal(data.get('grant_type'),'authorization_code'); assert.ok(data.get('code_verifier')); }
       else assert.equal(data.get('grant_type'),'refresh_token');
-      return Response.json({access_token:'fixture-access-'+tokenCalls,refresh_token:'fixture-refresh',token_type:'Bearer',scope,expires_in:3600});
+      return Response.json({access_token:'fixture-access-'+tokenCalls,...(tokenCalls===1?{refresh_token:'fixture-refresh'}:{}),token_type:'Bearer',scope,expires_in:3600});
     },probe:async token=>{ reads++; assert.ok(token.startsWith('fixture-access-')); return {privatePlaylist:true,expectedOrder:true}; }
   }});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -53,6 +53,7 @@ test('web OAuth requires owner consent, binds callback to browser/state, saves p
   assert.equal(check.status,200);
   assert.deepEqual(await check.json(),{before:{privatePlaylist:true,expectedOrder:true},renewal:true,after:{privatePlaylist:true,expectedOrder:true}});
   assert.equal(tokenCalls,2); assert.equal(reads,2);
+  assert.equal(JSON.parse(await readFile(tokenFile,'utf8')).refresh_token,'fixture-refresh','Renewal preserves the original refresh token when Google omits it');
   assert.equal((await fetch(base+'/api/account/oauth/probe',{method:'POST',headers,body:'{}'})).status,400);
   await chmod(clientFile,0o644);
   const unsafe=await fetch(endpoint,{method:'POST',headers}); assert.equal(unsafe.status,503);
