@@ -13,7 +13,15 @@ let calls=0;
 const selectedScopes=[];
 let releaseProbe,enterProbe;
 const probePending=new Promise(resolve=>{releaseProbe=resolve;}),probeEntered=new Promise(resolve=>{enterProbe=resolve;});
-const app=createServer({oauthOptions:{owner:'owner@example.test',clientFile,tokenFile,python:'unused',fetchImpl:async()=>{
+const app=createServer({oauthOptions:{owner:'owner@example.test',clientFile,tokenFile,python:'unused',fetchImpl:async(url,options)=>{
+  if(url.startsWith('https://www.googleapis.com/youtube/v3/')){
+   assert.equal(options.headers.Authorization,'Bearer fixture-access');
+   const query=new URL(url);
+   if(query.pathname.endsWith('/playlists'))return Response.json({items:query.searchParams.has('mine')
+    ?[{id:'PLfixture123',snippet:{title:'Google-owned fixture'}}]
+    :[{id:'PLfixture123',snippet:{title:'Google-owned fixture'},status:{privacyStatus:'private'},contentDetails:{itemCount:2}}]});
+   return Response.json({items:[{contentDetails:{videoId:'aaaaaaaaaaa'},snippet:{title:'Google fixture A',videoOwnerChannelTitle:'Fixture channel'}},{contentDetails:{videoId:'bbbbbbbbbbb'},snippet:{title:'Google fixture B'}}]});
+  }
   calls++; return Response.json({access_token:'fixture-access',refresh_token:'fixture-refresh',token_type:'Bearer',scope:selectedScopes.at(-1),expires_in:3600});
 },probe:async()=>{enterProbe();await probePending;const music=selectedScopes.at(-1)==='https://www.googleapis.com/auth/youtube';return {dataApiPrivatePlaylist:true,privatePlaylist:music,expectedOrder:music};}}});
 execFileSync('openssl',['req','-x509','-newkey','ec','-pkeyopt','ec_paramgen_curve:P-256','-noenc','-days','1','-subj','/CN=127.0.0.1','-addext','subjectAltName=IP:127.0.0.1','-keyout',join(directory,'key.pem'),'-out',join(directory,'cert.pem')],{stdio:'ignore'});
@@ -52,6 +60,15 @@ try {
  const before=await page.locator('audio').evaluate(a=>a.currentTime);
  await page.waitForFunction(before=>document.querySelector('audio').currentTime>before+.25,before);
  assert.equal((await page.locator('body').textContent()).includes('fixture-refresh'),false);
+ await page.getByRole('button',{name:'Load my playlists with Google',exact:true}).click({timeout:2000});
+ await page.waitForFunction(()=>document.querySelectorAll('#account-playlists li').length===1);
+ assert.ok((await page.locator('#account-connection').textContent()).includes('Google OAuth'));
+ await page.getByRole('button',{name:'Open playlist',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelectorAll('#account-tracks li').length===2);
+ assert.ok((await page.locator('#account-playlist-status').textContent()).includes('PRIVATE'));
+ assert.equal(await page.getByRole('button',{name:'Play playlist',exact:true}).count(),1);
+ assert.equal(await page.locator('audio').evaluate(a=>a.paused),false,'Google browsing preserves current audio');
+ for(const width of [390,728]){await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:`artifacts/oauth-owned-${width}.png`,fullPage:true});}
  await page.locator('#oauth-music-permission summary').click();
  assert.ok((await page.locator('#oauth-music-permission').textContent()).includes('Manage your YouTube account'));
  assert.deepEqual(selectedScopes,['https://www.googleapis.com/auth/youtube.readonly'],'No broader request before explicit choice');

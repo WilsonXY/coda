@@ -8,6 +8,8 @@ import { ownerAuthorized } from './account.mjs';
 
 const scope = 'https://www.googleapis.com/auth/youtube.readonly';
 const musicScope = 'https://www.googleapis.com/auth/youtube';
+const playlistId = /^(PL|OL)[A-Za-z0-9_-]{5,120}$/;
+const clip = (value, fallback = '') => typeof value === 'string' ? value.slice(0, 200) : fallback;
 const root = fileURLToPath(new URL('.', import.meta.url));
 const equal = (a, b) => typeof a === 'string' && typeof b === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 async function privatePath(path) {
@@ -66,17 +68,54 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
     const fresh = await exchange(client, { grant_type: 'refresh_token', refresh_token: token.refresh_token }, token);
     await store(tokenFile, fresh); return fresh;
   }
+  async function googleRead(endpoint, params, token) {
+    const response = await fetchImpl('https://www.googleapis.com/youtube/v3/' + endpoint + '?' + new URLSearchParams(params), {
+      method: 'GET', redirect: 'error', signal: AbortSignal.timeout(10000), headers: { Authorization: 'Bearer ' + token.access_token },
+    });
+    if (!response.ok) throw new Error('Google read failed');
+    const data = await response.json();
+    if (!Array.isArray(data.items)) throw new Error('Unexpected Google response');
+    return data;
+  }
+  async function playlists(url, token) {
+    if (url.pathname.endsWith('/playlists')) {
+      const data = await googleRead('playlists', { part: 'snippet', mine: 'true', maxResults: '50', fields: 'items(id,snippet/title),nextPageToken' }, token);
+      return { items: data.items.slice(0, 50).map(item => ({ id: typeof item.id === 'string' && playlistId.test(item.id) ? item.id : null,
+        title: clip(item.snippet?.title, 'Untitled playlist') })), limit: 50, complete: !data.nextPageToken };
+    }
+    const id = url.searchParams.get('id');
+    const data = await googleRead('playlists', { part: 'snippet,status,contentDetails', id, fields: 'items(id,snippet/title,status/privacyStatus,contentDetails/itemCount)' }, token);
+    const info = data.items[0]; if (!info || info.id !== id) throw new Error('Playlist not available');
+    const items = []; let next;
+    for (let page = 0; page < 2; page++) {
+      const tracks = await googleRead('playlistItems', { part: 'snippet,contentDetails', playlistId: id, maxResults: '50',
+        fields: 'items(contentDetails/videoId,snippet(title,videoOwnerChannelTitle)),nextPageToken', ...(next ? { pageToken: next } : {}) }, token);
+      for (const item of tracks.items.slice(0, 50)) {
+        const video = item.contentDetails?.videoId;
+        items.push({ id: typeof video === 'string' && /^[A-Za-z0-9_-]{11}$/.test(video) ? video : null,
+          title: clip(item.snippet?.title, 'Unavailable track'), artists: clip(item.snippet?.videoOwnerChannelTitle) });
+      }
+      next = tracks.nextPageToken; if (!next) break;
+    }
+    const total = Number.isSafeInteger(info.contentDetails?.itemCount) && info.contentDetails.itemCount >= 0 ? info.contentDetails.itemCount : null;
+    const privacy = info.status?.privacyStatus;
+    return { id, title: clip(info.snippet?.title, 'Untitled playlist'), privacy: ['private', 'public', 'unlisted'].includes(privacy) ? privacy.toUpperCase() : 'UNKNOWN',
+      items, total, limit: 100, complete: !next && total !== null && total === items.length };
+  }
   return async (req, url) => {
     const headers = { 'Referrer-Policy': 'no-referrer' };
     const result = (status, body, extra = {}) => ({ status, body, headers: { ...headers, ...extra } });
     const callback = url.pathname === '/api/account/oauth/callback';
+    const reading = ['/api/account/oauth/playlists', '/api/account/oauth/playlist'].includes(url.pathname);
     // Google returns through a cross-site top-level GET; state + a Lax browser cookie bind that callback.
     const identity = owner && ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && req.headers['tailscale-user-login'] === owner;
     if (callback ? !identity : !ownerAuthorized(req, owner)) return result(403, { error: 'OAuth requires the owner’s private Tailscale link.' });
-    if (callback ? req.method !== 'GET' : req.method !== 'POST') return result(405, { error: 'Unsupported OAuth method.' });
-    if (!callback && (req.headers.origin !== `https://${req.headers.host}`)) return result(403, { error: 'Start OAuth from the private HTTPS page.' });
-    if (!callback && (url.search || req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))) return result(400, { error: 'OAuth actions accept no parameters or body.' });
-    if (!['/api/account/oauth/connect', '/api/account/oauth/connect-music', '/api/account/oauth/probe', '/api/account/oauth/callback'].includes(url.pathname)) return result(404, { error: 'OAuth route not found.' });
+    if (callback || reading ? req.method !== 'GET' : req.method !== 'POST') return result(405, { error: 'Unsupported OAuth method.' });
+    if (!callback && !reading && (req.headers.origin !== `https://${req.headers.host}`)) return result(403, { error: 'Start OAuth from the private HTTPS page.' });
+    if (!callback && !reading && (url.search || req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))) return result(400, { error: 'OAuth actions accept no parameters or body.' });
+    if (reading && (req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0') ||
+        (url.pathname.endsWith('/playlists') ? Boolean(url.search) : url.searchParams.size !== 1 || !playlistId.test(url.searchParams.get('id') ?? '')))) return result(400, { error: 'Enter one supported playlist ID, or load owned playlists without parameters.' });
+    if (!reading && !['/api/account/oauth/connect', '/api/account/oauth/connect-music', '/api/account/oauth/probe', '/api/account/oauth/callback'].includes(url.pathname)) return result(404, { error: 'OAuth route not found.' });
     if (busy) return result(409, { error: 'An OAuth action is running. Wait for it to finish.' });
     const redirectUri = `https://${req.headers.host}/api/account/oauth/callback`;
     const cookie = 'Coda-OAuth-State';
@@ -98,7 +137,7 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
     busy = true;
     try {
       const client = (await privateJson(clientFile)).web;
-      if (!client?.client_id || !client?.client_secret || !client.redirect_uris?.includes(redirectUri)) throw new Error('Web client configuration required');
+      if (!client?.client_id || !client?.client_secret || (!reading && !client.redirect_uris?.includes(redirectUri))) throw new Error('Web client configuration required');
       if (clientFile === tokenFile) throw new Error('Separate files required');
       if (['/api/account/oauth/connect', '/api/account/oauth/connect-music'].includes(url.pathname)) {
         const requestedScope = url.pathname.endsWith('/connect-music') ? musicScope : scope;
@@ -110,12 +149,15 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
         return result(200, { authorizationUrl: auth.href }, { 'Set-Cookie': `${cookie}=${state}; Path=/api/account/oauth/callback; Max-Age=600; HttpOnly; Secure; SameSite=Lax` });
       }
       const token = await validToken(client, await privateJson(tokenFile));
+      if (reading) return result(200, await playlists(url, token));
       const before = await probe(token.access_token);
       // Exercise the same renewal branch without changing the stored expiry or waiting an hour.
       const renewed = await validToken(client, { ...token, expires_at: 0 });
       const after = await probe(renewed.access_token);
       return result(200, { before, renewal: true, after });
-    } catch { return result(503, { error: 'OAuth check unavailable. Verify the private Web client JSON, redirect URI and saved authorization, then try again. No library connection was changed.' }); }
+    } catch { return reading
+      ? result(503, { code: 'ACCOUNT_OAUTH_UNAVAILABLE', error: 'Google playlist read failed. Check Google authorization or upstream availability, then try again.' })
+      : result(503, { error: 'OAuth check unavailable. Verify the private Web client JSON, redirect URI and saved authorization, then try again. No library connection was changed.' }); }
     finally { busy = false; }
   };
 }
