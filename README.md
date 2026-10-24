@@ -112,7 +112,7 @@ Run `npm run test:account` for synthetic account fixtures, access rejection, per
 
 Run `npm run test:session` for connection/recovery states, owner rejection, uninterrupted tone playback and 390px/728px recovery screenshots. It uses synthetic responses and no Google session.
 
-The separate **OAuth connection experiment** adds Connect Google and a read/renew/read check inside My library. It uses a private Google **Web application** client, requests read-only YouTube access, and saves a separate OAuth token file. It keeps the active library connection in place until compatibility is established. See [Google setup, SSH copy instructions and limits](docs/oauth-experiment.md). Run `npm run test:oauth` for the synthetic HTTPS login/callback/renewal fixture. Real Google consent and Music compatibility are not established by that fixture.
+The separate **OAuth connection experiment** adds Connect Google and a read/renew/read check inside My library. It uses a private Google **Web application** client and saves a separate OAuth token file. The default button requests read-only YouTube access. A clearly labeled optional Music test requests broader permission to manage the account, because a live read-only token was rejected by Music for insufficient scope; the experiment's actions remain read-only. It keeps the active library connection in place until compatibility is established. See [Google setup, SSH copy instructions, live partial result and limits](docs/oauth-experiment.md). Run `npm run test:oauth` for the synthetic HTTPS login/callback/renewal fixture. Real Google consent and Music compatibility are not established by that fixture.
 
 ## Phone and Zen checks
 

@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-10-24T20:20:25Z",
+  "status": "PARTIAL",
+  "source": "Real private HTTPS; saved Google Web OAuth; automatic Serve identity",
+  "ownerObservation": "Owner explicitly reports the Coda read/renew/read test displayed PASS before this later repeat",
+  "before": {
+    "dataApiPrivatePlaylist": true,
+    "privatePlaylist": false,
+    "expectedOrder": false
+  },
+  "renewal": true,
+  "after": {
+    "dataApiPrivatePlaylist": true,
+    "privatePlaylist": false,
+    "expectedOrder": false
+  },
+  "musicDiagnostic": {
+    "accountWrites": 0,
+    "upstreamErrors": [
+      {
+        "http": 403,
+        "status": "PERMISSION_DENIED",
+        "scopeInsufficient": true,
+        "insufficientScopeMessage": true
+      }
+    ],
+    "identityErrorType": "YTMusicServerError"
+  },
+  "accountWrites": 0,
+  "activeLibrarySwitched": false,
+  "initialPassDifference": "UNEXPLAINED; later token cannot access Music with its current scope",
+  "ownerLaterScreenshot": "Matches partial comparison: official playlist YES to YES, Music NO to NO, renewal YES"
+}

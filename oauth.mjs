@@ -7,6 +7,7 @@ import { execFile } from 'node:child_process';
 import { ownerAuthorized } from './account.mjs';
 
 const scope = 'https://www.googleapis.com/auth/youtube.readonly';
+const musicScope = 'https://www.googleapis.com/auth/youtube';
 const root = fileURLToPath(new URL('.', import.meta.url));
 const equal = (a, b) => typeof a === 'string' && typeof b === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 async function privatePath(path) {
@@ -27,12 +28,12 @@ async function store(path, token) {
     await rename(temp, path);
   } finally { await unlink(temp).catch(() => {}); }
 }
-function tokenData(data, client, previous = {}) {
+function tokenData(data, client, previous = {}, requestedScope = scope) {
   const granted = data.scope ?? previous.scope;
   if (typeof data.access_token !== 'string' || !data.access_token || !Number.isSafeInteger(data.expires_in) || data.expires_in <= 0 ||
-      (data.token_type ?? previous.token_type) !== 'Bearer' || !granted?.split(' ').includes(scope) || !(data.refresh_token ?? previous.refresh_token)) throw new Error('Invalid token');
+      (data.token_type ?? previous.token_type) !== 'Bearer' || ![scope, musicScope].includes(requestedScope) || !granted?.split(' ').includes(requestedScope) || !(data.refresh_token ?? previous.refresh_token)) throw new Error('Invalid token');
   return { client_id: client.client_id, access_token: data.access_token, refresh_token: data.refresh_token ?? previous.refresh_token,
-    token_type: 'Bearer', scope: granted, expires_in: data.expires_in, expires_at: Date.now() + data.expires_in * 1000 };
+    token_type: 'Bearer', scope: granted, requested_scope: requestedScope, expires_in: data.expires_in, expires_at: Date.now() + data.expires_in * 1000 };
 }
 function runProbe(python, token) {
   return new Promise((resolve, reject) => {
@@ -52,12 +53,12 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
   clientFile = join(homedir(), '.config/coda/oauth-client.json'), tokenFile = join(homedir(), '.config/coda/oauth-web-test.json'),
   python = process.env.CODA_ACCOUNT_PYTHON, fetchImpl = fetch, probe = token => runProbe(python, token) } = {}) {
   let pending = null, busy = false; // ponytail: one owner and one login attempt; persistent sessions only if multi-user support is added.
-  async function exchange(client, fields, previous) {
+  async function exchange(client, fields, previous = {}, requestedScope = previous.requested_scope ?? scope) {
     const response = await fetchImpl('https://oauth2.googleapis.com/token', { method: 'POST', redirect: 'error',
       signal: AbortSignal.timeout(10000), headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ client_id: client.client_id, client_secret: client.client_secret, ...fields }) });
     if (!response.ok) throw new Error('Google authorization failed');
-    return tokenData(await response.json(), client, previous);
+    return tokenData(await response.json(), client, previous, requestedScope);
   }
   async function validToken(client, token) {
     if (token.client_id !== client.client_id) throw new Error('Client changed');
@@ -75,7 +76,7 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
     if (callback ? req.method !== 'GET' : req.method !== 'POST') return result(405, { error: 'Unsupported OAuth method.' });
     if (!callback && (req.headers.origin !== `https://${req.headers.host}`)) return result(403, { error: 'Start OAuth from the private HTTPS page.' });
     if (!callback && (url.search || req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))) return result(400, { error: 'OAuth actions accept no parameters or body.' });
-    if (!['/api/account/oauth/connect', '/api/account/oauth/probe', '/api/account/oauth/callback'].includes(url.pathname)) return result(404, { error: 'OAuth route not found.' });
+    if (!['/api/account/oauth/connect', '/api/account/oauth/connect-music', '/api/account/oauth/probe', '/api/account/oauth/callback'].includes(url.pathname)) return result(404, { error: 'OAuth route not found.' });
     if (busy) return result(409, { error: 'An OAuth action is running. Wait for it to finish.' });
     const redirectUri = `https://${req.headers.host}/api/account/oauth/callback`;
     const cookie = 'Coda-OAuth-State';
@@ -88,7 +89,7 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
       const clear = { 'Set-Cookie': `${cookie}=; Path=/api/account/oauth/callback; Max-Age=0; HttpOnly; Secure; SameSite=Lax` };
       try {
         if (url.searchParams.has('error') || !code[0] || code[0].length > 8192) throw new Error('Authorization not granted');
-        const token = await exchange(attempt.client, { grant_type: 'authorization_code', code: code[0], redirect_uri: redirectUri, code_verifier: attempt.verifier });
+        const token = await exchange(attempt.client, { grant_type: 'authorization_code', code: code[0], redirect_uri: redirectUri, code_verifier: attempt.verifier }, {}, attempt.requestedScope);
         await store(tokenFile, token);
         return result(303, {}, { ...clear, Location: '/?oauth=connected' });
       } catch { return result(303, {}, { ...clear, Location: '/?oauth=failed' }); }
@@ -99,11 +100,12 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
       const client = (await privateJson(clientFile)).web;
       if (!client?.client_id || !client?.client_secret || !client.redirect_uris?.includes(redirectUri)) throw new Error('Web client configuration required');
       if (clientFile === tokenFile) throw new Error('Separate files required');
-      if (url.pathname.endsWith('/connect')) {
+      if (['/api/account/oauth/connect', '/api/account/oauth/connect-music'].includes(url.pathname)) {
+        const requestedScope = url.pathname.endsWith('/connect-music') ? musicScope : scope;
         const state = randomBytes(32).toString('base64url'), verifier = randomBytes(32).toString('base64url');
-        pending = { state, verifier, client, redirectUri, deadline: Date.now() + 600000 };
+        pending = { state, verifier, client, redirectUri, requestedScope, deadline: Date.now() + 600000 };
         const auth = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-        auth.search = new URLSearchParams({ client_id: client.client_id, redirect_uri: redirectUri, response_type: 'code', scope,
+        auth.search = new URLSearchParams({ client_id: client.client_id, redirect_uri: redirectUri, response_type: 'code', scope: requestedScope,
           access_type: 'offline', prompt: 'consent', state, code_challenge: createHash('sha256').update(verifier).digest('base64url'), code_challenge_method: 'S256' });
         return result(200, { authorizationUrl: auth.href }, { 'Set-Cookie': `${cookie}=${state}; Path=/api/account/oauth/callback; Max-Age=600; HttpOnly; Secure; SameSite=Lax` });
       }

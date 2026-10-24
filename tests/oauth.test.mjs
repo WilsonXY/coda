@@ -7,7 +7,8 @@ import { createServer } from '../server.mjs';
 
 const owner='owner@example.test';
 const scope='https://www.googleapis.com/auth/youtube.readonly';
-test('web OAuth requires owner consent, binds callback to browser/state, saves privately and renews without cookies', async t => {
+for(const [route,grantedScope] of [['connect',scope],['connect-music','https://www.googleapis.com/auth/youtube']])
+test(`${route}: web OAuth requires owner consent, binds callback to browser/state, saves privately and renews without cookies`, async t => {
   const directory=await mkdtemp(join(tmpdir(),'coda-oauth-')); t.after(()=>rm(directory,{recursive:true,force:true}));
   const clientFile=join(directory,'client.json'), tokenFile=join(directory,'token.json');
   let base, tokenCalls=0, reads=0;
@@ -18,7 +19,7 @@ test('web OAuth requires owner consent, binds callback to browser/state, saves p
       assert.equal(data.get('client_secret'),'fixture-secret');
       if(tokenCalls===1) { assert.equal(data.get('grant_type'),'authorization_code'); assert.ok(data.get('code_verifier')); }
       else assert.equal(data.get('grant_type'),'refresh_token');
-      return Response.json({access_token:'fixture-access-'+tokenCalls,...(tokenCalls===1?{refresh_token:'fixture-refresh'}:{}),token_type:'Bearer',scope,expires_in:3600});
+      return Response.json({access_token:'fixture-access-'+tokenCalls,...(tokenCalls===1?{refresh_token:'fixture-refresh'}:{}),token_type:'Bearer',scope:grantedScope,expires_in:3600});
     },probe:async token=>{ reads++; assert.ok(token.startsWith('fixture-access-')); return {privatePlaylist:true,expectedOrder:true}; }
   }});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -27,12 +28,12 @@ test('web OAuth requires owner consent, binds callback to browser/state, saves p
   const redirect=base.replace('http:','https:')+'/api/account/oauth/callback';
   await writeFile(clientFile,JSON.stringify({web:{client_id:'fixture-client',client_secret:'fixture-secret',redirect_uris:[redirect]}}),{mode:0o600});
   const headers={'Tailscale-User-Login':owner,Origin:base.replace('http:','https:')};
-  const endpoint=base+'/api/account/oauth/connect';
+  const endpoint=base+'/api/account/oauth/'+route;
   assert.equal((await fetch(endpoint,{method:'POST'})).status,403);
   assert.equal((await fetch(endpoint,{method:'POST',headers:{'Tailscale-User-Login':owner}})).status,403);
   const start=await fetch(endpoint,{method:'POST',headers}); assert.equal(start.status,200);
   const auth=new URL((await start.json()).authorizationUrl);
-  assert.equal(auth.origin,'https://accounts.google.com'); assert.equal(auth.searchParams.get('scope'),scope);
+  assert.equal(auth.origin,'https://accounts.google.com'); assert.equal(auth.searchParams.get('scope'),grantedScope);
   assert.equal(auth.searchParams.get('access_type'),'offline'); assert.equal(auth.searchParams.get('redirect_uri'),redirect);
   assert.equal(auth.searchParams.get('code_challenge_method'),'S256');
   const state=auth.searchParams.get('state'), cookie=start.headers.get('set-cookie').split(';')[0];
@@ -54,6 +55,7 @@ test('web OAuth requires owner consent, binds callback to browser/state, saves p
   assert.deepEqual(await check.json(),{before:{privatePlaylist:true,expectedOrder:true},renewal:true,after:{privatePlaylist:true,expectedOrder:true}});
   assert.equal(tokenCalls,2); assert.equal(reads,2);
   assert.equal(JSON.parse(await readFile(tokenFile,'utf8')).refresh_token,'fixture-refresh','Renewal preserves the original refresh token when Google omits it');
+  assert.equal(JSON.parse(await readFile(tokenFile,'utf8')).requested_scope,grantedScope,'Renewal preserves the explicitly selected permission');
   assert.equal((await fetch(base+'/api/account/oauth/probe',{method:'POST',headers,body:'{}'})).status,400);
   await chmod(clientFile,0o644);
   const unsafe=await fetch(endpoint,{method:'POST',headers}); assert.equal(unsafe.status,503);
@@ -61,15 +63,19 @@ test('web OAuth requires owner consent, binds callback to browser/state, saves p
   assert.equal(tokenCalls,2,'Unsafe configuration cannot issue a token request');
 });
 
-test('OAuth token errors are fixed, do not save credentials and consume the login attempt', async t => {
+for(const failure of ['upstream','insufficient-scope'])
+test(`${failure}: OAuth token errors are fixed, do not save credentials and consume the login attempt`, async t => {
   const directory=await mkdtemp(join(tmpdir(),'coda-oauth-failure-'));t.after(()=>rm(directory,{recursive:true,force:true}));
   const clientFile=join(directory,'client.json'),tokenFile=join(directory,'token.json');
   let calls=0;
-  const server=createServer({oauthOptions:{owner,clientFile,tokenFile,fetchImpl:async()=>{calls++;throw new Error('private-upstream-secret');}}});
+  const server=createServer({oauthOptions:{owner,clientFile,tokenFile,fetchImpl:async()=>{
+    calls++;if(failure==='upstream')throw new Error('private-upstream-secret');
+    return Response.json({access_token:'fixture-access',refresh_token:'fixture-refresh',token_type:'Bearer',scope,expires_in:3600});
+  }}});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>{server.closeAllConnections();return new Promise(resolve=>server.close(resolve));});
   const base='http://127.0.0.1:'+server.address().port, origin=base.replace('http:','https:');
   await writeFile(clientFile,JSON.stringify({web:{client_id:'fixture-client',client_secret:'fixture-secret',redirect_uris:[origin+'/api/account/oauth/callback']}}),{mode:0o600});
-  const start=await fetch(base+'/api/account/oauth/connect',{method:'POST',headers:{'Tailscale-User-Login':owner,Origin:origin}});
+  const start=await fetch(base+'/api/account/oauth/'+(failure==='upstream'?'connect':'connect-music'),{method:'POST',headers:{'Tailscale-User-Login':owner,Origin:origin}});
   const state=new URL((await start.json()).authorizationUrl).searchParams.get('state'),cookie=start.headers.get('set-cookie').split(';')[0];
   const callback=base+'/api/account/oauth/callback?state='+state+'&code=fixture-code';
   const headers={'Tailscale-User-Login':owner,Cookie:cookie};

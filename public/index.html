@@ -43,8 +43,12 @@
 <p><a href="https://ytmusicapi.readthedocs.io/en/stable/setup/browser.html" target="_blank" rel="noopener noreferrer">Local browser authentication instructions</a></p>
 </details>
 <h3>OAuth connection experiment</h3>
-<p>Authorize read-only access on Google, then test private playlist access and token renewal. Your current library connection stays in place during this experiment. Connecting opens Google in this tab and stops any playing audio.</p>
+<p>Connect Google, then test private playlist access and token renewal. The default button requests read-only access; the optional Music test explains its broader permission below. Your current library connection stays in place during this experiment. Connecting opens Google in this tab and stops any playing audio.</p>
 <button id="oauth-connect">Connect Google (read-only)</button>
+<details id="oauth-music-permission"><summary>Optional Music permission test</summary>
+<p>Music may reject the read-only permission. This option requests broader Google access: Manage your YouTube account. That permission allows account changes, although this experiment only reads playlists and renews tokens. Review Google's consent screen before deciding. Your current library connection stays in place.</p>
+<button id="oauth-connect-music">Connect Google for Music (broader permission)</button>
+</details>
 <button id="oauth-probe">Test OAuth reads and renewal</button>
 <p id="oauth-status" role="status">Not tested. A private Google Web client configuration is required on the server.</p>
 <button id="account-load">Load my playlists</button>

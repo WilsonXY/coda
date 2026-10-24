@@ -10,11 +10,12 @@ import { createServer } from '../server.mjs';
 const directory=await mkdtemp(join(tmpdir(),'coda-oauth-browser-'));
 const clientFile=join(directory,'client.json'),tokenFile=join(directory,'token.json');
 let calls=0;
+const selectedScopes=[];
 let releaseProbe,enterProbe;
 const probePending=new Promise(resolve=>{releaseProbe=resolve;}),probeEntered=new Promise(resolve=>{enterProbe=resolve;});
 const app=createServer({oauthOptions:{owner:'owner@example.test',clientFile,tokenFile,python:'unused',fetchImpl:async()=>{
-  calls++; return Response.json({access_token:'fixture-access',refresh_token:'fixture-refresh',token_type:'Bearer',scope:'https://www.googleapis.com/auth/youtube.readonly',expires_in:3600});
-},probe:async()=>{enterProbe();await probePending;return {dataApiPrivatePlaylist:true,privatePlaylist:true,expectedOrder:true};}}});
+  calls++; return Response.json({access_token:'fixture-access',refresh_token:'fixture-refresh',token_type:'Bearer',scope:selectedScopes.at(-1),expires_in:3600});
+},probe:async()=>{enterProbe();await probePending;const music=selectedScopes.at(-1)==='https://www.googleapis.com/auth/youtube';return {dataApiPrivatePlaylist:true,privatePlaylist:music,expectedOrder:music};}}});
 execFileSync('openssl',['req','-x509','-newkey','ec','-pkeyopt','ec_paramgen_curve:P-256','-noenc','-days','1','-subj','/CN=127.0.0.1','-addext','subjectAltName=IP:127.0.0.1','-keyout',join(directory,'key.pem'),'-out',join(directory,'cert.pem')],{stdio:'ignore'});
 const server=createHttpsServer({key:await readFile(join(directory,'key.pem')),cert:await readFile(join(directory,'cert.pem'))},(req,res)=>{
  req.headers['tailscale-user-login']='owner@example.test';app.listeners('request')[0](req,res);
@@ -28,7 +29,7 @@ try {
  const context=await browser.newContext({ignoreHTTPSErrors:true,viewport:{width:390,height:900}});
  // Google is simulated; no identity header or real request leaves this fixture.
  await context.route('https://accounts.google.com/**',async route=>{
-  const state=new URL(route.request().url()).searchParams.get('state');
+  const params=new URL(route.request().url()).searchParams,state=params.get('state');selectedScopes.push(params.get('scope'));
   await route.fulfill({status:302,headers:{location:base+'/api/account/oauth/callback?state='+state+'&code=fixture-code'}});
  });
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -45,16 +46,26 @@ try {
  assert.equal(await page.locator('audio').evaluate(a=>a.paused),false);
  assert.equal(await page.locator('#oauth-status').textContent(),'Checking OAuth…','Audio advances while the probe is still pending');
  releaseProbe();
- await page.waitForFunction(()=>document.querySelector('#oauth-status').textContent.includes('PASS'));
+ await page.waitForFunction(()=>document.querySelector('#oauth-status').textContent.includes('OAuth comparison'));
+ assert.equal((await page.locator('#oauth-status').textContent()).includes('PASS'),false,'Partial Music access cannot display PASS');
  assert.equal(calls,2,'Probe exercises one token renewal');
  const before=await page.locator('audio').evaluate(a=>a.currentTime);
  await page.waitForFunction(before=>document.querySelector('audio').currentTime>before+.25,before);
  assert.equal((await page.locator('body').textContent()).includes('fixture-refresh'),false);
+ await page.locator('#oauth-music-permission summary').click();
+ assert.ok((await page.locator('#oauth-music-permission').textContent()).includes('Manage your YouTube account'));
+ assert.deepEqual(selectedScopes,['https://www.googleapis.com/auth/youtube.readonly'],'No broader request before explicit choice');
  for(const width of [390,728]){
   await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   await page.screenshot({path:`artifacts/oauth-${width}.png`,fullPage:true});
  }
+ await page.locator('#oauth-connect-music').click();
+ await page.waitForFunction(()=>document.querySelector('#oauth-status')?.textContent.includes('Authorization saved'));
+ await page.locator('#oauth-probe').click();
+ await page.waitForFunction(()=>document.querySelector('#oauth-status').textContent.includes('PASS'));
+ assert.deepEqual(selectedScopes,['https://www.googleapis.com/auth/youtube.readonly','https://www.googleapis.com/auth/youtube']);
+ assert.equal(calls,4);
  assert.deepEqual(errors,[]);
- await writeFile('artifacts/oauth-browser-check.json',JSON.stringify({status:'PASS',source:'HTTPS fixture, simulated Google redirect/token exchange, synthetic private-read results',browserBoundCallback:true,explicitRenewalProbe:true,audioContinuesDuringProbe:true,layouts:[390,728],realGoogleAuthorization:'NOT RUN'},null,2)+'\n');
+ await writeFile('artifacts/oauth-browser-check.json',JSON.stringify({status:'PASS',source:'HTTPS fixture, simulated Google redirect/token exchange, synthetic scope-dependent read results',browserBoundCallback:true,explicitRenewalProbe:true,audioContinuesDuringProbe:true,partialComparisonNeverPasses:true,broaderScopeOnlyOnExplicitClick:true,permissionExplainedBeforeChoice:true,layouts:[390,728],realGoogleAuthorization:'NOT RUN'},null,2)+'\n');
  console.log('PASS: browser-bound HTTPS OAuth redirect and read/renew/read controls; Google and account reads simulated.');
 }finally{await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));await rm(directory,{recursive:true,force:true});}

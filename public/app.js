@@ -336,14 +336,14 @@ async function request(path, signal, options = {}) {
 }
 
 async function oauthAction(task) {
-  $('oauth-connect').disabled = true; $('oauth-probe').disabled = true;
+  for (const id of ['oauth-connect', 'oauth-connect-music', 'oauth-probe']) $(id).disabled = true;
   $('oauth-status').textContent = 'Checking OAuth…';
   try { await task(); }
   catch (error) { $('oauth-status').textContent = error.message; }
-  finally { $('oauth-connect').disabled = false; $('oauth-probe').disabled = false; }
+  finally { for (const id of ['oauth-connect', 'oauth-connect-music', 'oauth-probe']) $(id).disabled = false; }
 }
-$('oauth-connect').onclick = () => oauthAction(async () => {
-  const data = await request('/api/account/oauth/connect', AbortSignal.timeout(15000), { method: 'POST' });
+for (const [id, route] of [['oauth-connect', 'connect'], ['oauth-connect-music', 'connect-music']]) $(id).onclick = () => oauthAction(async () => {
+  const data = await request('/api/account/oauth/' + route, AbortSignal.timeout(15000), { method: 'POST' });
   window.location.assign(data.authorizationUrl);
 });
 $('oauth-probe').onclick = () => oauthAction(async () => {
