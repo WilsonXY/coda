@@ -108,6 +108,11 @@ try {
  await page.locator('#account-check').click();await page.waitForFunction(()=>document.querySelector('#account-status').textContent.includes('failed'));
  assert.equal(await page.locator('#edit-search').isVisible(),true,'A failed saved-session check preserves the separate Google draft');
  assert.equal(await page.locator('#account-tracks li').count(),3);
+ let testRequests=0,discardPrompts=0;await page.route('**/api/account/playlist-test',async route=>{testRequests++;await route.fulfill({status:503,json:{error:'Synthetic test unavailable'}});});
+ page.once('dialog',async dialog=>{discardPrompts++;await dialog.dismiss();});
+ await page.locator('#account-test').click();
+ assert.equal(discardPrompts,1,'The old one-time test must ask before discarding a dirty draft');
+ assert.equal(testRequests,0);assert.equal(await page.locator('#edit-search').isVisible(),true);assert.equal(await page.locator('#account-test').isEnabled(),true);
  for(const width of [390,728]){await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.locator('#account-playlist-title').evaluate(e=>e.scrollIntoView());await page.screenshot({path:`artifacts/playlist-edit-draft-${width}.png`});}
  await page.getByRole('button',{name:'Save to YouTube',exact:true}).click();
  await page.waitForFunction(()=>document.querySelector('#edit-status').textContent.includes('Saved to YouTube'));

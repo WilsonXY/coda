@@ -427,7 +427,7 @@ async function accountCheck(task, failureLabel = 'Account read failed.') {
   }
 }
 $('account-test').onclick = () => {
-  if (accountBusy || playlistTestAttempted) return;
+  if (accountBusy || playlistTestAttempted || !discardBeforeNavigation()) return;
   playlistTestAttempted = true;
   accountCheck(async () => {
     clearAccountView(); $('account-test-steps').replaceChildren();

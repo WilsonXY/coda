@@ -86,3 +86,11 @@ test('playlist occurrence IDs are opaque printable strings, including punctuatio
  assert.equal(editable([{itemId:'opaque.entry=identifier',id:'aaaaaaaaaaa'}]),true);
  assert.equal(editable([{itemId:'entry\nsecret',id:'aaaaaaaaaaa'}]),false);
 });
+
+test('moving a song from either end to the other uses a single Google update',async()=>{
+ const {editPlan}=await import('../playlist-edit.mjs');
+ const original=Array.from({length:12},(_,i)=>({itemId:'entry-'+i,id:'aaaaaaaaaaa'}));
+ for(const desired of [[...original.slice(1),original[0]],[original.at(-1),...original.slice(0,-1)]]) {
+  const plan=editPlan(original,desired);assert.equal(plan.length,1);assert.equal(plan[0].method,'PUT');
+ }
+});

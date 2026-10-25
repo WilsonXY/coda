@@ -17,13 +17,20 @@ export function editPlan(original, desired) {
   }
   const work = original.filter(item => seen.has(item.itemId));
   const operations = original.filter(item => !seen.has(item.itemId)).map(item => ({ method: 'DELETE', item }));
-  desired.forEach((item, position) => {
-    const index = item.itemId === null ? -1 : work.findIndex(old => old.itemId === item.itemId);
-    if (index === position) return;
-    operations.push({ method: index < 0 ? 'POST' : 'PUT', item, position });
-    if (index >= 0) work.splice(index, 1);
-    work.splice(position, 0, item);
-  });
+  function moves(reverse = false) {
+    const current = work.slice(), result = [], positions = [...desired.keys()];
+    if (reverse) positions.reverse();
+    for (const position of positions) {
+      const item = desired[position], index = item.itemId === null ? -1 : current.findIndex(old => old.itemId === item.itemId);
+      if (index === position) continue;
+      result.push({ method: index < 0 ? 'POST' : 'PUT', item, position });
+      if (index >= 0) current.splice(index, 1);
+      current.splice(position, 0, item);
+    }
+    return result;
+  }
+  const forward = moves(), backward = desired.every(item => item.itemId !== null) ? moves(true) : forward;
+  operations.push(...(backward.length < forward.length ? backward : forward));
   // ponytail: a small save keeps request time and Google write quota bounded; split larger edits into separate saves.
   if (operations.length > 10) throw new Error('Save at most 10 changes at a time. Make a smaller edit.');
   return operations;
