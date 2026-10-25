@@ -1,79 +1,257 @@
 <!doctype html>
-<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Coda functionality experiment</title><link rel="stylesheet" href="/style.css">
-<body><main>
-<h1>Coda functionality experiment</h1>
-<p>Test the basics before designing the app. Choose generated tones or the three prepared music tracks below. Start quietly.</p>
-<nav aria-label="Experiment panels"><button id="show-player">Player checks</button> <button id="show-search">YouTube Music checks</button> <button id="show-account">My library</button></nav>
-<section aria-labelledby="player-heading">
-<h2 id="player-heading">Persistent player</h2>
-<p id="delivery-status" role="status">Mode: fetch each tone as it starts.</p>
-<button id="preload">Load all three tones before playing</button>
-<button id="music">Load three prepared music tracks</button>
-<button id="live">Use live music</button>
-<p><label><input id="buffer-next" type="checkbox" disabled> Buffer the next live song on this device</label></p>
-<p id="buffer-status" role="status">Next-song buffering is off. Select live music to enable it before Play.</p>
-<p>Live mode fetches a song when selected and plays incoming bytes. It requires the optional live experiment server. Older unused songs may be fetched again. This playback source is anonymous.</p>
-<p>Choose before playing. Loading stops and resets the queue. Prepared music loads about 16 MB into memory before Play; it uses anonymously retrieved complete files, with no Premium account connected. Wait for Ready. To change modes, export first and reload.</p>
-<p id="now" aria-live="polite">Nothing playing</p>
-<p id="playback-status" role="status"></p>
-<audio id="audio" controls preload="metadata"></audio>
-<p><button id="previous">Previous</button> <button id="play">Play / pause</button> <button id="next">Next</button> <label><input id="loop" type="checkbox" checked> Loop queue</label></p>
-</section>
-<section id="player-panel"><h2>Test queue</h2><ol id="queue"></ol><button id="reset">Reset queue</button>
-<h2>Device checklist</h2><p>Test in Zen on PC and Chrome on Android. Leave unsupported checks as Not run.</p>
-<label>Device, OS and browser version <input id="device" placeholder="e.g. Pixel … / Android … / Chrome …"></label>
-<div id="checklist"></div><label>Notes <textarea id="notes" rows="3" placeholder="What happened? Include interruptions and timing."></textarea></label>
-<button id="export">Export results</button><p id="storage-note">Results stay in this page until exported. Reloading clears them.</p>
-</section>
-<section id="search-panel" hidden><h2>YouTube Music public checks</h2>
-<p>These read-only public checks do not use your account. Search and player-response checks do not prove audio playback.</p>
-<form id="search"><label>Search <input id="query" required maxlength="120" value="Daft Punk Get Lucky"></label><label>Type <select id="type"><option value="song">Songs</option><option value="playlist">Playlists</option></select></label><button>Search YouTube Music</button></form>
-<p id="search-status" role="status"></p><ol id="results"></ol>
-<form id="playlist"><label>Public playlist ID <input id="playlist-id" required></label><button>Read playlist</button></form>
-<pre id="probe-output" aria-live="polite">No player response checked yet.</pre>
-<p>Account reads and the disposable playlist experiment are in My library.</p>
-</section>
-<section id="account-panel" hidden><h2>My YouTube Music library</h2>
-<p>Use your private Tailscale link on an owner device. Browsing is read-only. Playlist edits stay in a draft until you choose Save to YouTube.</p>
-<button id="account-check">Check connection</button>
-<p id="save-status" role="status"></p><progress id="save-progress" aria-label="Playlist save progress" hidden></progress> <button id="save-check" hidden>Check save status</button>
-<p id="account-connection" role="status">Connection has not been checked.</p>
-<details id="account-recovery" hidden><summary>Reconnect account</summary>
-<p>Refresh the saved YouTube Music session in the local terminal using your configured auth file. Keep headers and cookies there. Then choose Check connection here; no server restart is needed.</p>
-<p><a href="https://ytmusicapi.readthedocs.io/en/stable/setup/browser.html" target="_blank" rel="noopener noreferrer">Local browser authentication instructions</a></p>
-</details>
-<h3>OAuth connection experiment</h3>
-<p>Connect Google, then test private playlist access and token renewal. The default button requests read-only access; the optional Music test explains its broader permission below. Your current library connection stays in place during this experiment. Connecting opens Google in this tab and stops any playing audio.</p>
-<button id="oauth-connect">Connect Google (read-only)</button>
-<details id="oauth-music-permission"><summary>Optional Music permission test</summary>
-<p>Music may reject the read-only permission. This option requests broader Google access: Manage your YouTube account. That permission allows account changes, and Coda uses it for playlist changes only when you explicitly save a draft. Review Google's consent screen before deciding. Your current library connection stays in place.</p>
-<button id="oauth-connect-music">Connect Google for Music (broader permission)</button>
-</details>
-<button id="oauth-probe">Test OAuth reads and renewal</button>
-<p id="oauth-status" role="status">Not tested. A private Google Web client configuration is required on the server.</p>
-<h3>Playlists you own · Google connection</h3>
-<p>Lists up to 50 playlists you own and 100 tracks per playlist. This view uses Google authorization and can play through Coda's existing player. Music-only collections and playlists saved from other people remain in the saved-session view.</p>
-<details><summary>Allow playlist saving</summary>
-<p>Saving requires Google's broader permission: Manage your YouTube account. Connect below only if you want to edit playlists; review Google's consent screen. Connecting stops playback and leaves this page.</p>
-<button id="oauth-connect-edit">Enable Google playlist editing</button></details>
-<button id="account-load-google">Load my playlists with Google</button>
-<button id="account-load">Load Music library (saved session)</button>
-<p id="account-status" role="status">Your library has not been loaded.</p><ol id="account-playlists"></ol>
-<h3 id="account-playlist-title">No playlist selected</h3>
-<p id="account-playlist-status" role="status"></p><div id="account-playback-actions"></div>
-<div id="playlist-editor" hidden>
-<p id="edit-status" role="status"></p>
-<button id="account-edit">Edit playlist</button> <button id="edit-save" hidden>Save to YouTube</button> <button id="edit-discard" hidden>Discard draft</button> <button id="edit-reload">Reload playlist</button>
-<form id="edit-search" hidden><label>Find a song to add <input id="edit-query" required maxlength="120"></label><button>Find songs</button></form>
-<p id="edit-search-status" role="status"></p><ol id="edit-results"></ol>
-</div><ol id="account-tracks"></ol>
-<h3>One-time playlist management test</h3>
-<p>This changes only the existing private Coda test playlist: add a duplicate of its first song, move that exact copy to the front, then remove it. A successful test leaves the original two songs in order.</p>
-<button id="account-test">Run add / move / remove test once</button>
-<p id="account-test-status" role="status">Not run. Start only when ready to change the disposable test playlist. An interrupted test may leave a partial change; inspect it before further writes.</p>
-<ol id="account-test-steps"></ol>
-<p><a href="https://music.youtube.com/playlist?list=PLWEPAqmCfbhY" target="_blank" rel="noopener noreferrer">Inspect the test playlist on YouTube Music</a></p>
-</section>
-<section><h2>Event log</h2><p>Export after testing. Only the last 300 events are kept.</p><pre id="events" aria-live="off"></pre></section>
-</main><script type="module" src="/app.js"></script></body></html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  />
+  <title>Coda functionality experiment</title
+  ><link rel="stylesheet" href="/style.css" />
+  <body>
+    <main>
+      <h1>Coda functionality experiment</h1>
+      <p>
+        Test the basics before designing the app. Choose generated tones or the
+        three prepared music tracks below. Start quietly.
+      </p>
+      <nav aria-label="Experiment panels">
+        <button id="show-player">Player checks</button>
+        <button id="show-search">YouTube Music checks</button>
+        <button id="show-account">My library</button>
+      </nav>
+      <section aria-labelledby="player-heading">
+        <h2 id="player-heading">Persistent player</h2>
+        <p id="delivery-status" role="status">
+          Mode: fetch each tone as it starts.
+        </p>
+        <button id="preload">Load all three tones before playing</button>
+        <button id="music">Load three prepared music tracks</button>
+        <button id="live">Use live music</button>
+        <p>
+          <label
+            ><input id="buffer-next" type="checkbox" disabled /> Buffer the next
+            live song on this device</label
+          >
+        </p>
+        <p id="buffer-status" role="status">
+          Next-song buffering is off. Select live music to enable it before
+          Play.
+        </p>
+        <p>
+          Live mode fetches a song when selected and plays incoming bytes. It
+          requires the optional live experiment server. Older unused songs may
+          be fetched again. This playback source is anonymous.
+        </p>
+        <p>
+          Choose before playing. Loading stops and resets the queue. Prepared
+          music loads about 16 MB into memory before Play; it uses anonymously
+          retrieved complete files, with no Premium account connected. Wait for
+          Ready. To change modes, export first and reload.
+        </p>
+        <p id="now" aria-live="polite">Nothing playing</p>
+        <p id="playback-status" role="status"></p>
+        <audio id="audio" controls preload="metadata"></audio>
+        <p>
+          <button id="previous">Previous</button>
+          <button id="play">Play / pause</button>
+          <button id="next">Next</button>
+          <label><input id="loop" type="checkbox" checked /> Loop queue</label>
+        </p>
+      </section>
+      <section id="player-panel">
+        <h2>Test queue</h2>
+        <ol id="queue"></ol>
+        <button id="reset">Reset queue</button>
+        <h2>Device checklist</h2>
+        <p>
+          Test in Zen on PC and Chrome on Android. Leave unsupported checks as
+          Not run.
+        </p>
+        <label
+          >Device, OS and browser version
+          <input id="device" placeholder="e.g. Pixel … / Android … / Chrome …"
+        /></label>
+        <div id="checklist"></div>
+        <label
+          >Notes
+          <textarea
+            id="notes"
+            rows="3"
+            placeholder="What happened? Include interruptions and timing."
+          ></textarea>
+        </label>
+        <button id="export">Export results</button>
+        <p id="storage-note">
+          Results stay in this page until exported. Reloading clears them.
+        </p>
+      </section>
+      <section id="search-panel" hidden>
+        <h2>YouTube Music public checks</h2>
+        <p>
+          These read-only public checks do not use your account. Search and
+          player-response checks do not prove audio playback.
+        </p>
+        <form id="search">
+          <label
+            >Search
+            <input
+              id="query"
+              required
+              maxlength="120"
+              value="Daft Punk Get Lucky" /></label
+          ><label
+            >Type
+            <select id="type">
+              <option value="song">Songs</option>
+              <option value="playlist">Playlists</option>
+            </select></label
+          ><button>Search YouTube Music</button>
+        </form>
+        <p id="search-status" role="status"></p>
+        <ol id="results"></ol>
+        <form id="playlist">
+          <label>Public playlist ID <input id="playlist-id" required /></label
+          ><button>Read playlist</button>
+        </form>
+        <pre id="probe-output" aria-live="polite">
+No player response checked yet.</pre>
+        <p>
+          Account reads and the disposable playlist experiment are in My
+          library.
+        </p>
+      </section>
+      <section id="account-panel" hidden>
+        <h2>My YouTube Music library</h2>
+        <p>
+          Use your private Tailscale link on an owner device. Browsing is
+          read-only. Playlist edits stay in a draft until you choose Save to
+          YouTube.
+        </p>
+        <button id="account-check">Check connection</button>
+        <p id="save-status" role="status"></p>
+        <progress
+          id="save-progress"
+          aria-label="Playlist save progress"
+          hidden
+        ></progress>
+        <button id="save-check" hidden>Check save status</button>
+        <p id="account-connection" role="status">
+          Connection has not been checked.
+        </p>
+        <details id="account-recovery" hidden>
+          <summary>Reconnect account</summary>
+          <p>
+            Refresh the saved YouTube Music session in the local terminal using
+            your configured auth file. Keep headers and cookies there. Then
+            choose Check connection here; no server restart is needed.
+          </p>
+          <p>
+            <a
+              href="https://ytmusicapi.readthedocs.io/en/stable/setup/browser.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Local browser authentication instructions</a
+            >
+          </p>
+        </details>
+        <h3>OAuth connection experiment</h3>
+        <p>
+          Connect Google, then test private playlist access and token renewal.
+          The default button requests read-only access; the optional Music test
+          explains its broader permission below. Your current library connection
+          stays in place during this experiment. Connecting opens Google in this
+          tab and stops any playing audio.
+        </p>
+        <button id="oauth-connect">Connect Google (read-only)</button>
+        <details id="oauth-music-permission">
+          <summary>Optional Music permission test</summary>
+          <p>
+            Music may reject the read-only permission. This option requests
+            broader Google access: Manage your YouTube account. That permission
+            allows account changes, and Coda uses it for playlist changes only
+            when you explicitly save a draft. Review Google's consent screen
+            before deciding. Your current library connection stays in place.
+          </p>
+          <button id="oauth-connect-music">
+            Connect Google for Music (broader permission)
+          </button>
+        </details>
+        <button id="oauth-probe">Test OAuth reads and renewal</button>
+        <p id="oauth-status" role="status">
+          Not tested. A private Google Web client configuration is required on
+          the server.
+        </p>
+        <h3>Playlists you own · Google connection</h3>
+        <p>
+          Lists up to 50 playlists you own and 100 tracks per playlist. This
+          view uses Google authorization and can play through Coda's existing
+          player. Music-only collections and playlists saved from other people
+          remain in the saved-session view.
+        </p>
+        <details>
+          <summary>Allow playlist saving</summary>
+          <p>
+            Saving requires Google's broader permission: Manage your YouTube
+            account. Connect below only if you want to edit playlists; review
+            Google's consent screen. Connecting stops playback and leaves this
+            page.
+          </p>
+          <button id="oauth-connect-edit">
+            Enable Google playlist editing
+          </button>
+        </details>
+        <button id="account-load-google">Load my playlists with Google</button>
+        <button id="account-load">Load Music library (saved session)</button>
+        <p id="account-status" role="status">
+          Your library has not been loaded.
+        </p>
+        <ol id="account-playlists"></ol>
+        <h3 id="account-playlist-title">No playlist selected</h3>
+        <p id="account-playlist-status" role="status"></p>
+        <div id="account-playback-actions"></div>
+        <div id="playlist-editor" hidden>
+          <p id="edit-status" role="status"></p>
+          <button id="account-edit">Edit playlist</button>
+          <button id="edit-save" hidden>Save to YouTube</button>
+          <button id="edit-discard" hidden>Discard draft</button>
+          <button id="edit-reload">Reload playlist</button>
+          <form id="edit-search" hidden>
+            <label
+              >Find a song to add
+              <input id="edit-query" required maxlength="120" /></label
+            ><button>Find songs</button>
+          </form>
+          <p id="edit-search-status" role="status"></p>
+          <ol id="edit-results"></ol>
+        </div>
+        <ol id="account-tracks"></ol>
+        <h3>One-time playlist management test</h3>
+        <p>
+          This changes only the existing private Coda test playlist: add a
+          duplicate of its first song, move that exact copy to the front, then
+          remove it. A successful test leaves the original two songs in order.
+        </p>
+        <button id="account-test">Run add / move / remove test once</button>
+        <p id="account-test-status" role="status">
+          Not run. Start only when ready to change the disposable test playlist.
+          An interrupted test may leave a partial change; inspect it before
+          further writes.
+        </p>
+        <ol id="account-test-steps"></ol>
+        <p>
+          <a
+            href="https://music.youtube.com/playlist?list=PLWEPAqmCfbhY"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Inspect the test playlist on YouTube Music</a
+          >
+        </p>
+      </section>
+      <section>
+        <h2>Event log</h2>
+        <p>Export after testing. Only the last 300 events are kept.</p>
+        <pre id="events" aria-live="off"></pre>
+      </section>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

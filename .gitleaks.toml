@@ -1,0 +1,11 @@
+[extend]
+useDefault = true
+
+# Public BotGuard request identifier, not an account credential:
+# https://github.com/LuanRT/BgUtils/blob/main/examples/index-innertube.ts
+[[allowlists]]
+description = "Upstream public BotGuard request identifier in the two music probes"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^scripts/(music-session|prepare-music)\.mjs$''']
+regexes = ['''^O43z0dpjhgX20SCx4KAo$''']

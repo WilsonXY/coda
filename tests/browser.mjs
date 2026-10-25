@@ -4,102 +4,213 @@ import { chromium } from 'playwright';
 import { createServer } from '../server.mjs';
 
 const server = createServer();
-await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const base = `http://127.0.0.1:${server.address().port}`;
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, args: ['--no-sandbox'] });
+const browser = await chromium.launch({
+  executablePath: process.env.CHROMIUM_PATH,
+  args: ['--no-sandbox'],
+});
 try {
   await mkdir('artifacts', { recursive: true });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(base);
   await page.locator('#play').click();
-  await page.waitForFunction(() => document.querySelector('audio').currentTime > 0.2, null, { timeout: 5000 });
-  const initial = await page.locator('audio').evaluate(audio => audio.currentTime);
+  await page.waitForFunction(
+    () => document.querySelector('audio').currentTime > 0.2,
+    null,
+    { timeout: 5000 },
+  );
+  const initial = await page
+    .locator('audio')
+    .evaluate((audio) => audio.currentTime);
   await page.locator('#show-search').click();
-  await page.waitForFunction(before => document.querySelector('audio').currentTime > before + 0.2, initial);
-  assert.equal(await page.locator('audio').evaluate(audio => audio.paused), false);
+  await page.waitForFunction(
+    (before) => document.querySelector('audio').currentTime > before + 0.2,
+    initial,
+  );
+  assert.equal(
+    await page.locator('audio').evaluate((audio) => audio.paused),
+    false,
+  );
   await page.locator('#next').click();
-  await page.waitForFunction(() => document.querySelector('#now').textContent.includes('Tone B'));
-  await page.locator('audio').evaluate(audio => { audio.currentTime = 19.7; });
-  await page.waitForFunction(() => document.querySelector('#now').textContent.includes('Tone C'));
-  await page.locator('audio').evaluate(audio => { audio.currentTime = 19.7; });
-  await page.waitForFunction(() => document.querySelector('#now').textContent.includes('Tone A'));
-  await page.locator('audio').evaluate(audio => { audio.currentTime = 19.7; });
-  await page.waitForFunction(() => document.querySelector('#now').textContent.includes('Tone B'));
+  await page.waitForFunction(() =>
+    document.querySelector('#now').textContent.includes('Tone B'),
+  );
+  await page.locator('audio').evaluate((audio) => {
+    audio.currentTime = 19.7;
+  });
+  await page.waitForFunction(() =>
+    document.querySelector('#now').textContent.includes('Tone C'),
+  );
+  await page.locator('audio').evaluate((audio) => {
+    audio.currentTime = 19.7;
+  });
+  await page.waitForFunction(() =>
+    document.querySelector('#now').textContent.includes('Tone A'),
+  );
+  await page.locator('audio').evaluate((audio) => {
+    audio.currentTime = 19.7;
+  });
+  await page.waitForFunction(() =>
+    document.querySelector('#now').textContent.includes('Tone B'),
+  );
   await page.locator('#show-player').click();
-  await page.locator('#queue button').filter({ hasText: 'Move down' }).first().click();
-  assert.equal(await page.locator('audio').evaluate(audio => audio.paused), false);
+  await page
+    .locator('#queue button')
+    .filter({ hasText: 'Move down' })
+    .first()
+    .click();
+  assert.equal(
+    await page.locator('audio').evaluate((audio) => audio.paused),
+    false,
+  );
   await page.locator('#play').click();
-  assert.equal(await page.locator('audio').evaluate(audio => audio.paused), true);
-  await page.locator('#queue button').filter({ hasText: 'Remove' }).first().click();
+  assert.equal(
+    await page.locator('audio').evaluate((audio) => audio.paused),
+    true,
+  );
+  await page
+    .locator('#queue button')
+    .filter({ hasText: 'Remove' })
+    .first()
+    .click();
   assert.equal(await page.locator('#queue li').count(), 2);
   await page.locator('#reset').click();
   assert.equal(await page.locator('#queue li').count(), 3);
-  await page.locator('#device').fill('Automated Chromium / 390px; not a physical phone test');
+  await page
+    .locator('#device')
+    .fill('Automated Chromium / 390px; not a physical phone test');
   const downloadEvent = page.waitForEvent('download');
   await page.locator('#export').click();
   const download = await downloadEvent;
   await download.saveAs('artifacts/browser-export.json');
-  const exported = JSON.parse(await readFile('artifacts/browser-export.json', 'utf8'));
+  const exported = JSON.parse(
+    await readFile('artifacts/browser-export.json', 'utf8'),
+  );
   assert.equal('premiumReported' in exported, false);
   assert.equal(exported.schemaVersion, 2);
   assert.equal(exported.audioDelivery, 'network');
   assert.equal(exported.eventsTruncated, false);
-  assert.ok(exported.events.some(event => event.event === 'control' && event.action === 'play-pause'));
+  assert.ok(
+    exported.events.some(
+      (event) => event.event === 'control' && event.action === 'play-pause',
+    ),
+  );
   assert.equal(exported.source, 'generated WAV tones; not YouTube audio');
-  assert.ok(exported.checks.every(check => check.status === 'NOT RUN'));
-  assert.ok(exported.events.filter(event => event.event === 'ended').length >= 3);
+  assert.ok(exported.checks.every((check) => check.status === 'NOT RUN'));
+  assert.ok(
+    exported.events.filter((event) => event.event === 'ended').length >= 3,
+  );
   await page.screenshot({ path: 'artifacts/player-390.png', fullPage: true });
   await page.setViewportSize({ width: 728, height: 900 });
   await page.screenshot({ path: 'artifacts/player-728.png', fullPage: true });
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
-  const cached = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  cached.on('pageerror', error => errors.push(error.message));
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+    true,
+  );
+  const cached = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+  });
+  cached.on('pageerror', (error) => errors.push(error.message));
   let audioRequests = 0;
-  cached.on('request', request => { if (request.url().includes('/audio/')) audioRequests++; });
+  cached.on('request', (request) => {
+    if (request.url().includes('/audio/')) audioRequests++;
+  });
   await cached.goto(base);
   await cached.locator('#preload').click();
-  await cached.waitForFunction(() => document.querySelector('#delivery-status').textContent.includes('Ready: all three tones'));
+  await cached.waitForFunction(() =>
+    document
+      .querySelector('#delivery-status')
+      .textContent.includes('Ready: all three tones'),
+  );
   assert.equal(audioRequests, 3);
   await cached.context().setOffline(true);
   await cached.locator('#play').click();
-  await cached.waitForFunction(() => document.querySelector('audio').currentTime > 0.2);
-  assert.ok((await cached.locator('audio').getAttribute('src')).startsWith('blob:'));
+  await cached.waitForFunction(
+    () => document.querySelector('audio').currentTime > 0.2,
+  );
+  assert.ok(
+    (await cached.locator('audio').getAttribute('src')).startsWith('blob:'),
+  );
   assert.equal(await cached.locator('#preload').isDisabled(), true);
   for (const name of ['Tone B', 'Tone C', 'Tone A']) {
-    await cached.locator('audio').evaluate(audio => { audio.currentTime = 19.7; });
-    await cached.waitForFunction(expected => document.querySelector('#now').textContent === expected, name);
-    await cached.waitForFunction(() => !document.querySelector('audio').paused && document.querySelector('audio').currentTime > 0.1);
+    await cached.locator('audio').evaluate((audio) => {
+      audio.currentTime = 19.7;
+    });
+    await cached.waitForFunction(
+      (expected) => document.querySelector('#now').textContent === expected,
+      name,
+    );
+    await cached.waitForFunction(
+      () =>
+        !document.querySelector('audio').paused &&
+        document.querySelector('audio').currentTime > 0.1,
+    );
   }
-  assert.equal(audioRequests, 3, 'No new audio requests after preloading, even across offline track transitions');
+  assert.equal(
+    audioRequests,
+    3,
+    'No new audio requests after preloading, even across offline track transitions',
+  );
   const cachedDownload = cached.waitForEvent('download');
   await cached.locator('#export').click();
   await (await cachedDownload).saveAs('artifacts/preloaded-export.json');
-  const cachedReport = JSON.parse(await readFile('artifacts/preloaded-export.json', 'utf8'));
+  const cachedReport = JSON.parse(
+    await readFile('artifacts/preloaded-export.json', 'utf8'),
+  );
   assert.equal(cachedReport.audioDelivery, 'preloaded');
   assert.equal(cachedReport.schemaVersion, 2);
-  assert.ok(cachedReport.events.filter(event => event.event === 'ended').length >= 3);
-  await cached.screenshot({ path: 'artifacts/preloaded-390.png', fullPage: true });
+  assert.ok(
+    cachedReport.events.filter((event) => event.event === 'ended').length >= 3,
+  );
+  await cached.screenshot({
+    path: 'artifacts/preloaded-390.png',
+    fullPage: true,
+  });
   await cached.setViewportSize({ width: 728, height: 900 });
-  assert.equal(await cached.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-  await cached.screenshot({ path: 'artifacts/preloaded-728.png', fullPage: true });
+  assert.equal(
+    await cached.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+    true,
+  );
+  await cached.screenshot({
+    path: 'artifacts/preloaded-728.png',
+    fullPage: true,
+  });
   await cached.close();
 
   const failed = await browser.newPage();
-  await failed.route('**/audio/1.wav', route => route.fulfill({ status: 503, body: 'unavailable' }));
+  await failed.route('**/audio/1.wav', (route) =>
+    route.fulfill({ status: 503, body: 'unavailable' }),
+  );
   await failed.goto(base);
   await failed.locator('#preload').click();
-  await failed.waitForFunction(() => document.querySelector('#delivery-status').textContent.includes('Could not load all tones'));
+  await failed.waitForFunction(() =>
+    document
+      .querySelector('#delivery-status')
+      .textContent.includes('Could not load all tones'),
+  );
   assert.equal(await failed.locator('#preload').isDisabled(), false);
   assert.equal(await failed.locator('#play').isDisabled(), false);
   await failed.locator('#play').click();
-  await failed.waitForFunction(() => document.querySelector('audio').currentTime > 0.2);
-  assert.equal(await failed.locator('audio').getAttribute('src'), '/audio/0.wav');
+  await failed.waitForFunction(
+    () => document.querySelector('audio').currentTime > 0.2,
+  );
+  assert.equal(
+    await failed.locator('audio').getAttribute('src'),
+    '/audio/0.wav',
+  );
   await failed.close();
   assert.deepEqual(errors, []);
-  console.log('PASS: real audio playback, persistent player across panels, seeking, automatic transitions, loop, reorder/remove/reset, JSON export, 390px/728px layouts. Preloaded mode also plays through three transitions with browser network disabled; partial load failure stays in network mode. Physical Android preloaded mode and Zen NOT RUN.');
+  console.log(
+    'PASS: real audio playback, persistent player across panels, seeking, automatic transitions, loop, reorder/remove/reset, JSON export, 390px/728px layouts. Preloaded mode also plays through three transitions with browser network disabled; partial load failure stays in network mode. Physical Android preloaded mode and Zen NOT RUN.',
+  );
 } finally {
   await browser.close();
-  await new Promise(resolve => server.close(resolve));
+  await new Promise((resolve) => server.close(resolve));
 }
