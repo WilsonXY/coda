@@ -29,6 +29,44 @@ Both devices must have access to this tailnet. Keep the host awake. Stop only th
 
 ## Automated checks
 
+Install dependencies with `npm ci`. Format before review or commit:
+
+```sh
+npm run format
+npm run format:check
+```
+
+Prettier is pinned in `devDependencies`. It formats hand-written JavaScript/MJS,
+HTML, CSS, JSON, YAML and Markdown; it does not format Python. Generated evidence
+in `docs/evidence/`, media in `assets/`, ignored private files, artifacts and the
+npm lockfile are excluded. Formatting must preserve application behavior and design.
+
+Install [Gitleaks 8.30.1](https://github.com/gitleaks/gitleaks/releases/tag/v8.30.1)
+and put `gitleaks` on your `PATH`, then enable this checkout's pre-commit check:
+
+```sh
+npm run hooks:install
+npm run secrets:check
+```
+
+The hook rejects staged secrets and runs the repository format check without
+rewriting files. If formatting fails, run `npm run format`, review and stage the
+changes, then commit again. Install the hook once per clone; it sets Git's local
+`core.hooksPath` to `.githooks`, replacing any previous local hook directory.
+`npm run secrets:check` scans committed Git history; the hook scans staged changes.
+Both redact findings. Keep credentials outside the checkout; ignore rules are
+not a substitute for secret scanning. Do not suppress a real secret finding:
+revoke or rotate the credential and remove it from the proposed commit.
+The Gitleaks configuration keeps the default rules and exempts only the exact
+public BotGuard request identifier in the two music probes, with its upstream
+source documented in `.gitleaks.toml`.
+
+GitHub Actions runs the format check, full-history Gitleaks scan, Node and Python
+unit tests, and synthetic Chromium browser checks on every pull request and push
+to `main`. CI requires no account credentials, prepared music or live service
+probes. Live/phone checks below remain separate. Configure branch protection to
+require **Formatting and tests** and **Gitleaks** if merges must wait for CI.
+
 ```sh
 npm test
 python3 -m unittest discover -s tests -p '*_test.py'

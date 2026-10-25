@@ -1,0 +1,8 @@
+# Generated evidence, media, and tool-owned files.
+docs/evidence/
+artifacts/
+assets/
+package-lock.json
+node_modules/
+.venv/
+__pycache__/

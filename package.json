@@ -7,6 +7,10 @@
     "node": ">=22"
   },
   "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "secrets:check": "gitleaks git --redact",
+    "hooks:install": "git config --local core.hooksPath .githooks",
     "start": "node server.mjs",
     "test": "node --test tests/*.test.mjs",
     "test:browser": "node tests/browser.mjs",
@@ -32,6 +36,7 @@
     "bgutils-js": "4.0.3",
     "esbuild": "0.28.2",
     "googlevideo": "5.0.1",
-    "playwright": "1.64.1"
+    "playwright": "1.64.1",
+    "prettier": "3.9.10"
   }
 }
