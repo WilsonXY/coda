@@ -192,6 +192,20 @@ try {
  await storagePage.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('previous save result is unavailable')||document.querySelector('#save-status').textContent.includes('Saved to YouTube'));
  assert.ok((await storagePage.locator('#save-status').textContent()).includes('previous save result is unavailable'),'Accepted save identity must survive storage failure in the same tab');
  await storagePage.close();
+ const racePage=await context.newPage();await racePage.goto(base);await racePage.locator('#show-account').click();
+ await racePage.locator('#account-load-google').click();await racePage.getByRole('button',{name:'Open playlist',exact:true}).click();
+ let enterRecovery,releaseRecovery,enterReload,releaseReload,raceChecks=0;
+ const recoveryEntered=new Promise(r=>enterRecovery=r),recoveryGate=new Promise(r=>releaseRecovery=r),reloadEntered=new Promise(r=>enterReload=r),reloadGate=new Promise(r=>releaseReload=r);
+ await racePage.route('**/api/account/oauth/save-status',async route=>{
+  raceChecks++;if(raceChecks===1){enterRecovery();await recoveryGate;}
+  await route.fulfill({json:{id:'stale-save',state:raceChecks===1?'running':'saved',phase:'saving',completed:1,total:1}});
+ });
+ const recovering=racePage.locator('#save-check').evaluate(button=>button.onclick());await recoveryEntered;
+ await racePage.route('**/api/account/oauth/playlist?*',async route=>{enterReload();await reloadGate;await route.continue();});
+ await racePage.locator('#edit-reload').click();await reloadEntered;releaseRecovery();await recovering;
+ try {assert.equal(await racePage.locator('#account-edit').isDisabled(),true,'Recovery cannot release a pending playlist reload lock');assert.equal(raceChecks,1);}
+ finally {releaseReload();}
+ await racePage.waitForFunction(()=>!document.querySelector('#account-edit').disabled);await racePage.close();
  assert.deepEqual(errors,[]);
  await writeFile('artifacts/oauth-browser-check.json',JSON.stringify({status:'PASS',source:'HTTPS fixture, simulated Google redirect/token exchange, synthetic scope-dependent read results',browserBoundCallback:true,explicitRenewalProbe:true,audioContinuesDuringProbe:true,partialComparisonNeverPasses:true,broaderScopeOnlyOnExplicitClick:true,permissionExplainedBeforeChoice:true,draftMakesNoWrites:true,duplicateAwareSave:true,discardMakesNoWrites:true,staleConflictStopsBeforeWrites:true,failedSaveCannotResubmit:true,layouts:[390,728],realGoogleAuthorization:'NOT RUN'},null,2)+'\n');
  console.log('PASS: HTTPS OAuth, draft search/add/remove/reorder/save, discard, conflict and uncertain failure; Google simulated.');

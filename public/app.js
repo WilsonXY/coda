@@ -583,6 +583,7 @@ async function recoverSave() {
   if (monitoringSave || accountBusy) return;
   try {
     const job = await request('/api/account/oauth/save-status', AbortSignal.timeout(10000));
+    if (monitoringSave || accountBusy) return;
     const remembered = rememberedSave();
     if (remembered && job.id !== remembered) {
       showSaveStatus('The previous save result is unavailable or belongs to a different server save. Reload and inspect your playlist before another edit.');
