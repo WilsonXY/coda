@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-10-24T19:39:45.058750+00:00",
+  "baseline": [
+    {
+      "source": "regular",
+      "state": "connected",
+      "fileAgeSeconds": 1046.9,
+      "unchangedDuringRead": true
+    },
+    {
+      "source": "isolated",
+      "state": "connected",
+      "fileAgeSeconds": 151.9,
+      "unchangedDuringRead": true
+    }
+  ],
+  "isolatedPlaylistCheck": {
+    "isolatedSessionRead": true,
+    "sameDisposablePlaylist": true,
+    "private": true,
+    "expectedTrackOrder": true,
+    "authFileUnchanged": true,
+    "authMode0600": true,
+    "accountWrites": 0
+  },
+  "followUps": "PENDING; no durability claim",
+  "comparisonLimit": "Different capture ages; isolation causality not established"
+}

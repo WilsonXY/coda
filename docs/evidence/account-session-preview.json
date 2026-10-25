@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-10-24T19:52:58.140Z",
+  "status": "PASS",
+  "source": "Real private HTTPS, automatic Tailscale Serve identity; isolated account session",
+  "connectedCheck": true,
+  "privateDisposablePlaylist": {
+    "http": 200,
+    "private": true,
+    "expectedOrder": true
+  },
+  "generatedAudioContinued": true,
+  "localRequestWithoutIdentity": 403,
+  "layouts": [
+    390,
+    728
+  ],
+  "serveConfigurationUnchanged": true,
+  "accountWrites": 0,
+  "longTermDurability": "NOT ESTABLISHED"
+}

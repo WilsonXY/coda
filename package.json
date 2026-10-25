@@ -18,6 +18,8 @@
     "test:live": "node tests/live-browser.mjs",
     "test:buffer": "node tests/buffer-browser.mjs",
     "test:account": "node tests/account-browser.mjs",
+    "test:session": "node tests/account-session-browser.mjs",
+    "test:oauth": "node tests/oauth-browser.mjs",
     "test:playlist": "node tests/playlist-test-browser.mjs",
     "test:library": "node tests/library-playback-browser.mjs",
     "probe:library": "node tests/library-upstream.mjs",

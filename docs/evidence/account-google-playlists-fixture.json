@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "source": "Synthetic Google API and Serve identity; prepared audio behind real player routes; no Google account used by fixtures",
+  "nodeTests": 36,
+  "pythonTests": 26,
+  "browserSuites": 9,
+  "ownerGateBeforeGoogle": true,
+  "automaticRenewalWithoutBrowserSession": true,
+  "boundedProjectionAndTwoPageOrder": true,
+  "officialReadsIndependentOfMusicComparison": true,
+  "sourceLabelAndPrivatePlaylistView": true,
+  "googleRowsReachPlayAndQueue": true,
+  "googleSelectionExportRedacted": true,
+  "layouts": [
+    390,
+    728
+  ],
+  "realGoogleControl": "Official owned inventory and expected private track order separately passed; see broader-result evidence",
+  "physicalPhone": "NOT RUN"
+}

@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-10-24T20:15:11.036Z",
+  "status": "PASS",
+  "source": "Real private HTTPS with automatic Serve identity; auth-start endpoint only, no Google authorization navigation",
+  "authStart": {
+    "http": 200,
+    "googleAuthorization": true,
+    "webCallback": true,
+    "readOnlyScope": true,
+    "pkce": true
+  },
+  "loopbackWithoutIdentity": 403,
+  "tokenFileUnchanged": true,
+  "headerFilesUnchanged": true,
+  "serveConfigurationUnchanged": true,
+  "generatedAudioContinued": true,
+  "googleConsent": "PENDING OWNER",
+  "realMusicOAuthCompatibility": "NOT RUN",
+  "accountWrites": 0
+}

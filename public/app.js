@@ -331,12 +331,60 @@ $('export').onclick = async () => {
 async function request(path, signal, options = {}) {
   const response = await fetch(path, { ...options, signal });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error ?? `HTTP ${response.status}`);
+  if (!response.ok) throw Object.assign(new Error(data.error ?? `HTTP ${response.status}`), { code: data.code });
   return data;
+}
+
+async function oauthAction(task) {
+  for (const id of ['oauth-connect', 'oauth-connect-music', 'oauth-probe']) $(id).disabled = true;
+  $('oauth-status').textContent = 'Checking OAuth…';
+  try { await task(); }
+  catch (error) { $('oauth-status').textContent = error.message; }
+  finally { for (const id of ['oauth-connect', 'oauth-connect-music', 'oauth-probe']) $(id).disabled = false; }
+}
+for (const [id, route] of [['oauth-connect', 'connect'], ['oauth-connect-music', 'connect-music']]) $(id).onclick = () => oauthAction(async () => {
+  const data = await request('/api/account/oauth/' + route, AbortSignal.timeout(15000), { method: 'POST' });
+  window.location.assign(data.authorizationUrl);
+});
+$('oauth-probe').onclick = () => oauthAction(async () => {
+  const data = await request('/api/account/oauth/probe', AbortSignal.timeout(65000), { method: 'POST' });
+  const passes = phase => phase.dataApiPrivatePlaylist && phase.privatePlaylist && phase.expectedOrder;
+  $('oauth-status').textContent = passes(data.before) && data.renewal && passes(data.after)
+    ? 'PASS: private playlist reads succeeded before and after token renewal. Use Load my playlists with Google for the OAuth playlist view.'
+    : `OAuth comparison: Google private playlist ${data.before.dataApiPrivatePlaylist ? 'YES' : 'NO'} → ${data.after.dataApiPrivatePlaylist ? 'YES' : 'NO'}; YouTube Music private playlist and expected order ${data.before.privatePlaylist && data.before.expectedOrder ? 'YES' : 'NO'} → ${data.after.privatePlaylist && data.after.expectedOrder ? 'YES' : 'NO'}; token renewal ${data.renewal ? 'YES' : 'NO'}. Direct Music compatibility is not fully established. Use Load my playlists with Google to try the official playlist view.`;
+});
+const oauthReturn = new URLSearchParams(location.search).get('oauth');
+if (oauthReturn) {
+  $('show-account').click(); history.replaceState(null, '', location.pathname);
+  $('oauth-status').textContent = oauthReturn === 'connected'
+    ? 'Authorization saved privately. Choose Load my playlists with Google to browse and play.'
+    : 'Authorization was not saved. Check the Google setup or start Connect Google again.';
 }
 
 let accountBusy = false;
 let playlistTestAttempted = false;
+async function accountRead(path) {
+  try {
+    const google = path.startsWith('/api/account/oauth/');
+    const data = await request(path, AbortSignal.timeout(google ? 50000 : 20000));
+    $('account-connection').textContent = `Connected with ${google ? 'Google OAuth' : 'saved Music session'} · last checked ${new Date().toLocaleTimeString()}.`;
+    $('account-recovery').hidden = true; $('account-recovery').open = false;
+    return data;
+  } catch (error) {
+    const states = {
+      ACCOUNT_REAUTH_REQUIRED: 'Reconnect needed. The saved YouTube Music session is no longer accepted.',
+      ACCOUNT_SETUP_REQUIRED: 'Account setup needs attention. Check the local auth file and its permissions.',
+      ACCOUNT_NOT_CONFIGURED: 'Account setup is not configured on this server.',
+      ACCOUNT_OWNER_REQUIRED: 'Use the owner’s private Tailscale link to check the connection.',
+      ACCOUNT_BUSY: 'An account request is already running. Check again shortly.',
+      ACCOUNT_OAUTH_UNAVAILABLE: 'Google connection unverified. Check Google authorization or try again shortly.',
+    };
+    $('account-connection').textContent = states[error.code] ?? 'Connection unverified. The server or YouTube Music may be unavailable; try checking again.';
+    $('account-recovery').hidden = !['ACCOUNT_REAUTH_REQUIRED', 'ACCOUNT_SETUP_REQUIRED'].includes(error.code);
+    $('account-recovery').open = false;
+    throw error;
+  }
+}
 function clearAccountView() {
   $('account-playlists').replaceChildren(); $('account-tracks').replaceChildren();
   $('account-playback-actions').replaceChildren();
@@ -395,16 +443,20 @@ $('account-test').onclick = () => {
     }
   }, 'Playlist test stopped.');
 };
-$('account-load').onclick = () => accountCheck(async () => {
+$('account-check').onclick = () => accountCheck(async () => {
+  await accountRead('/api/account/status');
+  $('account-status').textContent = 'Connection checked. You can load your playlists.';
+});
+function loadAccount(prefix) { return accountCheck(async () => {
   clearAccountView();
-  const data = await request('/api/account/playlists', AbortSignal.timeout(20000));
+  const data = await accountRead(prefix + '/playlists');
   $('account-playlists').replaceChildren(...data.items.map(item => {
     const li = document.createElement('li');
     const title = document.createElement('span'); title.textContent = item.title + ' '; li.append(title);
     if (item.id) {
       const button = document.createElement('button'); button.textContent = 'Open playlist'; button.disabled = accountBusy;
       button.onclick = () => accountCheck(async () => {
-        const playlist = await request(`/api/account/playlist?id=${encodeURIComponent(item.id)}`, AbortSignal.timeout(20000));
+        const playlist = await accountRead(`${prefix}/playlist?id=${encodeURIComponent(item.id)}`);
         $('account-playlist-title').textContent = playlist.title;
         $('account-playlist-status').textContent = `${playlist.privacy} · ${playlist.items.length} tracks shown` +
           (playlist.total === null ? ` (limit ${playlist.limit})` : ` of ${playlist.total}`);
@@ -433,9 +485,11 @@ $('account-load').onclick = () => accountCheck(async () => {
     } else li.append(document.createTextNode('Unavailable in this view.'));
     return li;
   }));
-  $('account-status').textContent = `${data.items.length} playlists shown (limit ${data.limit}).`;
+  $('account-status').textContent = `${data.items.length} ${prefix.endsWith('/oauth') ? 'owned ' : ''}playlists shown (limit ${data.limit}).`;
   log('account-library-read');
-});
+}); }
+$('account-load').onclick = () => loadAccount('/api/account');
+$('account-load-google').onclick = () => loadAccount('/api/account/oauth');
 
 async function networkCheck(task) {
   if (networkBusy) return;

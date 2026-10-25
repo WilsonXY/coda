@@ -5,6 +5,10 @@ import json
 import os
 import subprocess
 import sys
+import io
+from contextlib import redirect_stdout
+from unittest.mock import patch
+from types import SimpleNamespace
 
 
 class AuthenticatedClient:
@@ -36,6 +40,30 @@ class AccountReaderChecks(unittest.TestCase):
         self.assertEqual(set(result['items'][0]), {'id', 'title'})
         self.assertEqual(len(result['items'][0]['title']), 200)
         self.assertNotIn('must-not-return', str(result))
+
+    def test_status_returns_only_connected_after_verifying_identity(self):
+        self.assertEqual(self.reader.read_account(AuthenticatedClient(), {'operation': 'status'}), {'state': 'connected'})
+
+    def test_rejected_session_requires_explicit_upstream_logged_out_signal(self):
+        self.assertTrue(hasattr(self.reader, 'ReauthenticationRequired'), 'No typed session rejection exists')
+        class Client:
+            def get_account_info(self):
+                raise KeyError('synthetic-private-secret')
+
+            def _send_request(self, endpoint, body):
+                self.request = (endpoint, body)
+                return {'responseContext': {'serviceTrackingParams': [{'params': self.signals}]}}
+        client = Client(); client.signals = [{'key': 'logged_in', 'value': '0'}]
+        with self.assertRaises(self.reader.ReauthenticationRequired):
+            self.reader.read_account(client, {'operation': 'status'})
+        self.assertEqual(client.request, ('account/account_menu', {}))
+        for signals in [[], [{'key': 'logged_in', 'value': '1'}], [{'key': 'logged_in', 'value': '0'}, {'key': 'logged_in', 'value': '1'}]]:
+            client.signals = signals
+            with self.subTest(signals=signals), self.assertRaises(KeyError):
+                self.reader.read_account(client, {'operation': 'status'})
+        client.get_account_info = lambda: (_ for _ in ()).throw(TimeoutError('synthetic-private-secret'))
+        with self.assertRaises(TimeoutError):
+            self.reader.read_account(client, {'operation': 'status'})
 
     def test_playlist_read_projects_tracks_privacy_and_honest_completeness(self):
         class Client(AuthenticatedClient):
@@ -94,6 +122,26 @@ class AccountReaderChecks(unittest.TestCase):
                 raise AssertionError('Must verify the session before library access')
         with self.assertRaises(ValueError):
             self.reader.read_account(Client(), {'operation': 'library'})
+
+    def test_cli_uses_safe_codes_for_rejected_session_and_local_setup(self):
+        class Client:
+            def get_account_info(self):
+                raise KeyError('synthetic-private-secret')
+
+            def _send_request(self, *args):
+                return {'responseContext': {'serviceTrackingParams': [{'params': [{'key': 'logged_in', 'value': '0'}]}]}}
+        output = io.StringIO()
+        modules = {'music_probe': SimpleNamespace(validate_auth=lambda *args: Path('/fixture/private.json')),
+                   'ytmusicapi': SimpleNamespace(YTMusic=lambda *args, **kwargs: Client())}
+        with patch.dict(sys.modules, modules), patch.dict(os.environ, {'CODA_ACCOUNT_AUTH': '/fixture/private.json'}), patch('sys.stdin', io.StringIO('{"operation":"status"}')), redirect_stdout(output):
+            self.assertEqual(self.reader.main(), 1)
+        self.assertEqual(json.loads(output.getvalue()), {'ok': False, 'error': 'Account read failed.', 'code': 'ACCOUNT_REAUTH_REQUIRED'})
+        self.assertNotIn('synthetic-private-secret', output.getvalue())
+        output = io.StringIO()
+        modules['music_probe'] = SimpleNamespace(validate_auth=lambda *args: (_ for _ in ()).throw(PermissionError('synthetic-private-secret')))
+        with patch.dict(sys.modules, modules), patch.dict(os.environ, {'CODA_ACCOUNT_AUTH': '/nonexistent/coda-test-auth'}), patch('sys.stdin', io.StringIO('{"operation":"status"}')), redirect_stdout(output):
+            self.assertEqual(self.reader.main(), 1)
+        self.assertEqual(json.loads(output.getvalue())['code'], 'ACCOUNT_SETUP_REQUIRED')
 
 
 if __name__ == '__main__':

@@ -59,6 +59,15 @@ try{
  await page.locator('#account-tracks li').first().getByRole('button',{name:'Play',exact:true}).click();await page.waitForFunction(()=>document.querySelector('audio').currentTime>0.25);
  assert.equal(await page.locator('#account-tracks img').count(),0);
  await page.locator('#show-player').click();await page.setViewportSize({width:390,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Long track titles fit in the player and queue');
+ await page.route('**/api/account/oauth/playlists',route=>route.fulfill({json:{items:[{id:'PLgoogle123',title:'Google-owned fixture'}],limit:50,complete:true}}));
+ await page.route('**/api/account/oauth/playlist?*',route=>route.fulfill({json:{id:'PLgoogle123',title:'Google-owned fixture',privacy:'PRIVATE',total:2,limit:100,items:[{id:'aaaaaaaaaaa',title:'Google fixture A',artists:'Fixture channel'},{id:'bbbbbbbbbbb',title:'Google fixture B',artists:'Fixture channel'}]}}));
+ await page.reload();await page.locator('#show-account').click();await page.locator('#account-load-google').click();await page.getByRole('button',{name:'Open playlist',exact:true}).click();
+ await page.getByRole('button',{name:'Play playlist',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#now').textContent==='Google fixture A'&&document.querySelector('audio').currentTime>.25);
+ assert.ok((await page.locator('#account-connection').textContent()).includes('Google OAuth'));
+ await page.locator('#account-tracks li').nth(1).getByRole('button',{name:'Add to queue',exact:true}).click();
+ await page.locator('#show-player').click();assert.equal(await page.locator('#queue li').count(),3);
+ const googleDownload=page.waitForEvent('download');await page.locator('#export').click();await(await googleDownload).saveAs('artifacts/google-playback-export.json');
+ const googleExport=await readFile('artifacts/google-playback-export.json','utf8');for(const value of ['Google fixture A','Google fixture B','aaaaaaaaaaa','bbbbbbbbbbb'])assert.equal(googleExport.includes(value),false,'Google playlist playback is redacted too');
  fail=true;await page.reload();await page.locator('#show-account').click();await page.locator('#account-load').click();await page.getByRole('button',{name:'Open playlist',exact:true}).click();
  await page.locator('#account-tracks li').last().getByRole('button',{name:'Play',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#playback-status').textContent.includes('could not be played'));
  assert.equal((await page.locator('body').textContent()).includes('synthetic-private-secret'),false);

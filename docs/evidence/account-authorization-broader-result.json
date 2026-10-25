@@ -1,0 +1,82 @@
+{
+  "grant": {
+    "readOnlyGranted": false,
+    "musicScopeGranted": true,
+    "requestedMusic": true,
+    "permissions0600": true
+  },
+  "music": {
+    "accountWrites": 0,
+    "upstreamErrors": [
+      {
+        "http": 400,
+        "status": "INVALID_ARGUMENT",
+        "reasons": [],
+        "insufficientScope": false,
+        "unsupportedCredential": false,
+        "invalidCredential": false,
+        "serviceDisabled": false
+      },
+      {
+        "http": 400,
+        "status": "INVALID_ARGUMENT",
+        "reasons": [],
+        "insufficientScope": false,
+        "unsupportedCredential": false,
+        "invalidCredential": false,
+        "serviceDisabled": false
+      }
+    ],
+    "checks": {
+      "identity": {
+        "ok": false,
+        "errorType": "YTMusicServerError"
+      },
+      "playlist": {
+        "ok": false,
+        "errorType": "YTMusicServerError"
+      }
+    }
+  },
+  "nativeControl": {
+    "accountWrites": 0,
+    "control": "Native OAuth token handler, same saved Web-client token; no file writes or refresh",
+    "errors": [
+      {
+        "http": 400,
+        "messageClass": "Request contains an invalid argument.",
+        "reasonEnums": [
+          "badRequest"
+        ],
+        "detailTypes": []
+      }
+    ],
+    "errorType": "YTMusicServerError"
+  },
+  "requestTimeControl": {
+    "change": "Added the same X-Goog-Request-Time header used by native ytmusicapi OAuth",
+    "accountWrites": 0,
+    "identityRead": false,
+    "errorType": "YTMusicServerError"
+  },
+  "encodingControl": {
+    "change": "Removed gzip Content-Encoding declaration; request body is uncompressed JSON",
+    "accountWrites": 0,
+    "identityRead": false,
+    "errorType": "YTMusicServerError"
+  },
+  "officialPlaylistControl": {
+    "accountWrites": 0,
+    "scopeGranted": true,
+    "officialPlaylistItemsRead": true,
+    "expectedSongOrder": true,
+    "expectedPositions": true,
+    "officialOwnedPlaylistsRead": true,
+    "knownPrivatePlaylistListed": true,
+    "moreOwnedPlaylists": false
+  },
+  "status": "Music Web OAuth remains rejected; official OAuth playlist reads pass",
+  "ownerScreenshot": "Official private playlist YES to YES, Music NO to NO, token renewal YES after broader consent",
+  "causeOfMusic400": "UNCONFIRMED",
+  "accountWrites": 0
+}
