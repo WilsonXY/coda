@@ -35,7 +35,7 @@
 <p>Account reads and the disposable playlist experiment are in My library.</p>
 </section>
 <section id="account-panel" hidden><h2>My YouTube Music library</h2>
-<p>Use your private Tailscale link on an owner device. Browsing below is read-only.</p>
+<p>Use your private Tailscale link on an owner device. Browsing is read-only. Playlist edits stay in a draft until you choose Save to YouTube.</p>
 <button id="account-check">Check connection</button>
 <p id="account-connection" role="status">Connection has not been checked.</p>
 <details id="account-recovery" hidden><summary>Reconnect account</summary>
@@ -46,18 +46,27 @@
 <p>Connect Google, then test private playlist access and token renewal. The default button requests read-only access; the optional Music test explains its broader permission below. Your current library connection stays in place during this experiment. Connecting opens Google in this tab and stops any playing audio.</p>
 <button id="oauth-connect">Connect Google (read-only)</button>
 <details id="oauth-music-permission"><summary>Optional Music permission test</summary>
-<p>Music may reject the read-only permission. This option requests broader Google access: Manage your YouTube account. That permission allows account changes, although this experiment only reads playlists and renews tokens. Review Google's consent screen before deciding. Your current library connection stays in place.</p>
+<p>Music may reject the read-only permission. This option requests broader Google access: Manage your YouTube account. That permission allows account changes, and Coda uses it for playlist changes only when you explicitly save a draft. Review Google's consent screen before deciding. Your current library connection stays in place.</p>
 <button id="oauth-connect-music">Connect Google for Music (broader permission)</button>
 </details>
 <button id="oauth-probe">Test OAuth reads and renewal</button>
 <p id="oauth-status" role="status">Not tested. A private Google Web client configuration is required on the server.</p>
 <h3>Playlists you own · Google connection</h3>
 <p>Lists up to 50 playlists you own and 100 tracks per playlist. This view uses Google authorization and can play through Coda's existing player. Music-only collections and playlists saved from other people remain in the saved-session view.</p>
+<details><summary>Allow playlist saving</summary>
+<p>Saving requires Google's broader permission: Manage your YouTube account. Connect below only if you want to edit playlists; review Google's consent screen. Connecting stops playback and leaves this page.</p>
+<button id="oauth-connect-edit">Enable Google playlist editing</button></details>
 <button id="account-load-google">Load my playlists with Google</button>
 <button id="account-load">Load Music library (saved session)</button>
 <p id="account-status" role="status">Your library has not been loaded.</p><ol id="account-playlists"></ol>
 <h3 id="account-playlist-title">No playlist selected</h3>
-<p id="account-playlist-status" role="status"></p><div id="account-playback-actions"></div><ol id="account-tracks"></ol>
+<p id="account-playlist-status" role="status"></p><div id="account-playback-actions"></div>
+<div id="playlist-editor" hidden>
+<p id="edit-status" role="status"></p>
+<button id="account-edit">Edit playlist</button> <button id="edit-save" hidden>Save to YouTube</button> <button id="edit-discard" hidden>Discard draft</button> <button id="edit-reload">Reload playlist</button>
+<form id="edit-search" hidden><label>Find a song to add <input id="edit-query" required maxlength="120"></label><button>Find songs</button></form>
+<p id="edit-search-status" role="status"></p><ol id="edit-results"></ol>
+</div><ol id="account-tracks"></ol>
 <h3>One-time playlist management test</h3>
 <p>This changes only the existing private Coda test playlist: add a duplicate of its first song, move that exact copy to the front, then remove it. A successful test leaves the original two songs in order.</p>
 <button id="account-test">Run add / move / remove test once</button>

@@ -207,3 +207,7 @@ Library playback uses an owner-protected `/catalog/<video-id>.webm` route, valid
 Selecting library playback replaces the demo queue and releases its Blob URLs. Device exports redact library track titles/IDs and omit the loaded playlist; public fixed-sample diagnostics filter out other catalog IDs. These exports are still an explicit owner action. See [library playback results](docs/library-playback.md).
 
 `npm run test:library` uses synthetic account metadata and prepared audio behind the real HTTP player routes. `npm run probe:library` fetches a public song outside the original three samples and tests actual playback/seek with synthetic library metadata and simulated owner identity; it does not prove live account reading. Set CHROMIUM_PATH as needed. The probe has a two-minute overall deadline and makes real anonymous upstream requests.
+
+## Edit owned playlists
+
+In My library, use **Load my playlists with Google → Open playlist → Edit playlist**. Reorder or remove songs, find songs to add, then choose **Save to YouTube**. Changes remain a local draft until Save; discarding does not change YouTube. Editing requires the broader Google grant (explicitly available under Allow playlist saving), a fully loaded owned playlist of up to 100 available songs, and at most 10 API mutations per save. A conflict stops before writing; a failed save may be partial and requires inspection, with no automatic retry or rollback. See [editing and verification](docs/playlist-editing.md).

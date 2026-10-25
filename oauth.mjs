@@ -5,6 +5,7 @@ import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { ownerAuthorized } from './account.mjs';
+import { editable, snapshot, editPlan, readDraft } from './playlist-edit.mjs';
 
 const scope = 'https://www.googleapis.com/auth/youtube.readonly';
 const musicScope = 'https://www.googleapis.com/auth/youtube';
@@ -54,7 +55,9 @@ function runProbe(python, token) {
 export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
   clientFile = join(homedir(), '.config/coda/oauth-client.json'), tokenFile = join(homedir(), '.config/coda/oauth-web-test.json'),
   python = process.env.CODA_ACCOUNT_PYTHON, fetchImpl = fetch, probe = token => runProbe(python, token) } = {}) {
-  let pending = null, busy = false; // ponytail: one owner and one login attempt; persistent sessions only if multi-user support is added.
+  // ponytail: one owner, one login attempt and one edit ticket; opening another playlist replaces the previous ticket.
+  let pending = null, busy = false, edit = null;
+  let ownedIds = new Set();
   async function exchange(client, fields, previous = {}, requestedScope = previous.requested_scope ?? scope) {
     const response = await fetchImpl('https://oauth2.googleapis.com/token', { method: 'POST', redirect: 'error',
       signal: AbortSignal.timeout(10000), headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -80,6 +83,7 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
   async function playlists(url, token) {
     if (url.pathname.endsWith('/playlists')) {
       const data = await googleRead('playlists', { part: 'snippet', mine: 'true', maxResults: '50', fields: 'items(id,snippet/title),nextPageToken' }, token);
+      ownedIds = new Set(data.items.slice(0, 50).map(item => item.id));
       return { items: data.items.slice(0, 50).map(item => ({ id: typeof item.id === 'string' && playlistId.test(item.id) ? item.id : null,
         title: clip(item.snippet?.title, 'Untitled playlist') })), limit: 50, complete: !data.nextPageToken };
     }
@@ -89,10 +93,10 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
     const items = []; let next;
     for (let page = 0; page < 2; page++) {
       const tracks = await googleRead('playlistItems', { part: 'snippet,contentDetails', playlistId: id, maxResults: '50',
-        fields: 'items(contentDetails/videoId,snippet(title,videoOwnerChannelTitle)),nextPageToken', ...(next ? { pageToken: next } : {}) }, token);
+        fields: 'items(id,contentDetails/videoId,snippet(title,videoOwnerChannelTitle,position)),nextPageToken', ...(next ? { pageToken: next } : {}) }, token);
       for (const item of tracks.items.slice(0, 50)) {
         const video = item.contentDetails?.videoId;
-        items.push({ id: typeof video === 'string' && /^[A-Za-z0-9_-]{11}$/.test(video) ? video : null,
+        items.push({ itemId: typeof item.id === 'string' ? item.id : null, id: typeof video === 'string' && /^[A-Za-z0-9_-]{11}$/.test(video) ? video : null,
           title: clip(item.snippet?.title, 'Unavailable track'), artists: clip(item.snippet?.videoOwnerChannelTitle) });
       }
       next = tracks.nextPageToken; if (!next) break;
@@ -106,16 +110,18 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
     const headers = { 'Referrer-Policy': 'no-referrer' };
     const result = (status, body, extra = {}) => ({ status, body, headers: { ...headers, ...extra } });
     const callback = url.pathname === '/api/account/oauth/callback';
+    const saving = url.pathname === '/api/account/oauth/save';
     const reading = ['/api/account/oauth/playlists', '/api/account/oauth/playlist'].includes(url.pathname);
     // Google returns through a cross-site top-level GET; state + a Lax browser cookie bind that callback.
     const identity = owner && ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && req.headers['tailscale-user-login'] === owner;
     if (callback ? !identity : !ownerAuthorized(req, owner)) return result(403, { error: 'OAuth requires the owner’s private Tailscale link.' });
     if (callback || reading ? req.method !== 'GET' : req.method !== 'POST') return result(405, { error: 'Unsupported OAuth method.' });
     if (!callback && !reading && (req.headers.origin !== `https://${req.headers.host}`)) return result(403, { error: 'Start OAuth from the private HTTPS page.' });
-    if (!callback && !reading && (url.search || req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))) return result(400, { error: 'OAuth actions accept no parameters or body.' });
+    if (!callback && !reading && !saving && (url.search || req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))) return result(400, { error: 'OAuth actions accept no parameters or body.' });
     if (reading && (req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0') ||
         (url.pathname.endsWith('/playlists') ? Boolean(url.search) : url.searchParams.size !== 1 || !playlistId.test(url.searchParams.get('id') ?? '')))) return result(400, { error: 'Enter one supported playlist ID, or load owned playlists without parameters.' });
-    if (!reading && !['/api/account/oauth/connect', '/api/account/oauth/connect-music', '/api/account/oauth/probe', '/api/account/oauth/callback'].includes(url.pathname)) return result(404, { error: 'OAuth route not found.' });
+    if (saving && (url.search || req.headers['content-type'] !== 'application/json' || req.headers['content-encoding'] || req.headers['transfer-encoding'] || !/^\d+$/.test(req.headers['content-length'] ?? '') || Number(req.headers['content-length']) > 32768)) return result(400, { error: 'Send one JSON playlist draft of at most 32 KiB.' });
+    if (!reading && !saving && !['/api/account/oauth/connect', '/api/account/oauth/connect-music', '/api/account/oauth/connect-edit', '/api/account/oauth/probe', '/api/account/oauth/callback'].includes(url.pathname)) return result(404, { error: 'OAuth route not found.' });
     if (busy) return result(409, { error: 'An OAuth action is running. Wait for it to finish.' });
     const redirectUri = `https://${req.headers.host}/api/account/oauth/callback`;
     const cookie = 'Coda-OAuth-State';
@@ -129,7 +135,7 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
       try {
         if (url.searchParams.has('error') || !code[0] || code[0].length > 8192) throw new Error('Authorization not granted');
         const token = await exchange(attempt.client, { grant_type: 'authorization_code', code: code[0], redirect_uri: redirectUri, code_verifier: attempt.verifier }, {}, attempt.requestedScope);
-        await store(tokenFile, token);
+        await store(tokenFile, token); edit = null; ownedIds.clear();
         return result(303, {}, { ...clear, Location: '/?oauth=connected' });
       } catch { return result(303, {}, { ...clear, Location: '/?oauth=failed' }); }
       finally { busy = false; }
@@ -137,10 +143,10 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
     busy = true;
     try {
       const client = (await privateJson(clientFile)).web;
-      if (!client?.client_id || !client?.client_secret || (!reading && !client.redirect_uris?.includes(redirectUri))) throw new Error('Web client configuration required');
+      if (!client?.client_id || !client?.client_secret || (!reading && !saving && !client.redirect_uris?.includes(redirectUri))) throw new Error('Web client configuration required');
       if (clientFile === tokenFile) throw new Error('Separate files required');
-      if (['/api/account/oauth/connect', '/api/account/oauth/connect-music'].includes(url.pathname)) {
-        const requestedScope = url.pathname.endsWith('/connect-music') ? musicScope : scope;
+      if (['/api/account/oauth/connect', '/api/account/oauth/connect-music', '/api/account/oauth/connect-edit'].includes(url.pathname)) {
+        const requestedScope = url.pathname.endsWith('/connect') ? scope : musicScope;
         const state = randomBytes(32).toString('base64url'), verifier = randomBytes(32).toString('base64url');
         pending = { state, verifier, client, redirectUri, requestedScope, deadline: Date.now() + 600000 };
         const auth = new URL('https://accounts.google.com/o/oauth2/v2/auth');
@@ -149,7 +155,48 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
         return result(200, { authorizationUrl: auth.href }, { 'Set-Cookie': `${cookie}=${state}; Path=/api/account/oauth/callback; Max-Age=600; HttpOnly; Secure; SameSite=Lax` });
       }
       const token = await validToken(client, await privateJson(tokenFile));
-      if (reading) return result(200, await playlists(url, token));
+      if (reading) {
+        const data = await playlists(url, token);
+        if (url.pathname.endsWith('/playlist')) {
+          edit = null;
+          const canSave = token.scope?.split(' ').includes(musicScope);
+          const supported = ownedIds.has(data.id) && data.id.startsWith('PL') && data.complete && editable(data.items);
+          data.edit = { canSave: Boolean(canSave && supported), reason: !supported ? 'Editing requires a complete owned playlist of at most 100 available songs.' : !canSave ? 'Enable Google playlist editing to allow saving.' : '' };
+          if (data.edit.canSave) {
+            edit = { ticket: randomBytes(24).toString('base64url'), id: data.id, items: data.items, refreshToken: token.refresh_token, deadline: Date.now() + 600000 };
+            data.edit.ticket = edit.ticket;
+          }
+        }
+        return result(200, data);
+      }
+      if (saving) {
+        let draft, operations;
+        try { draft = await readDraft(req); }
+        catch { return result(400, { error: 'Invalid playlist draft.' }); }
+        if (!edit || Date.now() > edit.deadline || draft.id !== edit.id || !equal(draft.ticket, edit.ticket) || edit.refreshToken !== token.refresh_token)
+          return result(409, { code: 'ACCOUNT_EDIT_EXPIRED', error: 'This draft is expired or was already submitted. Reload the playlist before editing.' });
+        if (!token.scope?.split(' ').includes(musicScope)) return result(403, { code: 'ACCOUNT_EDIT_PERMISSION', error: 'Enable Google playlist editing before saving.' });
+        try { operations = editPlan(edit.items, draft.items); }
+        catch (error) { return result(400, { code: 'ACCOUNT_EDIT_INVALID', error: error.message }); }
+        const original = edit; edit = null; // Single-use before the first upstream request; no automatic write retries, including after a restart.
+        const current = await playlists(new URL('/api/account/oauth/playlist?id=' + original.id, url), token);
+        if (!current.complete || snapshot(current.items) !== snapshot(original.items)) return result(409, { code: 'ACCOUNT_EDIT_CONFLICT', error: 'The playlist changed on YouTube. Reload it before editing; no changes were sent.' });
+        try {
+          for (const operation of operations) {
+            const params = operation.method === 'DELETE' ? { id: operation.item.itemId } : { part: 'snippet', fields: 'id' };
+            const body = operation.method === 'DELETE' ? undefined : JSON.stringify({ ...(operation.method === 'PUT' ? { id: operation.item.itemId } : {}),
+              snippet: { playlistId: original.id, position: operation.position, resourceId: { kind: 'youtube#video', videoId: operation.item.id } } });
+            const response = await fetchImpl('https://www.googleapis.com/youtube/v3/playlistItems?' + new URLSearchParams(params), {
+              method: operation.method, redirect: 'error', signal: AbortSignal.timeout(10000),
+              headers: { Authorization: 'Bearer ' + token.access_token, 'Content-Type': 'application/json' }, ...(body ? { body } : {}),
+            });
+            if (!response.ok) throw new Error('Write unconfirmed');
+          }
+          const after = await playlists(new URL('/api/account/oauth/playlist?id=' + original.id, url), token);
+          if (!after.complete || after.items.length !== draft.items.length || after.items.some((item, i) => item.id !== draft.items[i].id || (draft.items[i].itemId !== null && item.itemId !== draft.items[i].itemId))) throw new Error('Readback mismatch');
+          return result(200, { saved: true, changes: operations.length });
+        } catch { return result(502, { code: 'ACCOUNT_SAVE_UNCONFIRMED', error: 'Save outcome is unconfirmed; some changes may have reached YouTube. Reload and inspect the playlist before making another edit. This draft cannot be retried.' }); }
+      }
       const before = await probe(token.access_token);
       // Exercise the same renewal branch without changing the stored expiry or waiting an hour.
       const renewed = await validToken(client, { ...token, expires_at: 0 });
