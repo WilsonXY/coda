@@ -37,6 +37,7 @@
 <section id="account-panel" hidden><h2>My YouTube Music library</h2>
 <p>Use your private Tailscale link on an owner device. Browsing is read-only. Playlist edits stay in a draft until you choose Save to YouTube.</p>
 <button id="account-check">Check connection</button>
+<p id="save-status" role="status"></p><progress id="save-progress" aria-label="Playlist save progress" hidden></progress> <button id="save-check" hidden>Check save status</button>
 <p id="account-connection" role="status">Connection has not been checked.</p>
 <details id="account-recovery" hidden><summary>Reconnect account</summary>
 <p>Refresh the saved YouTube Music session in the local terminal using your configured auth file. Keep headers and cookies there. Then choose Check connection here; no server restart is needed.</p>

@@ -57,7 +57,7 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
   python = process.env.CODA_ACCOUNT_PYTHON, fetchImpl = fetch, probe = token => runProbe(python, token) } = {}) {
   // ponytail: one owner, one login attempt and one edit ticket; opening another playlist replaces the previous ticket.
   let pending = null, busy = false, edit = null;
-  let ownedIds = new Set();
+  let ownedIds = new Set(), saveState = { state: 'idle' };
   async function exchange(client, fields, previous = {}, requestedScope = previous.requested_scope ?? scope) {
     const response = await fetchImpl('https://oauth2.googleapis.com/token', { method: 'POST', redirect: 'error',
       signal: AbortSignal.timeout(10000), headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -106,21 +106,61 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
     return { id, title: clip(info.snippet?.title, 'Untitled playlist'), privacy: ['private', 'public', 'unlisted'].includes(privacy) ? privacy.toUpperCase() : 'UNKNOWN',
       items, total, limit: 100, complete: !next && total !== null && total === items.length };
   }
+  async function runSave(original, draft, operations, client, token, job) {
+    let attempted = false;
+    try {
+      const current = await playlists(new URL('https://coda.invalid/api/account/oauth/playlist?id=' + original.id), token);
+      if (!current.complete || snapshot(current.items) !== snapshot(original.items)) {
+        Object.assign(job, { state: 'conflict', code: 'ACCOUNT_EDIT_CONFLICT', error: 'The playlist changed on YouTube. Reload it before editing; no changes were sent.' });
+        return;
+      }
+      job.phase = 'saving';
+      for (const operation of operations) {
+        token = await validToken(client, token);
+        const params = operation.method === 'DELETE' ? { id: operation.item.itemId } : { part: 'snippet', fields: 'id' };
+        const body = operation.method === 'DELETE' ? undefined : JSON.stringify({ ...(operation.method === 'PUT' ? { id: operation.item.itemId } : {}),
+          snippet: { playlistId: original.id, position: operation.position, resourceId: { kind: 'youtube#video', videoId: operation.item.id } } });
+        attempted = true;
+        const response = await fetchImpl('https://www.googleapis.com/youtube/v3/playlistItems?' + new URLSearchParams(params), {
+          method: operation.method, redirect: 'error', signal: AbortSignal.timeout(10000),
+          headers: { Authorization: 'Bearer ' + token.access_token, 'Content-Type': 'application/json' }, ...(body ? { body } : {}),
+        });
+        const acknowledged = response.ok;
+        if (acknowledged) job.completed++;
+        await response.body?.cancel();
+        if (!acknowledged) throw new Error('Write unconfirmed');
+      }
+      job.phase = 'verifying';
+      token = await validToken(client, token);
+      const after = await playlists(new URL('https://coda.invalid/api/account/oauth/playlist?id=' + original.id), token);
+      if (!after.complete || after.items.length !== draft.items.length || after.items.some((item, i) => item.id !== draft.items[i].id || (draft.items[i].itemId !== null && item.itemId !== draft.items[i].itemId))) throw new Error('Readback mismatch');
+
+      job.state = 'saved';
+    } catch {
+      Object.assign(job, attempted ? { state: 'unconfirmed', code: 'ACCOUNT_SAVE_UNCONFIRMED', error: 'Save outcome is unconfirmed; some changes may have reached YouTube. Reload and inspect the playlist before another edit. This draft cannot be retried.' }
+        : { state: 'unavailable', code: 'ACCOUNT_SAVE_UNAVAILABLE', error: 'Save stopped before any changes were sent. Reload the playlist before editing again.' });
+    } finally { busy = false; }
+  }
   return async (req, url) => {
     const headers = { 'Referrer-Policy': 'no-referrer' };
     const result = (status, body, extra = {}) => ({ status, body, headers: { ...headers, ...extra } });
     const callback = url.pathname === '/api/account/oauth/callback';
     const saving = url.pathname === '/api/account/oauth/save';
+    const saveStatus = url.pathname === '/api/account/oauth/save-status';
     const reading = ['/api/account/oauth/playlists', '/api/account/oauth/playlist'].includes(url.pathname);
     // Google returns through a cross-site top-level GET; state + a Lax browser cookie bind that callback.
     const identity = owner && ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && req.headers['tailscale-user-login'] === owner;
     if (callback ? !identity : !ownerAuthorized(req, owner)) return result(403, { error: 'OAuth requires the owner’s private Tailscale link.' });
-    if (callback || reading ? req.method !== 'GET' : req.method !== 'POST') return result(405, { error: 'Unsupported OAuth method.' });
-    if (!callback && !reading && (req.headers.origin !== `https://${req.headers.host}`)) return result(403, { error: 'Start OAuth from the private HTTPS page.' });
-    if (!callback && !reading && !saving && (url.search || req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))) return result(400, { error: 'OAuth actions accept no parameters or body.' });
+    if (callback || reading || saveStatus ? req.method !== 'GET' : req.method !== 'POST') return result(405, { error: 'Unsupported OAuth method.' });
+    if (!callback && !reading && !saveStatus && (req.headers.origin !== `https://${req.headers.host}`)) return result(403, { error: 'Start OAuth from the private HTTPS page.' });
+    if (!callback && !reading && !saveStatus && !saving && (url.search || req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))) return result(400, { error: 'OAuth actions accept no parameters or body.' });
     if (reading && (req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0') ||
         (url.pathname.endsWith('/playlists') ? Boolean(url.search) : url.searchParams.size !== 1 || !playlistId.test(url.searchParams.get('id') ?? '')))) return result(400, { error: 'Enter one supported playlist ID, or load owned playlists without parameters.' });
     if (saving && (url.search || req.headers['content-type'] !== 'application/json' || req.headers['content-encoding'] || req.headers['transfer-encoding'] || !/^\d+$/.test(req.headers['content-length'] ?? '') || Number(req.headers['content-length']) > 32768)) return result(400, { error: 'Send one JSON playlist draft of at most 32 KiB.' });
+    if (saveStatus) {
+      if (url.search || req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0')) return result(400, { error: 'Save status accepts no parameters or body.' });
+      return result(200, { ...saveState });
+    }
     if (!reading && !saving && !['/api/account/oauth/connect', '/api/account/oauth/connect-music', '/api/account/oauth/connect-edit', '/api/account/oauth/probe', '/api/account/oauth/callback'].includes(url.pathname)) return result(404, { error: 'OAuth route not found.' });
     if (busy) return result(409, { error: 'An OAuth action is running. Wait for it to finish.' });
     const redirectUri = `https://${req.headers.host}/api/account/oauth/callback`;
@@ -140,7 +180,7 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
       } catch { return result(303, {}, { ...clear, Location: '/?oauth=failed' }); }
       finally { busy = false; }
     }
-    busy = true;
+    busy = true; let handedOff = false;
     try {
       const client = (await privateJson(clientFile)).web;
       if (!client?.client_id || !client?.client_secret || (!reading && !saving && !client.redirect_uris?.includes(redirectUri))) throw new Error('Web client configuration required');
@@ -179,23 +219,10 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
         try { operations = editPlan(edit.items, draft.items); }
         catch (error) { return result(400, { code: 'ACCOUNT_EDIT_INVALID', error: error.message }); }
         const original = edit; edit = null; // Single-use before the first upstream request; no automatic write retries, including after a restart.
-        const current = await playlists(new URL('/api/account/oauth/playlist?id=' + original.id, url), token);
-        if (!current.complete || snapshot(current.items) !== snapshot(original.items)) return result(409, { code: 'ACCOUNT_EDIT_CONFLICT', error: 'The playlist changed on YouTube. Reload it before editing; no changes were sent.' });
-        try {
-          for (const operation of operations) {
-            const params = operation.method === 'DELETE' ? { id: operation.item.itemId } : { part: 'snippet', fields: 'id' };
-            const body = operation.method === 'DELETE' ? undefined : JSON.stringify({ ...(operation.method === 'PUT' ? { id: operation.item.itemId } : {}),
-              snippet: { playlistId: original.id, position: operation.position, resourceId: { kind: 'youtube#video', videoId: operation.item.id } } });
-            const response = await fetchImpl('https://www.googleapis.com/youtube/v3/playlistItems?' + new URLSearchParams(params), {
-              method: operation.method, redirect: 'error', signal: AbortSignal.timeout(10000),
-              headers: { Authorization: 'Bearer ' + token.access_token, 'Content-Type': 'application/json' }, ...(body ? { body } : {}),
-            });
-            if (!response.ok) throw new Error('Write unconfirmed');
-          }
-          const after = await playlists(new URL('/api/account/oauth/playlist?id=' + original.id, url), token);
-          if (!after.complete || after.items.length !== draft.items.length || after.items.some((item, i) => item.id !== draft.items[i].id || (draft.items[i].itemId !== null && item.itemId !== draft.items[i].itemId))) throw new Error('Readback mismatch');
-          return result(200, { saved: true, changes: operations.length });
-        } catch { return result(502, { code: 'ACCOUNT_SAVE_UNCONFIRMED', error: 'Save outcome is unconfirmed; some changes may have reached YouTube. Reload and inspect the playlist before making another edit. This draft cannot be retried.' }); }
+        saveState = { id: randomBytes(16).toString('hex'), state: 'running', phase: 'checking', completed: 0, total: operations.length };
+        handedOff = true;
+        void runSave(original, draft, operations, client, token, saveState);
+        return result(202, { ...saveState });
       }
       const before = await probe(token.access_token);
       // Exercise the same renewal branch without changing the stored expiry or waiting an hour.
@@ -205,6 +232,6 @@ export function createOAuthExperiment({ owner = process.env.CODA_ACCOUNT_OWNER,
     } catch { return reading
       ? result(503, { code: 'ACCOUNT_OAUTH_UNAVAILABLE', error: 'Google playlist read failed. Check Google authorization or upstream availability, then try again.' })
       : result(503, { error: 'OAuth check unavailable. Verify the private Web client JSON, redirect URI and saved authorization, then try again. No library connection was changed.' }); }
-    finally { busy = false; }
+    finally { if (!handedOff) busy = false; }
   };
 }

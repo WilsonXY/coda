@@ -11,6 +11,7 @@ const directory=await mkdtemp(join(tmpdir(),'coda-oauth-browser-'));
 const clientFile=join(directory,'client.json'),tokenFile=join(directory,'token.json');
 let calls=0;
 let entries=[{itemId:'entry-a',id:'aaaaaaaaaaa',title:'Google fixture A'},{itemId:'entry-b',id:'bbbbbbbbbbb',title:'Google fixture B'},{itemId:'entry-copy',id:'aaaaaaaaaaa',title:'Google fixture A (copy)'}],writes=0,failWrite=false;
+let releaseWrite;const writeGate=new Promise(resolve=>{releaseWrite=resolve;});
 const selectedScopes=[];
 let releaseProbe,enterProbe;
 const probePending=new Promise(resolve=>{releaseProbe=resolve;}),probeEntered=new Promise(resolve=>{enterProbe=resolve;});
@@ -19,7 +20,7 @@ const app=createServer({oauthOptions:{owner:'owner@example.test',clientFile,toke
    assert.equal(options.headers.Authorization,'Bearer fixture-access');
    const query=new URL(url);
    if(options.method!=='GET'){
-    writes++;
+    writes++;if(writes===2)await writeGate;
     if(failWrite)throw new Error('private-write-secret');
     if(options.method==='DELETE')entries=entries.filter(x=>x.itemId!==query.searchParams.get('id'));
     else {
@@ -115,9 +116,36 @@ try {
  assert.equal(testRequests,0);assert.equal(await page.locator('#edit-search').isVisible(),true);assert.equal(await page.locator('#account-test').isEnabled(),true);
  for(const width of [390,728]){await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.locator('#account-playlist-title').evaluate(e=>e.scrollIntoView());await page.screenshot({path:`artifacts/playlist-edit-draft-${width}.png`});}
  await page.getByRole('button',{name:'Save to YouTube',exact:true}).click();
- await page.waitForFunction(()=>document.querySelector('#edit-status').textContent.includes('Saved to YouTube'));
+ await page.waitForFunction(()=>document.querySelector('#save-status')?.textContent.includes('1 of 3'),null,{timeout:4000});
+ assert.equal(await page.locator('#edit-save').isDisabled(),true);
+ assert.ok((await page.locator('#edit-status').textContent()).includes('1 of 3'),'Progress stays visible beside Save');
+ for(const width of [390,728]){await page.setViewportSize({width,height:1000});await page.locator('#save-status').evaluate(e=>e.scrollIntoView());await page.screenshot({path:`artifacts/playlist-save-progress-${width}.png`});}
+ let dropStatus=true;await page.route('**/api/account/oauth/save-status',async route=>{if(dropStatus){dropStatus=false;await route.abort();}else await route.continue();});
+ await page.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('unavailable'),null,{timeout:4000});
+ assert.equal(writes,2);await page.locator('#save-check').click();
+ await page.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('1 of 3'),null,{timeout:4000});
+ await page.reload();await page.locator('#show-account').click();
+ await page.waitForFunction(()=>document.querySelector('#save-status')?.textContent.includes('1 of 3'),null,{timeout:4000});
+ assert.equal(writes,2,'Reloading monitors the existing save without starting writes again');
+ releaseWrite();await page.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('Saved to YouTube'),null,{timeout:4000});
+ await page.locator('#account-load-google').click();await page.getByRole('button',{name:'Open playlist',exact:true}).click();
  assert.deepEqual(entries.map(x=>x.id),['aaaaaaaaaaa','ccccccccccc','bbbbbbbbbbb']);assert.equal(entries[0].itemId,'entry-copy');
  for(const width of [390,728]){await page.setViewportSize({width,height:1000});await page.locator('#account-playlist-title').evaluate(e=>e.scrollIntoView());await page.screenshot({path:`artifacts/playlist-edit-saved-${width}.png`});}
+ await page.getByRole('button',{name:'Edit playlist',exact:true}).click();
+ await page.locator('#account-tracks li').last().getByRole('button',{name:'Move up',exact:true}).click();
+ await page.route('**/api/account/oauth/playlist?*',route=>route.fulfill({status:503,json:{code:'ACCOUNT_OAUTH_UNAVAILABLE',error:'Synthetic reload failure'}}));
+ await page.getByRole('button',{name:'Save to YouTube',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('#account-status').textContent.includes('view could not reload'),null,{timeout:4000});
+ assert.ok((await page.locator('#save-status').textContent()).includes('Saved to YouTube'),'A failed UI reload must retain the verified save result');
+ await page.unroute('**/api/account/oauth/playlist?*');await page.locator('#edit-reload').click();
+ const lastJob=await(await page.request.get(base+'/api/account/oauth/save-status')).json();
+ await page.getByRole('button',{name:'Edit playlist',exact:true}).click();await page.locator('#account-tracks li').first().getByRole('button',{name:'Remove from playlist',exact:true}).click();
+ await page.evaluate(id=>sessionStorage.setItem('coda-save',id),lastJob.id);
+ const recovered=page.waitForResponse(r=>r.url().endsWith('/save-status'));
+ await page.locator('#save-check').evaluate(button=>button.click());await recovered;
+ await page.waitForFunction(()=>!document.querySelector('#account-load-google').disabled);
+ assert.equal(await page.locator('#account-tracks li').count(),2,'Checking an older save cannot discard a newer unsaved draft');
+ await page.getByRole('button',{name:'Discard draft',exact:true}).click();
  const savedWrites=writes;
  await page.getByRole('button',{name:'Edit playlist',exact:true}).click();
  await page.locator('#account-tracks li').first().getByRole('button',{name:'Remove from playlist',exact:true}).click();
@@ -125,15 +153,20 @@ try {
  await page.getByRole('button',{name:'Edit playlist',exact:true}).click();await page.locator('#account-tracks li').last().getByRole('button',{name:'Move up',exact:true}).click();
  entries.reverse();
  await page.getByRole('button',{name:'Save to YouTube',exact:true}).click();
- await page.waitForFunction(()=>document.querySelector('#edit-status').textContent.includes('changed on YouTube'));
+ await page.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('changed on YouTube'));
  assert.equal(writes,savedWrites);assert.equal(await page.getByRole('button',{name:'Save to YouTube',exact:true}).isDisabled(),true);
  await page.getByRole('button',{name:'Reload playlist',exact:true}).click();
  await page.getByRole('button',{name:'Edit playlist',exact:true}).click();await page.locator('#account-tracks li').last().getByRole('button',{name:'Move up',exact:true}).click();
  failWrite=true;await page.getByRole('button',{name:'Save to YouTube',exact:true}).click();
- await page.waitForFunction(()=>document.querySelector('#edit-status').textContent.includes('unconfirmed'));
+ await page.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('unconfirmed'));
  assert.equal(await page.getByRole('button',{name:'Save to YouTube',exact:true}).isDisabled(),true);assert.equal(writes,savedWrites+1);
  assert.equal((await page.locator('body').textContent()).includes('private-write-secret'),false);
 
+ await page.evaluate(()=>sessionStorage.setItem('coda-save','lost-fixture-save'));
+ await page.route('**/api/account/oauth/save-status',route=>route.fulfill({json:{state:'idle'}}));
+ const beforeRecovery=writes;await page.reload();await page.locator('#show-account').click();
+ await page.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('previous save result is unavailable'),null,{timeout:4000});
+ assert.equal(writes,beforeRecovery,'Lost server state never resubmits a draft');
  assert.deepEqual(errors,[]);
  await writeFile('artifacts/oauth-browser-check.json',JSON.stringify({status:'PASS',source:'HTTPS fixture, simulated Google redirect/token exchange, synthetic scope-dependent read results',browserBoundCallback:true,explicitRenewalProbe:true,audioContinuesDuringProbe:true,partialComparisonNeverPasses:true,broaderScopeOnlyOnExplicitClick:true,permissionExplainedBeforeChoice:true,draftMakesNoWrites:true,duplicateAwareSave:true,discardMakesNoWrites:true,staleConflictStopsBeforeWrites:true,failedSaveCannotResubmit:true,layouts:[390,728],realGoogleAuthorization:'NOT RUN'},null,2)+'\n');
  console.log('PASS: HTTPS OAuth, draft search/add/remove/reorder/save, discard, conflict and uncertain failure; Google simulated.');

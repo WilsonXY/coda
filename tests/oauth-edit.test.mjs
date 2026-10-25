@@ -16,7 +16,8 @@ export async function editingFixture(t) {
   const u=new URL(url);assert.equal(u.origin,'https://www.googleapis.com');
   if(options.method!=='GET'){
    state.writes.push({method:options.method,body:options.body?JSON.parse(options.body):null});
-   if(state.fail)throw new Error('upstream-private-secret');
+   if(state.writes.length===state.holdAt)await state.wait;
+   if(state.fail || state.writes.length===state.failAt)throw new Error('upstream-private-secret');
    if(options.method==='DELETE')state.items=state.items.filter(x=>x.itemId!==u.searchParams.get('id'));
    else {
     const b=JSON.parse(options.body),s=b.snippet;
@@ -34,7 +35,9 @@ export async function editingFixture(t) {
  const headers={'Tailscale-User-Login':'owner@example.test',Origin:base.replace('http:','https:'),'Content-Type':'application/json'};
  const read=async()=>{await fetch(base+'/api/account/oauth/playlists',{headers});return(await fetch(base+'/api/account/oauth/playlist?id=PLfixture123',{headers})).json();};
  const save=(body,extra={})=>fetch(base+'/api/account/oauth/save',{method:'POST',headers:{...headers,...extra},body:JSON.stringify(body)});
- return {state,read,save,tokenFile,scope,headers,base};
+ const status=async()=> (await fetch(base+'/api/account/oauth/save-status',{headers})).json();
+ const wait=async()=>{for(let i=0;i<100;i++){const result=await status();if(result.state!=='running')return result;await new Promise(r=>setTimeout(r,5));}throw new Error('Fixture save did not settle');};
+ return {state,read,save,status,wait,tokenFile,scope,headers,base};
 }
 
 test('save applies a duplicate-aware draft and verifies the resulting playlist; its ticket cannot run twice',async t=>{
@@ -43,7 +46,7 @@ test('save applies a duplicate-aware draft and verifies the resulting playlist; 
  assert.equal(p.items[2].itemId,'entry-copy');
  const desired=[p.items[2],{itemId:null,id:'ccccccccccc'},p.items[1]].map(({itemId,id})=>({itemId,id}));
  const body={id:p.id,ticket:p.edit.ticket,items:desired};
- const response=await f.save(body);assert.equal(response.status,200);assert.equal((await response.json()).saved,true);
+ const response=await f.save(body);assert.equal(response.status,202);assert.equal((await f.wait()).state,'saved');
  assert.deepEqual(f.state.items.map(x=>x.id),desired.map(x=>x.id));assert.equal(f.state.items[0].itemId,'entry-copy');
  const count=f.state.writes.length;assert.ok(count>0);
  assert.equal((await f.save(body)).status,409);assert.equal(f.state.writes.length,count,'Consumed ticket cannot repeat writes');
@@ -53,13 +56,13 @@ test('stale drafts and malformed edits cannot write, and failed saves cannot be 
  const f=await editingFixture(t);
  let p=await f.read(),body={id:p.id,ticket:p.edit.ticket,items:p.items.map(({itemId,id})=>({itemId,id}))};
  f.state.items.reverse();
- let response=await f.save(body);assert.equal(response.status,409);assert.equal((await response.json()).code,'ACCOUNT_EDIT_CONFLICT');assert.equal(f.state.writes.length,0);
+ let response=await f.save(body);assert.equal(response.status,202);assert.equal((await f.wait()).code,'ACCOUNT_EDIT_CONFLICT');assert.equal(f.state.writes.length,0);
  p=await f.read();body={...body,ticket:p.edit.ticket};
  for(const items of [[{itemId:'entry-a',id:'ccccccccccc'}],[{itemId:null,id:12345678901}],[p.items[0],p.items[0]],Array.from({length:101},()=>({itemId:null,id:'aaaaaaaaaaa'}))])assert.equal((await f.save({...body,items})).status,400);
  assert.equal(f.state.writes.length,0);
  f.state.fail=true;
  body.items=[{itemId:null,id:'ccccccccccc'},...p.items.map(({itemId,id})=>({itemId,id}))];
- response=await f.save(body);assert.equal(response.status,502);assert.equal((await response.text()).includes('upstream-private-secret'),false);
+ response=await f.save(body);assert.equal(response.status,202);const stopped=await f.wait();assert.equal(stopped.state,'unconfirmed');assert.equal(JSON.stringify(stopped).includes('upstream-private-secret'),false);
  assert.equal(f.state.writes.length,1);assert.equal((await f.save(body)).status,409);assert.equal(f.state.writes.length,1);
 });
 
@@ -93,4 +96,30 @@ test('moving a song from either end to the other uses a single Google update',as
  for(const desired of [[...original.slice(1),original[0]],[original.at(-1),...original.slice(0,-1)]]) {
   const plan=editPlan(original,desired);assert.equal(plan.length,1);assert.equal(plan[0].method,'PUT');
  }
+});
+
+
+test('one accepted save handles more than ten writes and exposes progress without replay',async t=>{
+ const f=await editingFixture(t);f.state.items=[];
+ const p=await f.read();let release;f.state.wait=new Promise(resolve=>{release=resolve;});f.state.holdAt=2;t.after(()=>release());
+ const desired=Array.from({length:12},()=>({itemId:null,id:'aaaaaaaaaaa'}));
+ const response=await f.save({id:p.id,ticket:p.edit.ticket,items:desired});assert.equal(response.status,202);
+ const accepted=await response.json();assert.equal(accepted.state,'running');
+ for(let i=0;i<100 && f.state.writes.length<2;i++)await new Promise(r=>setTimeout(r,5));
+ const progress=await f.status();assert.equal(progress.state,'running');assert.equal(progress.completed,1);assert.equal(progress.total,12);assert.equal(progress.id,accepted.id);
+ assert.equal((await f.save({id:p.id,ticket:p.edit.ticket,items:desired})).status,409);
+ assert.equal((await fetch(f.base+'/api/account/oauth/save-status')).status,403);
+ release();let final;
+ for(let i=0;i<100;i++){final=await f.status();if(final.state!=='running')break;await new Promise(r=>setTimeout(r,5));}
+ assert.equal(final.state,'saved');assert.equal(final.completed,12);assert.equal(f.state.items.length,12);assert.equal(f.state.writes.length,12);
+ for(const value of ['aaaaaaaaaaa','fixture','Bearer'])assert.equal(JSON.stringify(final).includes(value),false);
+});
+
+
+test('a partial larger save reports acknowledged writes and stops at the first uncertain operation',async t=>{
+ const f=await editingFixture(t);f.state.items=[];const p=await f.read();f.state.failAt=4;
+ const response=await f.save({id:p.id,ticket:p.edit.ticket,items:Array.from({length:12},()=>({itemId:null,id:'aaaaaaaaaaa'}))});
+ assert.equal(response.status,202);const result=await f.wait();
+ assert.equal(result.state,'unconfirmed');assert.equal(result.completed,3);assert.equal(result.total,12);assert.equal(f.state.writes.length,4);assert.equal(f.state.items.length,3);
+ assert.equal((await f.save({id:p.id,ticket:p.edit.ticket,items:[]})).status,409);assert.equal(f.state.writes.length,4);
 });

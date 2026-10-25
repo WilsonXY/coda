@@ -31,8 +31,6 @@ export function editPlan(original, desired) {
   }
   const forward = moves(), backward = desired.every(item => item.itemId !== null) ? moves(true) : forward;
   operations.push(...(backward.length < forward.length ? backward : forward));
-  // ponytail: a small save keeps request time and Google write quota bounded; split larger edits into separate saves.
-  if (operations.length > 10) throw new Error('Save at most 10 changes at a time. Make a smaller edit.');
   return operations;
 }
 

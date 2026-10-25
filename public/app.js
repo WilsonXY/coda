@@ -526,7 +526,7 @@ function renderLibraryPlaylist() {
     return row;
   }));
   $('playlist-editor').hidden = !playlist.prefix.endsWith('/oauth');
-  $('edit-status').textContent = draftItems ? `Unsaved draft: ${items.length} songs. Save sends these edits to YouTube; playback queue changes separately.` : playlist.edit?.reason || 'Edit songs here, then save to YouTube. Up to 10 changes per save.';
+  $('edit-status').textContent = draftItems ? `Unsaved draft: ${items.length} songs. Save sends these edits to YouTube; playback queue changes separately.` : playlist.edit?.reason || 'Edit songs here, then save to YouTube.';
   updateEditButtons();
 }
 $('account-edit').onclick = () => {
@@ -542,22 +542,71 @@ async function reloadLibraryPlaylist() {
   $('edit-results').replaceChildren(); $('edit-search-status').textContent = ''; renderLibraryPlaylist();
 }
 $('edit-reload').onclick = () => { if (discardBeforeNavigation()) return accountCheck(reloadLibraryPlaylist); };
+let monitoringSave = false;
+function showSaveStatus(message) {
+  $('save-status').textContent = message;
+  if (draftItems && submittedDraft) $('edit-status').textContent = message;
+}
+function rememberedSave() { try { return sessionStorage.getItem('coda-save'); } catch { return null; } }
+function rememberSave(id) { try { if (id) sessionStorage.setItem('coda-save', id); else sessionStorage.removeItem('coda-save'); } catch {} }
+function saveBusy(value) {
+  accountBusy = value; $('account-panel').querySelectorAll('button').forEach(button => { button.disabled = value; });
+  $('account-test').disabled = value || playlistTestAttempted; $('save-check').disabled = monitoringSave; updateEditButtons();
+}
+async function monitorSave(id) {
+  if (monitoringSave) return;
+  monitoringSave = true; rememberSave(id); saveBusy(true); $('save-check').hidden = false;
+  try {
+    while (true) {
+      const job = await request('/api/account/oauth/save-status', AbortSignal.timeout(10000));
+      if (job.id !== id) throw new Error('Status lost');
+      $('save-progress').hidden = false; $('save-progress').max = Math.max(1, job.total); $('save-progress').value = job.completed;
+      const count = `${job.completed} of ${job.total}`;
+      if (job.state === 'running') {
+        showSaveStatus(job.phase === 'checking' ? `Checking the playlist before saving ${job.total} changes…`
+          : job.phase === 'verifying' ? `Saved ${count} changes. Checking the final playlist…` : `Saving: ${count} changes confirmed.`);
+        await new Promise(resolve => setTimeout(resolve, 500)); continue;
+      }
+      rememberSave(null); $('save-check').hidden = true;
+      showSaveStatus(job.state === 'saved' ? `Saved to YouTube: ${count} changes confirmed and final order verified.`
+        : `${job.error} ${count} changes confirmed; inspect the current playlist before editing.`);
+      if (job.state === 'saved' && libraryPlaylist && submittedDraft) await reloadLibraryPlaylist().catch(() => {
+        $('account-status').textContent = 'Saved to YouTube, but the view could not reload. Try Reload playlist.';
+      });
+      return job;
+    }
+  } catch {
+    showSaveStatus('Save status is unavailable. The server may still be saving. Use Check save status; reload and inspect the playlist before another edit. Do not submit the same draft again.');
+  } finally { monitoringSave = false; saveBusy(false); }
+}
+async function recoverSave() {
+  if (monitoringSave || accountBusy) return;
+  try {
+    const job = await request('/api/account/oauth/save-status', AbortSignal.timeout(10000));
+    const remembered = rememberedSave();
+    if (job.state === 'running' || (remembered && job.id === remembered)) return monitorSave(job.id);
+    if (remembered) {
+      showSaveStatus('The previous save result is unavailable, possibly after a server restart. Reload and inspect your playlist before another edit.');
+      $('save-check').hidden = false;
+    }
+  } catch {
+    if (rememberedSave()) { showSaveStatus('The previous save result is unavailable. Check again when connected, then inspect the playlist.'); $('save-check').hidden = false; }
+  }
+}
+$('save-check').onclick = recoverSave;
 $('edit-save').onclick = async () => {
   if (accountBusy || !draftItems || !draftDirty || submittedDraft) return;
-  accountBusy = true; submittedDraft = true;
-  $('account-panel').querySelectorAll('button').forEach(button => { button.disabled = true; }); updateEditButtons();
-  $('edit-status').textContent = 'Saving to YouTube… Keep this page open. Writes are not retried.';
+  submittedDraft = true; rememberSave('pending'); saveBusy(true);
+  showSaveStatus('Starting save… Checking status never retries changes.');
   try {
-    await request('/api/account/oauth/save', AbortSignal.timeout(180000), { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const job = await request('/api/account/oauth/save', AbortSignal.timeout(20000), { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: libraryPlaylist.id, ticket: libraryPlaylist.edit.ticket, items: draftItems.map(({ itemId, id }) => ({ itemId, id })) }) });
-    await reloadLibraryPlaylist(); $('edit-status').textContent = 'Saved to YouTube. The song order was read back and verified.';
+    await monitorSave(job.id);
   } catch (error) {
-    if (error.code === 'ACCOUNT_EDIT_INVALID') submittedDraft = false;
-    $('edit-status').textContent = error.code ? error.message : 'Save outcome is unconfirmed. Reload and inspect the playlist before another edit; some changes may have reached YouTube.';
-  } finally {
-    accountBusy = false; $('account-panel').querySelectorAll('button').forEach(button => { button.disabled = false; });
-    $('account-test').disabled = playlistTestAttempted; updateEditButtons();
-  }
+    if (error.code === 'ACCOUNT_EDIT_INVALID') { submittedDraft = false; rememberSave(null); }
+    showSaveStatus(error.code ? error.message : 'Save outcome is unconfirmed. Check save status and inspect the playlist before another edit; the server may still be saving.');
+    $('save-check').hidden = error.code === 'ACCOUNT_EDIT_INVALID';
+  } finally { saveBusy(false); }
 };
 $('edit-search').onsubmit = async event => {
   event.preventDefault();
@@ -628,3 +677,5 @@ $('playlist').onsubmit = event => {
   });
 };
 reset();
+
+void recoverSave();
