@@ -162,11 +162,36 @@ try {
  assert.equal(await page.getByRole('button',{name:'Save to YouTube',exact:true}).isDisabled(),true);assert.equal(writes,savedWrites+1);
  assert.equal((await page.locator('body').textContent()).includes('private-write-secret'),false);
 
+ await page.evaluate(()=>sessionStorage.setItem('coda-save','remembered-save-A'));
+ let foreignChecks=0;await page.route('**/api/account/oauth/save-status',route=>route.fulfill({json:{id:'other-save-B',state:++foreignChecks===1?'running':'saved',phase:'saving',completed:1,total:1}}));
+ await page.locator('#save-check').evaluate(button=>button.click());
+ await page.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('previous save result is unavailable')||document.querySelector('#save-status').textContent.includes('Saved to YouTube'),null,{timeout:4000});
+ assert.equal(await page.evaluate(()=>sessionStorage.getItem('coda-save')),'remembered-save-A','Recovery must retain the original ID when another tab has a different save');
+ assert.ok((await page.locator('#save-status').textContent()).includes('previous save result is unavailable'));
  await page.evaluate(()=>sessionStorage.setItem('coda-save','lost-fixture-save'));
  await page.route('**/api/account/oauth/save-status',route=>route.fulfill({json:{state:'idle'}}));
  const beforeRecovery=writes;await page.reload();await page.locator('#show-account').click();
  await page.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('previous save result is unavailable'),null,{timeout:4000});
  assert.equal(writes,beforeRecovery,'Lost server state never resubmits a draft');
+ const discoveryPage=await context.newPage();let discoveryChecks=0;
+ await discoveryPage.route('**/api/account/oauth/save-status',route=>route.fulfill({json:{id:'discovered-save',state:++discoveryChecks===1?'running':'saved',phase:'saving',completed:1,total:1}}));
+ await discoveryPage.goto(base);await discoveryPage.locator('#show-account').click();
+ await discoveryPage.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('Saved to YouTube'));
+ assert.ok(discoveryChecks>=2,'A fresh tab can still discover and monitor an active server save');await discoveryPage.close();
+ const storagePage=await context.newPage();await storagePage.goto(base);await storagePage.locator('#show-account').click();
+ await storagePage.locator('#account-load-google').click();await storagePage.getByRole('button',{name:'Open playlist',exact:true}).click();
+ await storagePage.getByRole('button',{name:'Edit playlist',exact:true}).click();await storagePage.locator('#account-tracks li').first().getByRole('button',{name:'Remove from playlist',exact:true}).click();
+ await storagePage.evaluate(()=>{Storage.prototype.setItem=()=>{throw new Error('Storage unavailable');};});
+ await storagePage.route('**/api/account/oauth/save',route=>route.fulfill({status:202,json:{id:'accepted-save-A',state:'running'}}));
+ let storageChecks=0;await storagePage.route('**/api/account/oauth/save-status',async route=>{
+  storageChecks++;if(storageChecks===1)await route.abort();else await route.fulfill({json:{id:'other-save-B',state:storageChecks===2?'running':'saved',phase:'saving',completed:1,total:1}});
+ });
+ await storagePage.getByRole('button',{name:'Save to YouTube',exact:true}).click();
+ await storagePage.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('Save status is unavailable'));
+ await storagePage.locator('#save-check').click();
+ await storagePage.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('previous save result is unavailable')||document.querySelector('#save-status').textContent.includes('Saved to YouTube'));
+ assert.ok((await storagePage.locator('#save-status').textContent()).includes('previous save result is unavailable'),'Accepted save identity must survive storage failure in the same tab');
+ await storagePage.close();
  assert.deepEqual(errors,[]);
  await writeFile('artifacts/oauth-browser-check.json',JSON.stringify({status:'PASS',source:'HTTPS fixture, simulated Google redirect/token exchange, synthetic scope-dependent read results',browserBoundCallback:true,explicitRenewalProbe:true,audioContinuesDuringProbe:true,partialComparisonNeverPasses:true,broaderScopeOnlyOnExplicitClick:true,permissionExplainedBeforeChoice:true,draftMakesNoWrites:true,duplicateAwareSave:true,discardMakesNoWrites:true,staleConflictStopsBeforeWrites:true,failedSaveCannotResubmit:true,layouts:[390,728],realGoogleAuthorization:'NOT RUN'},null,2)+'\n');
  console.log('PASS: HTTPS OAuth, draft search/add/remove/reorder/save, discard, conflict and uncertain failure; Google simulated.');

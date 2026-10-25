@@ -542,13 +542,13 @@ async function reloadLibraryPlaylist() {
   $('edit-results').replaceChildren(); $('edit-search-status').textContent = ''; renderLibraryPlaylist();
 }
 $('edit-reload').onclick = () => { if (discardBeforeNavigation()) return accountCheck(reloadLibraryPlaylist); };
-let monitoringSave = false;
+let monitoringSave = false, knownSaveId = null;
 function showSaveStatus(message) {
   $('save-status').textContent = message;
   if (draftItems && submittedDraft) $('edit-status').textContent = message;
 }
-function rememberedSave() { try { return sessionStorage.getItem('coda-save'); } catch { return null; } }
-function rememberSave(id) { try { if (id) sessionStorage.setItem('coda-save', id); else sessionStorage.removeItem('coda-save'); } catch {} }
+function rememberedSave() { try { return knownSaveId ?? sessionStorage.getItem('coda-save'); } catch { return knownSaveId; } }
+function rememberSave(id) { knownSaveId = id; try { if (id) sessionStorage.setItem('coda-save', id); else sessionStorage.removeItem('coda-save'); } catch {} }
 function saveBusy(value) {
   accountBusy = value; $('account-panel').querySelectorAll('button').forEach(button => { button.disabled = value; });
   $('account-test').disabled = value || playlistTestAttempted; $('save-check').disabled = monitoringSave; updateEditButtons();
@@ -584,6 +584,11 @@ async function recoverSave() {
   try {
     const job = await request('/api/account/oauth/save-status', AbortSignal.timeout(10000));
     const remembered = rememberedSave();
+    if (remembered && job.id !== remembered) {
+      showSaveStatus('The previous save result is unavailable or belongs to a different server save. Reload and inspect your playlist before another edit.');
+      $('save-check').hidden = false;
+      return;
+    }
     if (job.state === 'running' || (remembered && job.id === remembered)) return monitorSave(job.id);
     if (remembered) {
       showSaveStatus('The previous save result is unavailable, possibly after a server restart. Reload and inspect your playlist before another edit.');
