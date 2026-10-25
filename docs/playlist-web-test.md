@@ -26,7 +26,6 @@ A real read-only preflight confirms that the existing disposable playlist meets 
 
 Actual reviewer gpt-6-astra/high was confirmed by the parent in rollout-2026-10-25T01-16-43-01a16eea-2e0d-7e30-ad13-1061b044d33e.jsonl, turn-context line 10, with no fallback. Parent/reviewer HEAD, clean status and origin refs matched before/after; the review worktree/branch were removed. Fresh Astra round 2 returned PASS, resolving the P3 finding with no new security, logic, reporting or complexity findings. Parent confirmed actual gpt-6-astra/high in rollout-2026-10-25T01-21-01-01a16eee-1eea-7803-badd-9a5c3095e6ad.jsonl, turn-context line 10; no fallback. Parent/reviewer HEAD, clean status and origin refs matched again; the clean review worktree/branch were removed. Round 2 independently passed 22 Python tests and synthetic account-gate/wrong-duplicate/sync-failure checks; its Node server tests could not start because that worktree lacked youtubei.js, and it did not rerun browsers. Parent Node/browser results and the first reviewer's full checks remain separate evidence.
 
-
 ## Earlier private preview check and session failure
 
 After review/push, the private service was briefly configured for the one-time experiment. Invalid real HTTPS requests were rejected: GET405, POST without Origin403, cross-site403, target override400, request body400, other write path405. Serve/Funnel configuration stayed unchanged. No valid mutation request was made and no journal was created.
@@ -34,7 +33,6 @@ After review/push, the private service was briefly configured for the one-time e
 At that earlier preview check, the account read failed again with502 and the fixed error. A direct read-only account-menu response includes logged_in=0, lacks the active account header, and both identity/private-playlist parsers raise KeyError. Browser auth format and official Origin are correct. The owner reports staying signed in without switching accounts. This establishes rejection of the copied server session now; it does not establish the invalidation mechanism or a causal connection to the service restart. Earlier successful reads/owner confirmation and the earlier passing read-only preflight remain recorded.
 
 Write enablement was removed again from the private environment so this invalid session cannot consume the one-time test. Real Chromium over private HTTPS confirms navigation starts no writes and clicking the disabled backend operation receives503, leaves the journal absent, disables the page button and fits390/728. This is a deployed rejection-path check only. At that point real web-write acceptance was BLOCKED pending a usable local session, followed by explicit enablement and the owner's one-click/official-site check. No account mutations occurred. GitHub reports no CI checks for this draft branch; parent tests and independent review are the available checks.
-
 
 ## Owner-run website cycle passed
 

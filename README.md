@@ -160,13 +160,11 @@ Open the private page. Fill in device/OS/browser version. Play the tone queue an
 
 The web page provides no PWA installation/offline app, public media proxy, or Premium account behavior. The optional live server below handles anonymous audio retrieval for the fixed samples and owner-only library playback. It can optionally play the three locally prepared complete files described below. The separate sample probe demonstrates limited SABR URL resolution and compressed-audio decoding.
 
-
 ## Android next-track stall comparison
 
 The original phone export showed three long waits while the next tone was loading. The page now offers **Load all three tones before playing** before the first Play. Wait for **Ready**, then play and lock the phone under the same battery/network conditions for at least five minutes. Export immediately on returning. Reload to return to the original network mode; export first because reloading clears observations. This mode loads only the three generated test files into memory and does not promise reliable background playback or offline YouTube access.
 
 Version 2 exports label the chosen delivery mode and whether the last-300-event history was truncated. Button and media-key actions are logged where exposed, without attempting to guess every OS interruption reason. The browser test additionally disables networking after preparation and verifies three real track transitions; a simulated partial load failure keeps the original network mode usable.
-
 
 ## Private prepared-music mode
 
@@ -194,7 +192,6 @@ CODA_LONG_PLAY=1 npm run test:music
 
 The optional longer check takes about six minutes. On phone Chrome, reload the private page, select music, wait for Ready, press Play, then lock for ten minutes and export immediately after returning. Note silence, missing notification controls or any need to reopen the page. Ten minutes crosses the first natural transition; all three natural transitions take about sixteen minutes. Keep other checklist items NOT RUN unless you tested them. Prepared-file success does not establish live-stream renewal, Premium behavior or authenticated playlist writes.
 
-
 ## Optional live-delivery experiment
 
 With the prepared manifest configured for fixed track names and development dependencies/Chromium installed:
@@ -214,9 +211,7 @@ npm run probe:live  # fresh upstream requests, playback-before-completion, seeks
 
 Both commands need `CODA_MUSIC_DIR` and Chromium; the live probe has a three-minute overall deadline. On phone Chrome, use a fresh live service run, choose the live mode and lock for ten minutes while playing from the first track. Export immediately and report gaps/controls/recovery. This targets cold next-track fetching while hidden; prepared-music phone results do not establish this behavior. No account or Premium session is connected.
 
-
 The first physical Android live-mode run failed: next songs stalled until the owner reopened the phone, despite complete server captures. See [the recorded failure](docs/experiment-results.md#android-live-mode-background-transitions-failed-run). Live exports now include the last twenty HTTP request timing records per track plus a truncation flag. Arrival/first-write/finish/close and drain-wait counts help locate the boundary; response finish does not prove phone receipt. No raw URLs, headers or client addresses are recorded. This adds diagnostics without changing playback. For the focused rerun, select live mode in a fresh server session, play only the first song and lock for seven minutes without skipping, then return/export immediately. Keep the failed result separate from later comparisons.
-
 
 ## Next-song browser-buffer experiment
 
@@ -230,11 +225,9 @@ Run `npm run test:buffer` with the same `CODA_MUSIC_DIR` and `CHROMIUM_PATH` use
 
 Focused phone test (supersedes the longer immediate rerun above): leave Battery Saver **on**, remain unplugged, refresh Chrome, choose live music and enable next-song buffering. Play the first song only and wait for the next-song-ready message. Seek to about thirty seconds before its end, then lock for ninety seconds. Return and export immediately; note the actual power settings, whether the next song was audible and whether waking was required. No need to visit other songs beforehand. A short pass does not prove prolonged inactivity reliability; reserve a longer confirmation for after this check succeeds.
 
-
 ## One-time website playlist write test
 
 The optional button in My library tests add/move/remove only on the already created disposable Coda playlist. Enable it with CODA_ACCOUNT_TEST_JOURNAL pointing to a new file in the private configuration directory outside this checkout. It runs once on an explicit click and leaves the original two songs on successful readback. A timeout or failed guard may leave a partial change; the retained journal blocks repeats, with no automatic retry or rollback. See [setup, exact scope and the short owner check](docs/playlist-web-test.md). Run `npm run test:playlist` for HTTPS browser fixtures (Chromium and the system `openssl` command required); this makes no real account writes.
-
 
 ## Playing library songs
 

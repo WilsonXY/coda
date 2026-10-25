@@ -26,13 +26,11 @@ Astra round 1 found one P2 blocking privacy-label bug: ytmusicapi 1.12.3 infers 
 
 Actual reviewer gpt-6-astra, high effort, confirmed by the parent in the reviewer's own session log rollout-2026-10-25T00-14-39-01a16eb1-5c10-7333-b3f7-78bc2bbc3bc9.jsonl, turn-context line 10; no fallback. Parent/reviewer HEAD and clean status, and origin refs, matched before/after. The review worktree/branch were removed. Fresh Astra round 2 returned PASS: both findings resolved, with no new blocking findings or complexity concerns. The parent confirmed actual gpt-6-astra/high from rollout-2026-10-25T00-18-37-01a16eb4-fc62-7633-aa50-dd94cfbc771b.jsonl, turn-context line 10; no fallback. Parent/reviewer HEAD and clean status, and origin refs, again matched. Its clean worktree/branch were removed.
 
-
 ## Private preview smoke
 
 After the reviewed branch was pushed, the owned experiment service was configured using a private mode-0600 environment file outside Git and restarted. Existing Tailscale Serve/Funnel routes stayed byte-equivalent as parsed JSON, and port 8493 remains private. The page returns 200. An account request without a Serve owner identity returns 403. A real private HTTPS owner request reaches the worker and returns the fixed session failure (502); supplying a fake incoming identity through Serve yields the same result, confirming the supplied header is replaced on this route.
 
 A real Chromium browser using the private HTTPS URL and no manually supplied identity headers shows the fixed session error, leaves both account lists empty, keeps generated audio advancing and fits 390px/728px. This verifies the deployed failure path only; successful live private-library access remains NOT VERIFIED. See evidence/account-library-private-preview.json. GitHub reported no CI checks for this branch; local tests and independent review are the available checks.
-
 
 ## Later live acceptance and owner confirmation
 

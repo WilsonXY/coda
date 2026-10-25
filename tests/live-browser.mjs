@@ -5,65 +5,160 @@ import { chromium } from 'playwright';
 import { createServer } from '../server.mjs';
 
 const directory = process.env.CODA_MUSIC_DIR;
-if (!directory) throw new Error('Set CODA_MUSIC_DIR to the prepared fixture cache');
+if (!directory)
+  throw new Error('Set CODA_MUSIC_DIR to the prepared fixture cache');
 const releases = new Map();
-const server = createServer({ musicDirectory: directory, liveMusic: async id => {
-  const bytes = await readFile(join(directory, `${id}.webm`));
-  return { bytes: bytes.length, stream: new ReadableStream({ start(controller) {
-    controller.enqueue(bytes.subarray(0, 512 * 1024));
-    releases.set(id, () => { controller.enqueue(bytes.subarray(512 * 1024)); controller.close(); });
-  } }) };
-} });
-await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+const server = createServer({
+  musicDirectory: directory,
+  liveMusic: async (id) => {
+    const bytes = await readFile(join(directory, `${id}.webm`));
+    return {
+      bytes: bytes.length,
+      stream: new ReadableStream({
+        start(controller) {
+          controller.enqueue(bytes.subarray(0, 512 * 1024));
+          releases.set(id, () => {
+            controller.enqueue(bytes.subarray(512 * 1024));
+            controller.close();
+          });
+        },
+      }),
+    };
+  },
+});
+await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const base = `http://127.0.0.1:${server.address().port}`;
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, args: ['--no-sandbox'] });
+const browser = await chromium.launch({
+  executablePath: process.env.CHROMIUM_PATH,
+  args: ['--no-sandbox'],
+});
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(base);
   await page.locator('#live').click({ timeout: 2000 });
-  await page.waitForFunction(() => document.querySelector('#delivery-status').textContent.includes('Ready: live music'));
-  assert.equal((await (await fetch(base + '/api/live/status')).json()).tracks.length, 0, 'Selecting the mode does not start media retrieval');
+  await page.waitForFunction(() =>
+    document
+      .querySelector('#delivery-status')
+      .textContent.includes('Ready: live music'),
+  );
+  assert.equal(
+    (await (await fetch(base + '/api/live/status')).json()).tracks.length,
+    0,
+    'Selecting the mode does not start media retrieval',
+  );
   await page.locator('#play').click();
-  await page.waitForFunction(() => document.querySelector('audio').currentTime > 0.25, null, { timeout: 10000 });
-  const partial = (await (await fetch(base + '/api/live/status')).json()).tracks[0];
+  await page.waitForFunction(
+    () => document.querySelector('audio').currentTime > 0.25,
+    null,
+    { timeout: 10000 },
+  );
+  const partial = (await (await fetch(base + '/api/live/status')).json())
+    .tracks[0];
   assert.equal(partial.receivedBytes, 512 * 1024);
-  assert.equal(partial.completedAt, null, 'Playback must start before upstream EOF');
+  assert.equal(
+    partial.completedAt,
+    null,
+    'Playback must start before upstream EOF',
+  );
   releases.get(partial.id)();
-  await page.locator('audio').evaluate(audio => { audio.currentTime = 150; });
-  await page.waitForFunction(() => document.querySelector('audio').currentTime > 150.25);
-  await page.locator('audio').evaluate(audio => { audio.currentTime = audio.duration - 0.2; });
-  await page.waitForFunction(() => document.querySelector('#now').textContent === '三年二班');
-  await page.waitForFunction(() => document.querySelector('audio').currentTime > 0.25);
-  const second = (await (await fetch(base + '/api/live/status')).json()).tracks[1];
+  await page.locator('audio').evaluate((audio) => {
+    audio.currentTime = 150;
+  });
+  await page.waitForFunction(
+    () => document.querySelector('audio').currentTime > 150.25,
+  );
+  await page.locator('audio').evaluate((audio) => {
+    audio.currentTime = audio.duration - 0.2;
+  });
+  await page.waitForFunction(
+    () => document.querySelector('#now').textContent === '三年二班',
+  );
+  await page.waitForFunction(
+    () => document.querySelector('audio').currentTime > 0.25,
+  );
+  const second = (await (await fetch(base + '/api/live/status')).json())
+    .tracks[1];
   assert.equal(second.completedAt, null);
   releases.get(second.id)();
-  const download = page.waitForEvent('download'); await page.locator('#export').click();
+  const download = page.waitForEvent('download');
+  await page.locator('#export').click();
   await (await download).saveAs('artifacts/live-export.json');
-  const exported = JSON.parse(await readFile('artifacts/live-export.json', 'utf8'));
+  const exported = JSON.parse(
+    await readFile('artifacts/live-export.json', 'utf8'),
+  );
   assert.equal(exported.audioDelivery, 'live');
   assert.equal(exported.liveRunId, exported.liveStatus.runId);
   assert.deepEqual(exported.liveRequestedTrackIdsAtSelection, []);
   assert.equal(exported.musicPreparedAt, null);
   assert.ok(exported.source.includes('progressive'));
-  assert.ok(exported.checks.every(check => check.status === 'NOT RUN'));
+  assert.ok(exported.checks.every((check) => check.status === 'NOT RUN'));
   await page.screenshot({ path: 'artifacts/live-390.png', fullPage: true });
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+    true,
+  );
   await page.setViewportSize({ width: 728, height: 900 });
   await page.screenshot({ path: 'artifacts/live-728.png', fullPage: true });
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+    true,
+  );
   const warm = await browser.newPage();
-  await warm.goto(base); await warm.locator('#live').click();
-  await warm.waitForFunction(() => document.querySelector('#delivery-status').textContent.includes('Ready: live music'));
-  await warm.evaluate(() => { for (let i = 0; i < 301; i++) document.dispatchEvent(new Event('resume')); });
-  const warmDownload = warm.waitForEvent('download'); await warm.locator('#export').click();
+  await warm.goto(base);
+  await warm.locator('#live').click();
+  await warm.waitForFunction(() =>
+    document
+      .querySelector('#delivery-status')
+      .textContent.includes('Ready: live music'),
+  );
+  await warm.evaluate(() => {
+    for (let i = 0; i < 301; i++) document.dispatchEvent(new Event('resume'));
+  });
+  const warmDownload = warm.waitForEvent('download');
+  await warm.locator('#export').click();
   await (await warmDownload).saveAs('artifacts/live-warm-export.json');
-  const warmExport = JSON.parse(await readFile('artifacts/live-warm-export.json', 'utf8'));
+  const warmExport = JSON.parse(
+    await readFile('artifacts/live-warm-export.json', 'utf8'),
+  );
   assert.equal(warmExport.eventsTruncated, true);
-  assert.equal(warmExport.events.some(event => event.event === 'live-selected'), false);
-  assert.deepEqual(warmExport.liveRequestedTrackIdsAtSelection, [...releases.keys()], 'Selection-time warm cache evidence survives the rolling log');
+  assert.equal(
+    warmExport.events.some((event) => event.event === 'live-selected'),
+    false,
+  );
+  assert.deepEqual(
+    warmExport.liveRequestedTrackIdsAtSelection,
+    [...releases.keys()],
+    'Selection-time warm cache evidence survives the rolling log',
+  );
   await warm.close();
   assert.deepEqual(errors, []);
-  await writeFile('artifacts/live-browser-check.json', JSON.stringify({ status: 'PASS', source: 'prepared files gated as progressive upstream fixtures; not live YouTube', earlyPlayback: partial, earlySecondTrack: second, middleSeek: 'PASS', phone: 'NOT RUN' }, null, 2));
-  console.log('PASS: gated progressive HTTP playback before completion, seeking, automatic cold next track, export and layouts. Live upstream not exercised by this fixture test.');
-} finally { await browser.close(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
+  await writeFile(
+    'artifacts/live-browser-check.json',
+    JSON.stringify(
+      {
+        status: 'PASS',
+        source:
+          'prepared files gated as progressive upstream fixtures; not live YouTube',
+        earlyPlayback: partial,
+        earlySecondTrack: second,
+        middleSeek: 'PASS',
+        phone: 'NOT RUN',
+      },
+      null,
+      2,
+    ),
+  );
+  console.log(
+    'PASS: gated progressive HTTP playback before completion, seeking, automatic cold next track, export and layouts. Live upstream not exercised by this fixture test.',
+  );
+} finally {
+  await browser.close();
+  server.closeAllConnections();
+  await new Promise((resolve) => server.close(resolve));
+}

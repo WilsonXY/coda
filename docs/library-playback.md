@@ -24,7 +24,6 @@ Parent confirmed actual gpt-6-astra/high in rollout-2026-10-25T02-44-21-01a16f3a
 
 The library still loads up to50playlists/100tracks; no additional pages are queued. Audio must be anonymously available and fit the per-track byte limit. Browser autoplay policy may require another Play tap. Seeking uncached bytes may wait; failed captures require eviction/restart; no automatic token/session renewal is implemented. Account login longevity remains unresolved. Physical Android locked-screen behavior and owner Zen use of this new library path await a short check; prior fixed-song device passes do not prove this path.
 
-
 ## Private preview and real account check
 
 After the reviewed branch was pushed, the owned live experiment service was restarted without changing Serve/Funnel configuration. The copied account session initially failed again; a real private HTTPS native-audio probe still played/seeks the public radio-edit song through the owner-protected catalog route. That initial check did not exercise the library UI and is retained separately.

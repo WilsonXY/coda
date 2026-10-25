@@ -16,12 +16,12 @@ After inspecting current state, a one-off continuation used the same newly creat
 
 Let A be `4D7u5KF7SP8` and B be `Rgrt_8mXrK8`:
 
-| Action | Expected and observed order |
-| --- | --- |
-| Inspect previously created playlist | A, B |
-| Add duplicate A | A, B, A |
-| Move appended A to front | A, A, B |
-| Remove that exact appended occurrence | A, B |
+| Action                                | Expected and observed order |
+| ------------------------------------- | --------------------------- |
+| Inspect previously created playlist   | A, B                        |
+| Add duplicate A                       | A, B, A                     |
+| Move appended A to front              | A, A, B                     |
+| Remove that exact appended occurrence | A, B                        |
 
 All four readbacks passed with PRIVATE/owned confirmed. Distinct playlist-item identifiers verified which duplicate moved and was removed, and both original item identities survived. Record **PASS_API_READBACK** for this continuation, separately from the initial failed probe.
 
@@ -32,7 +32,6 @@ The final two songs are Get Lucky (feat. Pharrell Williams and Nile Rodgers), th
 This establishes account reads and the specific new-playlist operations for the current browser session. Session expiry, reauthentication/logout, partial-failure recovery, general catalog/pagination, other existing playlists and Premium-linked playback remain unverified. The website still has no authenticated account/write endpoints. Before exposing account operations in Coda, implement a minimal backend workflow with explicit owner access controls and credentials confined to the backend.
 
 Evidence source hashes, consistency assertions and whitespace checks pass. No app regression suite is rerun for this documentation-only update. Independent review passed as recorded below. No further account mutations are needed for this experiment.
-
 
 ## Independent review
 
