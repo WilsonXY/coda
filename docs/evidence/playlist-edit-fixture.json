@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "source": "HTTPS fixture, simulated Google redirect/token exchange, synthetic scope-dependent read results",
+  "browserBoundCallback": true,
+  "explicitRenewalProbe": true,
+  "audioContinuesDuringProbe": true,
+  "partialComparisonNeverPasses": true,
+  "broaderScopeOnlyOnExplicitClick": true,
+  "permissionExplainedBeforeChoice": true,
+  "draftMakesNoWrites": true,
+  "duplicateAwareSave": true,
+  "discardMakesNoWrites": true,
+  "staleConflictStopsBeforeWrites": true,
+  "failedSaveCannotResubmit": true,
+  "layouts": [
+    390,
+    728
+  ],
+  "realGoogleAuthorization": "NOT RUN",
+  "nodeTests": 42,
+  "browserSuites": 9,
+  "legacyTestDiscardGuard": true,
+  "singleEndMoveOneUpdate": true,
+  "review": "Astra round2 PASS; model and high effort independently verified from own session log; both prior findings fixed",
+  "realAccountWrites": 0
+}

@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "source": "Node tests and HTTPS Chromium fixtures; simulated Google; no real account changes",
+  "nodeTests": 44,
+  "browserSuites": 9,
+  "largerSaveAccepted12": true,
+  "gatedAcknowledgedProgress": true,
+  "overlapRejected": true,
+  "partialFailure3of12NoRetry": true,
+  "statusDisconnectRecovery": true,
+  "pageReloadRecovery": true,
+  "missingServerStateStaysUnconfirmed": true,
+  "verifiedSuccessSurvivesViewReloadFailure": true,
+  "oldSaveCheckPreservesNewDraft": true,
+  "progressBesideSave": true,
+  "layouts": [
+    390,
+    728
+  ],
+  "realAccountWrites": 0,
+  "review": "Astra round3 PASS; previous P2 identity and lock findings fixed; actual gpt-6-astra/high independently verified from reviewer session log line10",
+  "mismatchedIdNeverAdopted": true,
+  "blockedStorageRetainsAcceptedIdInMemory": true,
+  "freshTabDiscoversActiveSave": true,
+  "delayedRecoveryPreservesReloadLock": true
+}

@@ -336,13 +336,15 @@ async function request(path, signal, options = {}) {
 }
 
 async function oauthAction(task) {
-  for (const id of ['oauth-connect', 'oauth-connect-music', 'oauth-probe']) $(id).disabled = true;
+  if (accountBusy) return;
+  for (const id of ['oauth-connect', 'oauth-connect-music', 'oauth-connect-edit', 'oauth-probe']) $(id).disabled = true;
   $('oauth-status').textContent = 'Checking OAuth…';
   try { await task(); }
   catch (error) { $('oauth-status').textContent = error.message; }
-  finally { for (const id of ['oauth-connect', 'oauth-connect-music', 'oauth-probe']) $(id).disabled = false; }
+  finally { for (const id of ['oauth-connect', 'oauth-connect-music', 'oauth-connect-edit', 'oauth-probe']) $(id).disabled = false; }
 }
-for (const [id, route] of [['oauth-connect', 'connect'], ['oauth-connect-music', 'connect-music']]) $(id).onclick = () => oauthAction(async () => {
+for (const [id, route] of [['oauth-connect', 'connect'], ['oauth-connect-music', 'connect-music'], ['oauth-connect-edit', 'connect-edit']]) $(id).onclick = () => oauthAction(async () => {
+  if (!discardBeforeNavigation()) return;
   const data = await request('/api/account/oauth/' + route, AbortSignal.timeout(15000), { method: 'POST' });
   window.location.assign(data.authorizationUrl);
 });
@@ -386,6 +388,8 @@ async function accountRead(path) {
   }
 }
 function clearAccountView() {
+  libraryPlaylist = null; draftItems = null; draftDirty = false; submittedDraft = false;
+  $('playlist-editor').hidden = true; $('edit-results').replaceChildren();
   $('account-playlists').replaceChildren(); $('account-tracks').replaceChildren();
   $('account-playback-actions').replaceChildren();
   $('account-playlist-title').textContent = 'No playlist selected';
@@ -416,14 +420,14 @@ async function accountCheck(task, failureLabel = 'Account read failed.') {
   $('account-panel').querySelectorAll('button').forEach(button => { button.disabled = true; });
   $('account-status').textContent = 'Loading account data…';
   try { await task(); }
-  catch (error) { clearAccountView(); $('account-status').textContent = `${failureLabel} ${error.message}`; log('account-request-failed'); }
+  catch (error) { if (!draftItems) clearAccountView(); $('account-status').textContent = `${failureLabel} ${error.message}`; log('account-request-failed'); }
   finally {
     accountBusy = false; $('account-panel').querySelectorAll('button').forEach(button => { button.disabled = false; });
-    $('account-test').disabled = playlistTestAttempted;
+    $('account-test').disabled = playlistTestAttempted; updateEditButtons();
   }
 }
 $('account-test').onclick = () => {
-  if (accountBusy || playlistTestAttempted) return;
+  if (accountBusy || playlistTestAttempted || !discardBeforeNavigation()) return;
   playlistTestAttempted = true;
   accountCheck(async () => {
     clearAccountView(); $('account-test-steps').replaceChildren();
@@ -447,7 +451,7 @@ $('account-check').onclick = () => accountCheck(async () => {
   await accountRead('/api/account/status');
   $('account-status').textContent = 'Connection checked. You can load your playlists.';
 });
-function loadAccount(prefix) { return accountCheck(async () => {
+function loadAccount(prefix) { if (accountBusy || !discardBeforeNavigation()) return; return accountCheck(async () => {
   clearAccountView();
   const data = await accountRead(prefix + '/playlists');
   $('account-playlists').replaceChildren(...data.items.map(item => {
@@ -455,32 +459,15 @@ function loadAccount(prefix) { return accountCheck(async () => {
     const title = document.createElement('span'); title.textContent = item.title + ' '; li.append(title);
     if (item.id) {
       const button = document.createElement('button'); button.textContent = 'Open playlist'; button.disabled = accountBusy;
-      button.onclick = () => accountCheck(async () => {
+      button.onclick = () => { if (accountBusy || !discardBeforeNavigation()) return; return accountCheck(async () => {
         const playlist = await accountRead(`${prefix}/playlist?id=${encodeURIComponent(item.id)}`);
         $('account-playlist-title').textContent = playlist.title;
         $('account-playlist-status').textContent = `${playlist.privacy} · ${playlist.items.length} tracks shown` +
           (playlist.total === null ? ` (limit ${playlist.limit})` : ` of ${playlist.total}`);
-        const playable = playlist.items.filter(track => track.id);
-        $('account-playback-actions').replaceChildren();
-        if (playable.length) {
-          const play = document.createElement('button'); play.textContent = 'Play playlist'; play.onclick = () => playLibrary(playable, 0);
-          $('account-playback-actions').append(play);
-        }
-        $('account-tracks').replaceChildren(...playlist.items.map(track => {
-          const row = document.createElement('li'); row.textContent = `${track.title}${track.artists ? ' — ' + track.artists : ''} `;
-          if (track.id) {
-            const play = document.createElement('button'); play.textContent = 'Play'; play.onclick = () => playLibrary(playable, playable.indexOf(track));
-            const add = document.createElement('button'); add.textContent = 'Add to queue'; add.onclick = () => {
-              if (!libraryMode()) return;
-              queue.push(libraryTrack(track)); selectedTracks = queue.map(item => ({ ...item })); renderQueue(); void bufferNext();
-              $('account-status').textContent = 'Added to the player queue. Press Play above to start if stopped.';
-            };
-            row.append(play, add);
-          }
-          return row;
-        }));
+        libraryPlaylist = { ...playlist, prefix }; draftItems = null; draftDirty = false; submittedDraft = false;
+        renderLibraryPlaylist();
         $('account-status').textContent = 'Playlist loaded.'; log('account-playlist-read');
-      });
+      }); };
       li.append(button);
     } else li.append(document.createTextNode('Unavailable in this view.'));
     return li;
@@ -488,6 +475,164 @@ function loadAccount(prefix) { return accountCheck(async () => {
   $('account-status').textContent = `${data.items.length} ${prefix.endsWith('/oauth') ? 'owned ' : ''}playlists shown (limit ${data.limit}).`;
   log('account-library-read');
 }); }
+let libraryPlaylist = null, draftItems = null, draftDirty = false, submittedDraft = false;
+function discardBeforeNavigation() {
+  if (!draftDirty || submittedDraft) return true;
+  if (!window.confirm('Discard the unsaved playlist draft?')) return false;
+  draftItems = null; draftDirty = false; $('edit-results').replaceChildren(); renderLibraryPlaylist();
+  return true;
+}
+window.addEventListener('beforeunload', event => { if (draftDirty && !submittedDraft) { event.preventDefault(); event.returnValue = ''; } });
+function updateEditButtons() {
+  const editing = Boolean(draftItems);
+  $('account-edit').hidden = editing;
+  $('account-edit').disabled = accountBusy || !libraryPlaylist?.edit?.canSave;
+  $('edit-save').hidden = $('edit-discard').hidden = $('edit-search').hidden = !editing;
+  $('edit-save').disabled = accountBusy || !draftDirty || submittedDraft;
+  $('edit-discard').disabled = accountBusy || submittedDraft;
+  $('edit-reload').disabled = accountBusy;
+  $('edit-search').querySelectorAll('input,button').forEach(element => { element.disabled = accountBusy || submittedDraft; });
+  $('edit-results').querySelectorAll('button').forEach(button => { button.disabled = accountBusy || submittedDraft || (draftItems?.length ?? 0) >= 100; });
+  $('account-tracks').querySelectorAll('[data-edit]').forEach(button => { button.disabled = accountBusy || submittedDraft || button.dataset.edge === 'true'; });
+}
+function renderLibraryPlaylist() {
+  const playlist = libraryPlaylist;
+  const items = draftItems ?? playlist.items, playable = items.filter(track => track.id);
+  $('account-playback-actions').replaceChildren();
+  if (playable.length) {
+    const play = document.createElement('button'); play.textContent = 'Play playlist'; play.onclick = () => playLibrary(playable, 0);
+    $('account-playback-actions').append(play);
+  }
+  $('account-tracks').replaceChildren(...items.map((track, index) => {
+    const row = document.createElement('li'); row.textContent = `${track.title}${track.artists ? ' — ' + track.artists : ''} `;
+    if (track.id) {
+      const play = document.createElement('button'); play.textContent = 'Play'; play.onclick = () => playLibrary(playable, playable.indexOf(track));
+      const add = document.createElement('button'); add.textContent = 'Add to queue'; add.onclick = () => {
+        if (!libraryMode()) return;
+        queue.push(libraryTrack(track)); selectedTracks = queue.map(item => ({ ...item })); renderQueue(); void bufferNext();
+        $('account-status').textContent = 'Added to the player queue. Press Play above to start if stopped.';
+      };
+      row.append(play, add);
+    }
+    if (draftItems) for (const [label, offset] of [['Move up', -1], ['Move down', 1], ['Remove from playlist', 0]]) {
+      const button = document.createElement('button'); button.textContent = label; button.dataset.edit = 'true';
+      button.dataset.edge = String(offset !== 0 && (index + offset < 0 || index + offset >= items.length));
+      button.onclick = () => {
+        const [entry] = draftItems.splice(index, 1);
+        if (offset) draftItems.splice(index + offset, 0, entry);
+        draftDirty = true; renderLibraryPlaylist();
+      }; row.append(button);
+    }
+    return row;
+  }));
+  $('playlist-editor').hidden = !playlist.prefix.endsWith('/oauth');
+  $('edit-status').textContent = draftItems ? `Unsaved draft: ${items.length} songs. Save sends these edits to YouTube; playback queue changes separately.` : playlist.edit?.reason || 'Edit songs here, then save to YouTube.';
+  updateEditButtons();
+}
+$('account-edit').onclick = () => {
+  if (accountBusy || !libraryPlaylist?.edit?.canSave) return;
+  draftItems = libraryPlaylist.items.map(item => ({ ...item })); draftDirty = false; submittedDraft = false;
+  $('edit-results').replaceChildren(); $('edit-search-status').textContent = ''; renderLibraryPlaylist();
+};
+$('edit-discard').onclick = () => { draftItems = null; draftDirty = false; renderLibraryPlaylist(); $('edit-results').replaceChildren(); $('edit-search-status').textContent = ''; };
+async function reloadLibraryPlaylist() {
+  const playlist = await accountRead(`${libraryPlaylist.prefix}/playlist?id=${encodeURIComponent(libraryPlaylist.id)}`);
+  libraryPlaylist = { ...playlist, prefix: libraryPlaylist.prefix }; draftItems = null; draftDirty = false; submittedDraft = false;
+  $('account-playlist-status').textContent = `${playlist.privacy} · ${playlist.items.length} tracks shown of ${playlist.total}`;
+  $('edit-results').replaceChildren(); $('edit-search-status').textContent = ''; renderLibraryPlaylist();
+}
+$('edit-reload').onclick = () => { if (discardBeforeNavigation()) return accountCheck(reloadLibraryPlaylist); };
+let monitoringSave = false, knownSaveId = null;
+function showSaveStatus(message) {
+  $('save-status').textContent = message;
+  if (draftItems && submittedDraft) $('edit-status').textContent = message;
+}
+function rememberedSave() { try { return knownSaveId ?? sessionStorage.getItem('coda-save'); } catch { return knownSaveId; } }
+function rememberSave(id) { knownSaveId = id; try { if (id) sessionStorage.setItem('coda-save', id); else sessionStorage.removeItem('coda-save'); } catch {} }
+function saveBusy(value) {
+  accountBusy = value; $('account-panel').querySelectorAll('button').forEach(button => { button.disabled = value; });
+  $('account-test').disabled = value || playlistTestAttempted; $('save-check').disabled = monitoringSave; updateEditButtons();
+}
+async function monitorSave(id) {
+  if (monitoringSave) return;
+  monitoringSave = true; rememberSave(id); saveBusy(true); $('save-check').hidden = false;
+  try {
+    while (true) {
+      const job = await request('/api/account/oauth/save-status', AbortSignal.timeout(10000));
+      if (job.id !== id) throw new Error('Status lost');
+      $('save-progress').hidden = false; $('save-progress').max = Math.max(1, job.total); $('save-progress').value = job.completed;
+      const count = `${job.completed} of ${job.total}`;
+      if (job.state === 'running') {
+        showSaveStatus(job.phase === 'checking' ? `Checking the playlist before saving ${job.total} changes…`
+          : job.phase === 'verifying' ? `Saved ${count} changes. Checking the final playlist…` : `Saving: ${count} changes confirmed.`);
+        await new Promise(resolve => setTimeout(resolve, 500)); continue;
+      }
+      rememberSave(null); $('save-check').hidden = true;
+      showSaveStatus(job.state === 'saved' ? `Saved to YouTube: ${count} changes confirmed and final order verified.`
+        : `${job.error} ${count} changes confirmed; inspect the current playlist before editing.`);
+      if (job.state === 'saved' && libraryPlaylist && submittedDraft) await reloadLibraryPlaylist().catch(() => {
+        $('account-status').textContent = 'Saved to YouTube, but the view could not reload. Try Reload playlist.';
+      });
+      return job;
+    }
+  } catch {
+    showSaveStatus('Save status is unavailable. The server may still be saving. Use Check save status; reload and inspect the playlist before another edit. Do not submit the same draft again.');
+  } finally { monitoringSave = false; saveBusy(false); }
+}
+async function recoverSave() {
+  if (monitoringSave || accountBusy) return;
+  try {
+    const job = await request('/api/account/oauth/save-status', AbortSignal.timeout(10000));
+    if (monitoringSave || accountBusy) return;
+    const remembered = rememberedSave();
+    if (remembered && job.id !== remembered) {
+      showSaveStatus('The previous save result is unavailable or belongs to a different server save. Reload and inspect your playlist before another edit.');
+      $('save-check').hidden = false;
+      return;
+    }
+    if (job.state === 'running' || (remembered && job.id === remembered)) return monitorSave(job.id);
+    if (remembered) {
+      showSaveStatus('The previous save result is unavailable, possibly after a server restart. Reload and inspect your playlist before another edit.');
+      $('save-check').hidden = false;
+    }
+  } catch {
+    if (rememberedSave()) { showSaveStatus('The previous save result is unavailable. Check again when connected, then inspect the playlist.'); $('save-check').hidden = false; }
+  }
+}
+$('save-check').onclick = recoverSave;
+$('edit-save').onclick = async () => {
+  if (accountBusy || !draftItems || !draftDirty || submittedDraft) return;
+  submittedDraft = true; rememberSave('pending'); saveBusy(true);
+  showSaveStatus('Starting save… Checking status never retries changes.');
+  try {
+    const job = await request('/api/account/oauth/save', AbortSignal.timeout(20000), { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: libraryPlaylist.id, ticket: libraryPlaylist.edit.ticket, items: draftItems.map(({ itemId, id }) => ({ itemId, id })) }) });
+    await monitorSave(job.id);
+  } catch (error) {
+    if (error.code === 'ACCOUNT_EDIT_INVALID') { submittedDraft = false; rememberSave(null); }
+    showSaveStatus(error.code ? error.message : 'Save outcome is unconfirmed. Check save status and inspect the playlist before another edit; the server may still be saving.');
+    $('save-check').hidden = error.code === 'ACCOUNT_EDIT_INVALID';
+  } finally { saveBusy(false); }
+};
+$('edit-search').onsubmit = async event => {
+  event.preventDefault();
+  if (accountBusy || !draftItems || submittedDraft) return;
+  accountBusy = true; updateEditButtons(); $('edit-results').replaceChildren(); $('edit-search-status').textContent = 'Finding songs…';
+  try {
+    const data = await request(`/api/search?q=${encodeURIComponent($('edit-query').value.trim())}&type=song`, AbortSignal.timeout(20000));
+    $('edit-results').replaceChildren(...data.items.filter(item => typeof item.id === 'string' && /^[A-Za-z0-9_-]{11}$/.test(item.id)).map(item => {
+      const row = document.createElement('li'); row.textContent = `${item.title} — ${item.artists} `;
+      const button = document.createElement('button'); button.textContent = 'Add to draft';
+      button.onclick = () => {
+        if (!draftItems || submittedDraft || draftItems.length >= 100) return;
+        draftItems.push({ itemId: null, id: item.id, title: String(item.title).slice(0, 200), artists: String(item.artists).slice(0, 200) });
+        draftDirty = true; renderLibraryPlaylist(); $('edit-search-status').textContent = 'Added to draft. Save to YouTube when ready.';
+      }; row.append(button); return row;
+    }));
+    $('edit-search-status').textContent = `${data.items.length} search results. Add songs to your draft below.`;
+  } catch { $('edit-search-status').textContent = 'Song search unavailable. Your draft is unchanged; try again.'; }
+  finally { accountBusy = false; updateEditButtons(); }
+};
 $('account-load').onclick = () => loadAccount('/api/account');
 $('account-load-google').onclick = () => loadAccount('/api/account/oauth');
 
@@ -538,3 +683,5 @@ $('playlist').onsubmit = event => {
   });
 };
 reset();
+
+void recoverSave();

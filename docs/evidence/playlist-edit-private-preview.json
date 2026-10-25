@@ -1,0 +1,27 @@
+{
+  "checkedAt": "2026-10-25T07:31:34.934Z",
+  "status": "PASS",
+  "stage": "complete",
+  "accountWrites": 0,
+  "httpStatus": 200,
+  "realGoogleOwnedReads": true,
+  "existingGrantAllowsEditing": true,
+  "localReorderAndDiscard": true,
+  "toneContinues": true,
+  "layouts": [
+    390,
+    728
+  ],
+  "saveRequests": 0,
+  "notRun": [
+    "Real Google mutations; synthetic HTTPS fixture covers Save",
+    "Physical Android/Zen editing"
+  ],
+  "priorAttempt": {
+    "checkedAt": "2026-10-25T07:30:55.783Z",
+    "status": "FAIL",
+    "stage": "open-private-page",
+    "accountWrites": 0,
+    "note": "First attempt immediately after service restart failed to open the page; exact cause not retained. Subsequent local and private HTTPS checks returned200, and the bounded repeat passed."
+  }
+}
